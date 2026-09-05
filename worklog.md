@@ -113,10 +113,10 @@ Stage Summary:
   - /home/z/my-project/src/app/api/admin/login/route.ts
   - /home/z/my-project/src/app/api/admin/logout/route.ts
   - /home/z/my-project/agent-ctx/4-admin-auth-builder.md
-- Generated credentials:
+- Generated credentials (see .env or .env.example — DO NOT commit real values):
   - ADMIN_EMAIL: admin@peredammobiljakarta.com
-  - ADMIN_PASSWORD: k4FWnxeIW47NVUUS
-  - ADMIN_SESSION_SECRET: 29d4fd65722583c6842af1990ed8aa40
+  - ADMIN_PASSWORD: <REDACTED — see local .env>
+  - ADMIN_SESSION_SECRET: <REDACTED — see local .env>
 - Endpoint API:
   - POST /api/admin/login (body {email,password} → 200 {ok:true}+cookie | 401 | 400)
   - POST /api/admin/logout (→ 200 {ok:true}+clear cookie)
