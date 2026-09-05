@@ -10,7 +10,10 @@
     "db:push": "prisma db push --accept-data-loss",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "seed": "bun run seed/seed.ts",
+    "scrape": "bun run seed/parse-scraped.ts",
+    "generate": "bun run seed/generate.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema for "Peredam Mobil Jakarta" portal media
+// 9 models: Category, Tag, Article, ArticleTag, ArticleVersion, Comment, Faq, Subscriber, SiteSetting
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +10,197 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// ============================================================
+// 1. CATEGORY — Kategori artikel (Peredam Mobil, Upgrade Audio, dll)
+// ============================================================
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  color       String?   @default("amber") // badge color key: amber, red, green, slate, etc.
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  articles Article[]
+
+  @@map("categories")
 }
 
-model Post {
+// ============================================================
+// 2. TAG — Topik populer / hashtag (Butyl, DSP, Speaker Split, dll)
+// ============================================================
+model Tag {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  name      String   @unique
+  slug      String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  articles Article[] @relation("ArticleTags")
+
+  @@map("tags")
+}
+
+// ============================================================
+// 3. ARTICLE — Inti portal berita ⭐
+// ============================================================
+model Article {
+  id                String   @id @default(cuid())
+  title             String
+  slug              String   @unique
+  excerpt           String?  // ringkasan singkat untuk kartu listing
+  content           String   @default("") // HTML hasil render dari MDX editor
+  contentMarkdown   String?  // raw markdown/MDX source (untuk re-edit)
+
+  featuredImageUrl String?
+  featuredImageAlt String?
+
+  categoryId        String
+  category          Category @relation(fields: [categoryId], references: [id])
+
+  authorName        String   @default("Innovation Car Audio")
+
+  // DRAFT = masih draft, PUBLISHED = sudah publish, ARCHIVED = arsip
+  status            String   @default("DRAFT")
+
+  isFeatured        Boolean  @default(false) // tampilkan sebagai Berita Utama
+  isBreaking        Boolean  @default(false) // tampilkan sebagai Breaking News ticker
+
+  // SEO fields (auto-fallback to title/excerpt/tags jika kosong)
+  metaTitle         String?
+  metaDescription   String?
+  metaKeywords      String?
+  ogImageUrl        String?
+
+  // Auto-calculated
+  readingTimeMinutes Int    @default(1)
+  wordCount          Int    @default(0)
+
+  // Counters
+  viewCount         Int      @default(0)
+  shareCount        Int      @default(0)
+
+  // Scheduling: jika status=PUBLISHED & publishedAt > now() = "terjadwalkan"
+  publishedAt       DateTime?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tags              Tag[]    @relation("ArticleTags")
+  versions          ArticleVersion[]
+  comments          Comment[]
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@index([isFeatured])
+  @@index([isBreaking])
+  @@map("articles")
+}
+
+// ============================================================
+// 4. ARTICLE_TAG — Junction many-to-many Article <-> Tag
+// ============================================================
+// Note: Prisma SQLite menggunakan implicit m-n relation via @relation("ArticleTags")
+// di atas. Tabel junction dibuat otomatis oleh Prisma.
+// Tidak perlu define model eksplisit kecuali perlu field tambahan.
+
+// ============================================================
+// 5. ARTICLE_VERSION — Snapshot artikel untuk versioning
+// ============================================================
+model ArticleVersion {
+  id             String   @id @default(cuid())
+  articleId      String
+  article        Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  versionNumber  Int
+  title          String
+  content        String   @default("")
+  excerpt        String?
+  editedBy       String   @default("admin")
+  editNote       String?
+  createdAt      DateTime @default(now())
+
+  @@unique([articleId, versionNumber])
+  @@index([articleId])
+  @@map("article_versions")
+}
+
+// ============================================================
+// 6. COMMENT — Komentar pembaca (wajib email+nama, must approve)
+// ============================================================
+model Comment {
+  id           String   @id @default(cuid())
+  articleId    String
+  article      Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  authorName   String
+  authorEmail  String
+  content      String
+  status       String   @default("PENDING") // PENDING | APPROVED | REJECTED | SPAM
+  parentId     String?  // untuk reply (self-reference, nullable)
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([articleId, status])
+  @@index([status])
+  @@map("comments")
+}
+
+// ============================================================
+// 7. FAQ — Pertanyaan yang Sering Diajukan
+// ============================================================
+model Faq {
+  id          String   @id @default(cuid())
+  question    String
+  answer      String
+  order       Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+// ============================================================
+// 8. SUBSCRIBER — Newsletter "Buletin Mingguan"
+// ============================================================
+model Subscriber {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  status        String   @default("ACTIVE") // ACTIVE | UNSUBSCRIBED
+  source        String?  // dari mana subscribe (homepage, popup, dll)
+  subscribedAt  DateTime @default(now())
+  unsubscribedAt DateTime?
+
+  @@index([status])
+  @@map("subscribers")
+}
+
+// ============================================================
+// 9. SITE_SETTING — Konfigurasi global (singleton, id="global")
+// ============================================================
+model SiteSetting {
+  id                  String   @id @default("global")
+  siteName            String   @default("Peredam Mobil Jakarta")
+  tagline             String   @default("Review Workshop Peredam & Upgrade Audio Terbaik")
+  logoUrl             String?
+  faviconUrl          String?
+
+  contactEmail        String   @default("innovationcaraudio@gmail.com")
+  contactAddress      String   @default("Jl. Taman Surya Boulevard 3 Blok H1 No.9, Pegadungan, Kalideres, Jakarta Barat 11830")
+  contactPhone        String?
+
+  socialFacebook      String?
+  socialInstagram     String?
+  socialYoutube       String?
+
+  authorName          String   @default("Innovation Car Audio")
+  newsletterHeadline  String   @default("Buletin Mingguan")
+  newsletterSubtext   String   @default("Ringkasan review workshop dan panduan peredam, sekali seminggu.")
+  footerCopyright     String   @default("© 2026 Peredam Mobil Jakarta. Seluruh hak cipta dilindungi.")
+
+  primaryColor        String   @default("amber")
+
+  updatedAt           DateTime @updatedAt
+
+  @@map("site_settings")
 }

@@ -1,0 +1,22 @@
+{
+  "source": "scrape",
+  "ordinal": 13,
+  "title": "Uji Kebisingan Sebelum dan Sesudah: Standar yang Jarang Ditawarkan",
+  "slug": "uji-kebisingan-sebelum-dan-sesudah-standar-yang-jarang-ditawarkan",
+  "category": "review-workshop",
+  "excerpt": "Cara melakukan uji kebisingan kabin sebelum dan sesudah pemasangan peredam mobil, syarat pengukuran yang valid, dan penurunan desibel yang realistis.",
+  "contentHtml": "<p>Peredam adalah produk yang hasilnya sulit dibuktikan setelah trim dipasang kembali. Pengukuran kebisingan menjadi satu-satunya cara mengubah kesan subjektif menjadi angka yang bisa dibandingkan.</p>\n\n<h2>Alat yang dibutuhkan</h2>\n<p>Sound level meter kelas dasar sudah memadai untuk membandingkan kondisi sebelum dan sesudah pada mobil yang sama. Aplikasi ponsel bisa dipakai sebagai gambaran kasar, meskipun akurasinya bergantung mikrofon dan kalibrasi perangkat. Untuk membandingkan selisih, konsistensi alat lebih penting daripada akurasi absolutnya.</p>\n\n<h2>Syarat pengukuran yang valid</h2>\n<ul>\n<li><strong>Rute yang sama.</strong> Aspal halus dan jalan beton memberi hasil yang jauh berbeda.</li>\n<li><strong>Kecepatan yang sama.</strong> Umumnya diukur pada 60, 80, dan 100 km/jam.</li>\n<li><strong>Posisi mikrofon yang sama.</strong> Biasanya di dekat kepala pengemudi, tidak dipegang tangan.</li>\n<li><strong>Kondisi yang sama.</strong> AC pada tingkat sama, jendela tertutup, audio dimatikan, ban dan tekanan sama.</li>\n<li><strong>Beberapa kali pengambilan.</strong> Ambil rata-rata, bukan satu angka tunggal.</li>\n</ul>\n<p>Tanpa syarat-syarat ini, selisih yang muncul bisa berasal dari perbedaan permukaan jalan, bukan dari pekerjaan peredam.</p>\n\n<h2>Angka yang realistis</h2>\n<p>Penurunan 3 dB sudah terdengar sebagai perbedaan yang nyata. Penurunan 6 dB terasa seperti kebisingan berkurang setengah bagi persepsi telinga. Paket menyeluruh yang dikerjakan baik umumnya menghasilkan 6–12 dB pada kecepatan menengah ke atas. Klaim penurunan jauh di atas itu tanpa data pengukuran patut disikapi hati-hati.</p>\n\n<h2>Yang tidak tertangkap angka</h2>\n<p>Sound level meter mengukur tekanan suara total, sehingga tidak selalu mencerminkan kenyamanan. Peredam sering mengubah karakter derau: dengung frekuensi rendah yang melelahkan berkurang, sementara desis frekuensi tinggi relatif tetap. Hasilnya kabin terasa lebih nyaman meski angka pada alat hanya turun beberapa desibel. Karena itu catatan subjektif tetap layak didokumentasikan bersama data pengukuran.</p>\n\n<h2>Kenapa ini layak diminta</h2>\n<p>Workshop yang bersedia mengukur menunjukkan dua hal: percaya pada hasil kerjanya, dan siap dinilai berdasarkan data. Bagi konsumen, pengukuran juga menjadi dasar yang jelas bila hasil pengerjaan ternyata tidak sesuai kesepakatan.</p>",
+  "authorName": "Innovation Car Audio",
+  "featuredImageUrl": "https://peredammobiljakarta.com/uploads/seed/workshop-peredam-jakarta.svg",
+  "publishedAt": "2026-07-29T22:00:00+07:00",
+  "readingTimeMinutes": 2,
+  "wordCount": 288,
+  "viewCount": 266,
+  "tags": [
+    "uji-kebisingan",
+    "wheel-housing"
+  ],
+  "originalUrl": "https://peredammobiljakarta.com/berita/review-workshop/uji-kebisingan-sebelum-dan-sesudah-standar-yang-jarang-ditawarkan",
+  "metaDescription": "Cara melakukan uji kebisingan kabin sebelum dan sesudah pemasangan peredam mobil, syarat pengukuran yang valid, dan penurunan desibel yang realistis.",
+  "metaKeywords": "uji kebisingan kabin mobil, tes desibel mobil, sound level meter mobil, hasil peredam mobil"
+}
