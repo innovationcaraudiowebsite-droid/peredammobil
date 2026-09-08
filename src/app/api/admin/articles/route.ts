@@ -27,6 +27,7 @@ interface CreateArticleBody {
   metaDescription?: unknown
   metaKeywords?: unknown
   ogImageUrl?: unknown
+  targetKeyword?: unknown
   publishedAt?: unknown
   tagIds?: unknown
 }
@@ -168,6 +169,7 @@ export async function POST(req: NextRequest) {
       metaDescription,
       metaKeywords: metaKeywords || null,
       ogImageUrl: asString(body.ogImageUrl) ?? null,
+      targetKeyword: asString(body.targetKeyword, 120) ?? null,
       readingTimeMinutes,
       wordCount,
       viewCount: 0,

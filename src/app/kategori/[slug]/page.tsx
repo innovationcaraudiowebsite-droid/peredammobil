@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ChevronRight, Home as HomeIcon, Folder } from 'lucide-react'
+import { ChevronRight, Folder } from 'lucide-react'
 import {
   getSiteSetting,
   getArticlesByCategory,
@@ -11,11 +11,18 @@ import { Header } from '@/components/portal/header'
 import { Footer } from '@/components/portal/footer'
 import { ArticleCard } from '@/components/portal/article-card'
 import { NewsletterForm } from '@/components/portal/newsletter-form'
+import { PortalBreadcrumb } from '@/components/portal/breadcrumb'
+import {
+  JsonLd,
+  CollectionPageSchema,
+} from '@/components/seo/json-ld'
 import { db } from '@/lib/db'
 
-export const revalidate = 60
+// Revalidate every 1 hour — category listing rarely changes.
+export const revalidate = 3600
 
 const PAGE_SIZE = 12
+const SITE_URL = 'https://peredammobiljakarta.com'
 
 export async function generateMetadata({
   params,
@@ -31,21 +38,29 @@ export async function generateMetadata({
     }
   }
   const settings = await getSiteSetting()
-  const title = `${category.name} — ${settings.siteName}`
+  const title = `${category.name} — Artikel Terbaru | ${settings.siteName}`
   const description =
     category.description ||
     `Kumpulan artikel di kategori ${category.name} dari portal ${settings.siteName}.`
+  const url = `/kategori/${category.slug}`
   return {
     title,
     description,
-    alternates: { canonical: `/kategori/${category.slug}` },
+    alternates: { canonical: url },
     openGraph: {
       type: 'website',
       title,
       description,
-      url: `/kategori/${category.slug}`,
+      url: `${SITE_URL}${url}`,
       siteName: settings.siteName,
       locale: 'id_ID',
+      images: [{ url: '/og-default.png', width: 1200, height: 630, alt: category.name }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-default.png'],
     },
     robots: { index: true, follow: true },
   }
@@ -95,6 +110,15 @@ export default async function CategoryPage({
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
 
+  // JSON-LD schemas — BreadcrumbList is rendered by PortalBreadcrumb component,
+  // here we only emit CollectionPage.
+  const collectionSchema = CollectionPageSchema({
+    name: category.name,
+    description: category.description || undefined,
+    url: `/kategori/${category.slug}`,
+    numberOfItems: total,
+  })
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header
@@ -104,21 +128,13 @@ export default async function CategoryPage({
       />
       <main className="flex-1">
         <div className="container mx-auto max-w-7xl px-4 py-6">
-          {/* Breadcrumb */}
-          <nav
-            aria-label="Breadcrumb"
-            className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground mb-4"
-          >
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1 hover:text-primary"
-            >
-              <HomeIcon className="size-3.5" />
-              Beranda
-            </Link>
-            <ChevronRight className="size-3.5" aria-hidden />
-            <span className="text-foreground font-medium">{category.name}</span>
-          </nav>
+          {/* Breadcrumb (visual + JSON-LD). */}
+          <PortalBreadcrumb
+            items={[
+              { name: 'Beranda', url: '/' },
+              { name: category.name },
+            ]}
+          />
 
           {/* Category header */}
           <header className="mb-6 pb-6 border-b border-border">
@@ -256,6 +272,9 @@ export default async function CategoryPage({
         </div>
       </main>
       <Footer settings={settings} />
+
+      {/* JSON-LD structured data: CollectionPage (BreadcrumbList emitted by PortalBreadcrumb). */}
+      <JsonLd schema={collectionSchema} />
     </div>
   )
 }

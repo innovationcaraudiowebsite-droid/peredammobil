@@ -23,6 +23,11 @@ interface SettingFields {
   newsletterSubtext?: unknown
   footerCopyright?: unknown
   primaryColor?: unknown
+  // SEO integrations
+  gaMeasurementId?: unknown
+  gtmId?: unknown
+  verificationGoogle?: unknown
+  verificationBing?: unknown
 }
 
 function asString(v: unknown, max?: number): string | undefined {
@@ -136,6 +141,20 @@ export async function PUT(req: NextRequest) {
   // Footer
   if (body.footerCopyright !== undefined) {
     data.footerCopyright = asNullableString(body.footerCopyright, 300) ?? ''
+  }
+
+  // SEO integrations (GA4, GTM, verifications)
+  if (body.gaMeasurementId !== undefined) {
+    data.gaMeasurementId = asNullableString(body.gaMeasurementId, 60)
+  }
+  if (body.gtmId !== undefined) {
+    data.gtmId = asNullableString(body.gtmId, 60)
+  }
+  if (body.verificationGoogle !== undefined) {
+    data.verificationGoogle = asNullableString(body.verificationGoogle, 200)
+  }
+  if (body.verificationBing !== undefined) {
+    data.verificationBing = asNullableString(body.verificationBing, 200)
   }
 
   if (Object.keys(data).length === 0) {

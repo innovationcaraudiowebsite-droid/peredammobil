@@ -18,9 +18,15 @@ import { TagCloud } from '@/components/portal/tag-cloud'
 import { NewsletterForm } from '@/components/portal/newsletter-form'
 import { FaqAccordion } from '@/components/portal/faq-accordion'
 import { Footer } from '@/components/portal/footer'
+import { PortalBreadcrumb } from '@/components/portal/breadcrumb'
+import {
+  JsonLd,
+  FAQPageSchema,
+  WebPageSchema,
+} from '@/components/seo/json-ld'
 
-// Revalidate setiap 60 detik (ISR) — homepage bersifat semi-statis.
-export const revalidate = 60
+// Revalidate setiap 1 jam (ISR) — homepage semi-statis.
+export const revalidate = 3600
 
 export default async function HomePage() {
   // SiteSetting (singleton).
@@ -84,6 +90,16 @@ export default async function HomePage() {
     },
   })
 
+  // Build JSON-LD schemas for homepage.
+  const faqSchema = FAQPageSchema(faqs)
+  const webPageSchema = WebPageSchema({
+    name: `${settings.siteName} — ${settings.tagline}`,
+    description:
+      'Portal media niche otomotif yang membahas peredam mobil, upgrade audio, review workshop Jakarta, tips & biaya pemasangan.',
+    url: '/',
+    speakableSelectors: ['h1', '.portal-speakable'],
+  })
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header
@@ -98,6 +114,13 @@ export default async function HomePage() {
 
       <main className="flex-1">
         <div className="container mx-auto max-w-7xl px-4">
+          {/* Breadcrumb (Beranda only — single item, current page). */}
+          <div className="pt-4">
+            <PortalBreadcrumb
+              items={[{ name: 'Beranda' }]}
+            />
+          </div>
+
           {/* Hero */}
           {mainFeatured && (
             <HeroFeatured
@@ -193,6 +216,10 @@ export default async function HomePage() {
       </main>
 
       <Footer settings={settings} />
+
+      {/* JSON-LD structured data: FAQPage + WebPage (speakable). */}
+      <JsonLd schema={webPageSchema} />
+      {faqSchema && <JsonLd schema={faqSchema} />}
     </div>
   )
 }

@@ -65,6 +65,7 @@ export default async function EditArticlePage({
     metaDescription: article.metaDescription ?? '',
     metaKeywords: article.metaKeywords ?? '',
     ogImageUrl: article.ogImageUrl,
+    targetKeyword: (article as { targetKeyword?: string }).targetKeyword ?? '',
     publishedAt: article.publishedAt?.toISOString() ?? null,
     tagIds: article.tags.map((t) => t.id),
     versions: article.versions.map((v) => ({

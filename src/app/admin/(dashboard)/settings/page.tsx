@@ -42,6 +42,10 @@ export default async function SettingsPage() {
     newsletterHeadline: setting.newsletterHeadline,
     newsletterSubtext: setting.newsletterSubtext,
     footerCopyright: setting.footerCopyright,
+    gaMeasurementId: (setting as { gaMeasurementId?: string | null }).gaMeasurementId ?? null,
+    gtmId: (setting as { gtmId?: string | null }).gtmId ?? null,
+    verificationGoogle: (setting as { verificationGoogle?: string | null }).verificationGoogle ?? null,
+    verificationBing: (setting as { verificationBing?: string | null }).verificationBing ?? null,
   }
 
   return (

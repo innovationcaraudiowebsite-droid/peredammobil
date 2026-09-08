@@ -72,6 +72,8 @@ model Article {
   metaDescription   String?
   metaKeywords      String?
   ogImageUrl        String?
+  // Target keyword for internal SEO tracking (not used in front-end metadata).
+  targetKeyword     String?
 
   // Auto-calculated
   readingTimeMinutes Int    @default(1)
@@ -199,6 +201,12 @@ model SiteSetting {
   footerCopyright     String   @default("© 2026 Peredam Mobil Jakarta. Seluruh hak cipta dilindungi.")
 
   primaryColor        String   @default("amber")
+
+  // SEO integrations (Google Analytics 4, Tag Manager, Search Console verification)
+  gaMeasurementId    String?
+  gtmId               String?
+  verificationGoogle  String?
+  verificationBing    String?
 
   updatedAt           DateTime @updatedAt
 

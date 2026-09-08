@@ -1,7 +1,7 @@
 'use client'
 
-import { Sparkles, Loader2, ExternalLink } from 'lucide-react'
-import { useState } from 'react'
+import { Sparkles, Loader2, ExternalLink, CheckCircle2, XCircle, Target } from 'lucide-react'
+import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
 
 import { Label } from '@/components/ui/label'
@@ -18,27 +18,131 @@ interface TabSeoProps {
   slug: string
   /** Excerpt untuk fallback meta description. */
   excerpt: string
-  /** Konten markdown untuk konteks generate AI. */
+  /** Konten markdown untuk konteks generate AI + SEO score. */
   contentMarkdown: string
+  /** Featured image URL — dipakai sebagai fallback OG image. */
+  featuredImageUrl: string | null
 
   metaTitle: string
   metaDescription: string
   metaKeywords: string
   ogImageUrl: string | null
-
-  /** Featured image URL — dipakai sebagai fallback OG image. */
-  featuredImageUrl: string | null
+  /** Target keyword for internal SEO tracking (optional). */
+  targetKeyword: string
 
   onChange: (patch: {
     metaTitle?: string
     metaDescription?: string
     metaKeywords?: string
     ogImageUrl?: string | null
+    targetKeyword?: string
   }) => void
 }
 
 const META_TITLE_MAX = 60
 const META_DESC_MAX = 160
+const META_TITLE_MIN = 30
+const META_DESC_MIN = 120
+const MIN_WORDS = 300
+
+/* -------------------------------------------------------------------------- */
+/*  SEO score checker                                                          */
+/* -------------------------------------------------------------------------- */
+
+interface SeoCheck {
+  id: string
+  label: string
+  hint: string
+  pass: boolean
+}
+
+function useSeoScore(opts: {
+  metaTitle: string
+  metaDescription: string
+  targetKeyword: string
+  title: string
+  excerpt: string
+  contentMarkdown: string
+}): { checks: SeoCheck[]; passed: number; total: number; score: number } {
+  return useMemo(() => {
+    const effectiveTitle = opts.metaTitle || opts.title
+    const effectiveDesc = opts.metaDescription || opts.excerpt
+    const kw = opts.targetKeyword.trim().toLowerCase()
+
+    const wordCount = opts.contentMarkdown
+      .replace(/[#*_`>]/g, ' ')
+      .split(/\s+/)
+      .filter(Boolean).length
+
+    const first100 = opts.contentMarkdown
+      .split(/\s+/)
+      .slice(0, 100)
+      .join(' ')
+      .toLowerCase()
+
+    const checks: SeoCheck[] = [
+      {
+        id: 'title-len',
+        label: 'Panjang Meta Title',
+        hint: `Antara ${META_TITLE_MIN}-${META_TITLE_MAX} karakter (sekarang ${effectiveTitle.length}).`,
+        pass:
+          effectiveTitle.length >= META_TITLE_MIN &&
+          effectiveTitle.length <= META_TITLE_MAX,
+      },
+      {
+        id: 'desc-len',
+        label: 'Panjang Meta Description',
+        hint: `Antara ${META_DESC_MIN}-${META_DESC_MAX} karakter (sekarang ${effectiveDesc.length}).`,
+        pass:
+          effectiveDesc.length >= META_DESC_MIN &&
+          effectiveDesc.length <= META_DESC_MAX,
+      },
+      {
+        id: 'keyword-h1',
+        label: 'Target keyword di judul',
+        hint: kw
+          ? `Cek apakah "${kw}" muncul di judul (H1).`
+          : 'Isi target keyword untuk mengaktifkan check ini.',
+        pass: kw ? opts.title.toLowerCase().includes(kw) : false,
+      },
+      {
+        id: 'keyword-first100',
+        label: 'Keyword di 100 kata pertama',
+        hint: kw
+          ? `Cek apakah "${kw}" muncul di awal konten.`
+          : 'Isi target keyword untuk mengaktifkan check ini.',
+        pass: kw ? first100.includes(kw) : false,
+      },
+      {
+        id: 'internal-link',
+        label: 'Minimal 1 internal link',
+        hint: 'Tambahkan link ke artikel lain di portal untuk SEO internal.',
+        pass: /\]\([^)]+\)|<a\s+href/i.test(opts.contentMarkdown),
+      },
+      {
+        id: 'image-alt',
+        label: 'Gambar dengan alt text',
+        hint: 'Pastikan gambar memiliki alt text deskriptif.',
+        pass: /!\[[^\]]*\]\([^)]+\)|<img[^>]+alt=/i.test(opts.contentMarkdown),
+      },
+      {
+        id: 'wordcount',
+        label: `Minimal ${MIN_WORDS} kata`,
+        hint: `Jumlah kata sekarang: ${wordCount}.`,
+        pass: wordCount >= MIN_WORDS,
+      },
+    ]
+
+    const passed = checks.filter((c) => c.pass).length
+    const total = checks.length
+    const score = Math.round((passed / total) * 100)
+    return { checks, passed, total, score }
+  }, [opts.metaTitle, opts.metaDescription, opts.targetKeyword, opts.title, opts.excerpt, opts.contentMarkdown])
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Component                                                                  */
+/* -------------------------------------------------------------------------- */
 
 export function TabSeo({
   title,
@@ -50,9 +154,19 @@ export function TabSeo({
   metaKeywords,
   ogImageUrl,
   featuredImageUrl,
+  targetKeyword,
   onChange,
 }: TabSeoProps) {
   const [generating, setGenerating] = useState(false)
+
+  const { checks, passed, total, score } = useSeoScore({
+    metaTitle,
+    metaDescription,
+    targetKeyword,
+    title,
+    excerpt,
+    contentMarkdown,
+  })
 
   async function generateMeta() {
     setGenerating(true)
@@ -89,9 +203,69 @@ export function TabSeo({
   const effectiveMetaDesc = metaDescription || excerpt.slice(0, META_DESC_MAX)
   const ogPreview = ogImageUrl || featuredImageUrl
 
+  // Score color banding.
+  const scoreColor =
+    score >= 85
+      ? 'text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800'
+      : score >= 60
+        ? 'text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800'
+        : 'text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-800'
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div className="space-y-5">
+        {/* SEO Score */}
+        <div className={`rounded-lg border p-4 ${scoreColor}`}>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold">SEO Score</p>
+              <p className="text-xs opacity-80">
+                {passed}/{total} checklist lulus
+              </p>
+            </div>
+            <div className="text-3xl font-bold tabular-nums">{score}</div>
+          </div>
+          <ul className="mt-3 space-y-1.5">
+            {checks.map((c) => (
+              <li
+                key={c.id}
+                className="flex items-start gap-2 text-xs"
+                title={c.hint}
+              >
+                {c.pass ? (
+                  <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-emerald-500" />
+                ) : (
+                  <XCircle className="mt-0.5 size-3.5 shrink-0 text-rose-500" />
+                )}
+                <span className={c.pass ? 'text-foreground' : 'text-muted-foreground'}>
+                  {c.label}
+                </span>
+                <span className="ml-auto text-[10px] text-muted-foreground/80 truncate max-w-[55%]">
+                  {c.hint}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Target Keyword */}
+        <div className="space-y-2">
+          <Label htmlFor="target-keyword" className="flex items-center gap-1.5">
+            <Target className="size-3.5 text-amber-500" />
+            Target Keyword (Internal)
+          </Label>
+          <Input
+            id="target-keyword"
+            value={targetKeyword}
+            onChange={(e) => onChange({ targetKeyword: e.target.value })}
+            placeholder="peredam mobil jakarta"
+            maxLength={120}
+          />
+          <p className="text-xs text-muted-foreground">
+            Untuk tracking internal. Tidak ditampilkan ke publik. Dipakai SEO score di atas.
+          </p>
+        </div>
+
         {/* Meta Title */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">

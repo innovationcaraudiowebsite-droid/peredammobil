@@ -16,6 +16,8 @@ import {
   Newspaper,
   Copyright,
   FileImage,
+  BarChart3,
+  ShieldCheck,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -58,6 +60,11 @@ export interface SiteSettingData {
   newsletterHeadline: string
   newsletterSubtext: string
   footerCopyright: string
+  // SEO integrations
+  gaMeasurementId: string | null
+  gtmId: string | null
+  verificationGoogle: string | null
+  verificationBing: string | null
 }
 
 const COLOR_OPTIONS: { value: string; label: string; swatch: string }[] = [
@@ -613,6 +620,82 @@ export function SettingsForm({ initial }: SettingsFormProps) {
             placeholder="© 2026 Peredam Mobil Jakarta. Seluruh hak cipta dilindungi."
           />
         </FieldRow>
+      </SectionCard>
+
+      {/* SEO Integrations */}
+      <SectionCard
+        title="SEO & Analytics"
+        description="Google Analytics 4, Google Tag Manager, dan meta verifikasi Search Console. Di-apply ke seluruh halaman portal."
+        icon={BarChart3}
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FieldRow
+            id="gaMeasurementId"
+            label="GA4 Measurement ID"
+            hint="Format: G-XXXXXXXXXX. Akan inject gtag.js otomatis."
+          >
+            <Input
+              id="gaMeasurementId"
+              value={form.gaMeasurementId ?? ''}
+              onChange={(e) => patch('gaMeasurementId', e.target.value || null)}
+              maxLength={60}
+              placeholder="G-XXXXXXXXXX"
+            />
+          </FieldRow>
+          <FieldRow
+            id="gtmId"
+            label="Google Tag Manager ID"
+            hint="Format: GTM-XXXXXXX. Opsional."
+          >
+            <Input
+              id="gtmId"
+              value={form.gtmId ?? ''}
+              onChange={(e) => patch('gtmId', e.target.value || null)}
+              maxLength={60}
+              placeholder="GTM-XXXXXXX"
+            />
+          </FieldRow>
+        </div>
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-muted-foreground">
+          Tip: Setelah menyimpan, meta verifikasi &amp; script GA4 / GTM langsung aktif di
+          semua halaman publik. Tidak perlu restart server.
+        </div>
+      </SectionCard>
+
+      {/* Search Console Verification */}
+      <SectionCard
+        title="Verifikasi Search Console"
+        description="Meta tag verifikasi untuk Google Search Console & Bing Webmaster Tools. Disisipkan ke <head> seluruh halaman."
+        icon={ShieldCheck}
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <FieldRow
+            id="verificationGoogle"
+            label="google-site-verification"
+            hint="Isi nilai content dari meta tag Google Search Console."
+          >
+            <Input
+              id="verificationGoogle"
+              value={form.verificationGoogle ?? ''}
+              onChange={(e) => patch('verificationGoogle', e.target.value || null)}
+              maxLength={200}
+              placeholder="abcDEF123456..."
+            />
+          </FieldRow>
+          <FieldRow
+            id="verificationBing"
+            label="msvalidate.01 (Bing)"
+            hint="Isi nilai content dari meta tag Bing Webmaster."
+          >
+            <Input
+              id="verificationBing"
+              value={form.verificationBing ?? ''}
+              onChange={(e) => patch('verificationBing', e.target.value || null)}
+              maxLength={200}
+              placeholder="Bing verification token..."
+            />
+          </FieldRow>
+        </div>
       </SectionCard>
 
       {/* Submit bar (sticky bottom of form) */}

@@ -1,20 +1,22 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { Search as SearchIcon, ChevronRight, Home as HomeIcon, AlertCircle } from 'lucide-react'
+import { Search as SearchIcon, ChevronRight, AlertCircle } from 'lucide-react'
 import { getSiteSetting, searchArticles } from '@/lib/portal'
 import { Header } from '@/components/portal/header'
 import { Footer } from '@/components/portal/footer'
 import { ArticleCard } from '@/components/portal/article-card'
 import { NewsletterForm } from '@/components/portal/newsletter-form'
 import { SearchForm, SearchSkeleton } from '@/components/portal/search-form'
+import { PortalBreadcrumb } from '@/components/portal/breadcrumb'
 import { formatNumber } from '@/lib/format-tanggal'
 
+// Search results pages should be noindex.
 export const revalidate = 30
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Pencarian',
+  title: 'Pencarian Artikel',
   description:
     'Cari artikel tentang peredam mobil, upgrade audio, dan workshop di Jakarta.',
   robots: { index: false, follow: true },
@@ -52,21 +54,13 @@ export default async function SearchPage({
       />
       <main className="flex-1">
         <div className="container mx-auto max-w-7xl px-4 py-6">
-          {/* Breadcrumb */}
-          <nav
-            aria-label="Breadcrumb"
-            className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground mb-4"
-          >
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1 hover:text-primary"
-            >
-              <HomeIcon className="size-3.5" />
-              Beranda
-            </Link>
-            <ChevronRight className="size-3.5" aria-hidden />
-            <span className="text-foreground font-medium">Pencarian</span>
-          </nav>
+          {/* Breadcrumb (visual only — page is noindex). */}
+          <PortalBreadcrumb
+            items={[
+              { name: 'Beranda', url: '/' },
+              { name: 'Pencarian' },
+            ]}
+          />
 
           <header className="mb-6 pb-6 border-b border-border">
             <h1 className="inline-flex items-center gap-2 text-2xl sm:text-3xl font-bold tracking-tight">

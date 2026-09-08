@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowRight, Clock, Eye } from 'lucide-react'
 import type { PortalArticleListItem } from '@/lib/portal'
 import { categoryBadgeClass } from '@/lib/portal'
@@ -21,6 +22,7 @@ export function HeroFeatured({
   const mainColor = categoryBadgeClass(main.category.color)
   const mainDate =
     relativeTime(main.publishedAt) || formatTanggalPendek(main.publishedAt)
+  const hasMainImage = Boolean(main.featuredImageUrl)
 
   return (
     <section className="py-6">
@@ -30,13 +32,14 @@ export function HeroFeatured({
           href={mainHref}
           className="group relative lg:col-span-2 block overflow-hidden rounded-xl aspect-[16/9] sm:aspect-[16/9]"
         >
-          {main.featuredImageUrl ? (
-            <img
-              src={main.featuredImageUrl}
+          {hasMainImage ? (
+            <Image
+              src={main.featuredImageUrl!}
               alt={main.featuredImageAlt || main.title}
-              className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
-              loading="eager"
-              fetchPriority="high"
+              fill
+              sizes="(min-width: 1024px) 66vw, 100vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              priority
             />
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500 via-amber-600 to-slate-800" />
@@ -50,7 +53,7 @@ export function HeroFeatured({
                 Berita Utama · {main.category.name}
               </span>
             </div>
-            <h1 className="mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight line-clamp-3 group-hover:text-amber-300 transition-colors max-w-3xl">
+            <h1 className="portal-speakable mt-3 text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight line-clamp-3 group-hover:text-amber-300 transition-colors max-w-3xl">
               {main.title}
             </h1>
             {main.excerpt && (

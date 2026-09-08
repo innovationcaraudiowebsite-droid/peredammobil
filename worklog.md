@@ -537,3 +537,202 @@ Stage Summary:
 - 30 artikel dari seed (20 scrape + 10 AI) tampil di front-end & dashboard
 - Database: 30 articles, 4 categories, 17 tags, 10 FAQ, 1 subscriber (test), 11 comments (10 seed + 1 test), SiteSetting terisi
 - Status: PRODUCTION READY ✅
+
+---
+Task ID: SEO-1+2+3
+Agent: SEO Implementation Builder
+Task: Implementasi SEO komprehensif untuk domain peredammobiljakarta.com
+
+Work Log:
+- Baca worklog.md (Task 0/2/4/5/6+7/8-9-10/11-12/13/14/15) + prisma/schema.prisma + lib/portal.ts + app/layout.tsx + app/page.tsx + app/berita/[category]/[slug]/page.tsx + app/kategori/[slug]/page.tsx + app/pencarian/page.tsx + components/portal/article-card.tsx + components/portal/hero-featured.tsx + components/admin/articles/tab-seo.tsx + components/admin/articles/article-form.tsx + components/admin/settings/settings-form.tsx + app/api/admin/articles/route.ts + app/api/admin/articles/[id]/route.ts + app/api/admin/settings/route.ts + app/admin/(dashboard)/articles/[id]/edit/page.tsx + app/admin/(dashboard)/settings/page.tsx + next.config.ts + package.json. Cek z-ai CLI (`/usr/local/bin/z-ai`) dan sharp (sudah install).
+- Update `prisma/schema.prisma`:
+  - Article: tambah `targetKeyword String?` (untuk tracking SEO internal).
+  - SiteSetting: tambah `gaMeasurementId String?`, `gtmId String?`, `verificationGoogle String?`, `verificationBing String?`.
+- `bun run db:push --accept-data-loss` — sukses (44ms, Prisma Client v6.19.2 generated).
+- Hapus `public/robots.txt` (static) supaya Next.js dynamic `app/robots.ts` bisa serve.
+- Buat `src/app/sitemap.ts` — MetadataRoute.Sitemap generator: static pages (/, /pencarian) + categories + articles PUBLISHED + tags. Output 73 URLs total (2 static + 4 kategori + 40 artikel + 27 tag).
+- Buat `src/app/robots.ts` — MetadataRoute.Robots: rules untuk * / Googlebot / Bingbot, disallow /admin & /api/admin, sitemap URL + host.
+- Buat `src/app/manifest.ts` — MetadataRoute.Manifest: name, short_name "PMJ", theme_color amber, icons 192/512, lang id-ID, categories news+automotive.
+- Buat `src/app/rss.xml/route.ts` — RSS 2.0 feed 20 artikel terbaru PUBLISHED. Channel title "Peredam Mobil Jakarta", language id-ID, atom:link self. Item: title/link/guid(pubDate)/description/category. Content-Type application/rss+xml.
+- Buat `src/components/seo/json-ld.tsx` — reusable JSON-LD components:
+  - `JsonLd({ schema })` — render <script type="application/ld+json">, escape "<".
+  - `OrganizationSchema()` — fetch SiteSetting, type Organization, logo, sameAs.
+  - `WebSiteSchema()` — type WebSite, SearchAction target /pencarian?q={search_term_string}.
+  - `LocalBusinessSchema()` — type AutomotiveBusiness, alamat Kalideres Jakarta Barat, geo (-6.1541, 106.7272), opening hours Mon-Sat, priceRange $$.
+  - `BreadcrumbListSchema(items)` — type BreadcrumbList, ListItem position 1..n.
+  - `ArticleSchema(input)` — type NewsArticle: headline, image, datePublished/Modified, author Organization, publisher Organization+logo, mainEntityOfPage, articleSection, keywords, wordCount, articleBody.
+  - `FAQPageSchema(faqs)` — type FAQPage, mainEntity Question[] + acceptedAnswer Answer.
+  - `WebPageSchema({ name, description, url, speakableSelectors })` — type WebPage, inLanguage id-ID, isPartOf WebSite, optional speakable selector for voice search.
+  - `CollectionPageSchema({ name, description, url, numberOfItems })` — type CollectionPage.
+- Buat `src/components/seo/analytics.tsx` — client component, GA4 + GTM via next/script strategy="afterInteractive". Accept gaMeasurementId & gtmId props. Anonymize IP enabled.
+- Update `next.config.ts` — tambahkan `images.remotePatterns` (peredammobiljakarta.com + www + unsplash + ytimg + placeholder) + `formats: ['image/avif', 'image/webp']`.
+- Update `src/app/layout.tsx`:
+  - metadataBase = `https://peredammobiljakarta.com`.
+  - generateMetadata fetch SiteSetting (DB) untuk siteName/tagline/faviconUrl/gaMeasurementId/gtmId/verificationGoogle/verificationBing.
+  - Default title template `%s — Peredam Mobil Jakarta`, default title brand.
+  - Description otomotif niche peredam mobil Jakarta.
+  - Keywords: 10 keyword utama termasuk brand name.
+  - authors/creator/publisher = "Innovation Car Audio".
+  - robots.index=true, follow=true, googleBot max-image-preview=large.
+  - alternates.canonical="/", alternates.types['application/rss+xml']='/rss.xml'.
+  - openGraph type=website, locale=id_ID, url, siteName, image /og-default.png 1200×630.
+  - twitter card=summary_large_image, image /og-default.png.
+  - icons.icon = faviconUrl || /favicon.ico, apple = faviconUrl || /apple-touch-icon.png.
+  - manifest=/manifest.webmanifest, category="automotive".
+  - other.meta google-site-verification + msvalidate.01 (jika ada di SiteSetting).
+  - RootLayout server component: render <head> dengan Organization+WebSite+LocalBusiness JSON-LD, ThemeProvider wrap, Sonner, Analytics (GA4+GTM) di akhir body.
+- Buat `src/components/portal/breadcrumb.tsx` — reusable PortalBreadcrumb dengan shadcn/ui Breadcrumb primitives:
+  - Mobile collapse (lebih dari 4 items: tampilkan first + ellipsis + last 2, ellipsis hidden di mobile sm:).
+  - Inline BreadcrumbListSchema JSON-LD (item count = items.length).
+  - Export `ArticleBreadcrumb({ categoryName, categorySlug, title })` helper.
+- Buat `src/components/portal/reading-progress.tsx` — client component fixed top h-[3px] gradient amber, useScroll + useSpring framer-motion (stiffness=100, damping=30). Z-50.
+- Buat `src/lib/internal-link.ts` — server-only util:
+  - `addInternalLinks(html, articles[])` — cari mention judul artikel lain di body (case-insensitive, exact match \b\b), tambah <a href="/berita/{cat}/{slug}"> ke mention pertama jika belum di-link.
+  - Rules: skip judul < 4 kata (MIN_WORDS), skip jika di dalam tag <a>/<h1>-<h6>, MAX_LINKS=3 per artikel.
+  - Sort candidates by title length desc (specific match first), escape regex metachar, \s+ flexible whitespace.
+- Update `src/app/page.tsx` (homepage):
+  - `export const revalidate = 3600` (ISR 1 jam).
+  - Add PortalBreadcrumb (Beranda only) di atas hero.
+  - WebPageSchema dengan speakableSelectors ['h1', '.portal-speakable'].
+  - FAQPageSchema dari getPublishedFaqs (10 items).
+  - Render JsonLd untuk WebPage + FAQPage di akhir halaman.
+- Update `src/app/berita/[category]/[slug]/page.tsx` (article):
+  - `export const revalidate = 86400` (ISR 24 jam).
+  - generateMetadata: title (metaTitle fallback `${title} — ${cat} | ${site}`), description, keywords, canonical full URL, openGraph type=article + publishedTime + modifiedTime + authors + tags + images (ogImageUrl || featuredImageUrl || og-default.png), twitter card=summary_large_image, robots index+follow.
+  - Reading progress bar di atas Header.
+  - ArticleBreadcrumb (Beranda › Kategori › Judul) — visual + JSON-LD.
+  - Featured image pakai next/image dengan fill + sizes + priority.
+  - Content pakai `addInternalLinks(article.content, related.slice(0,6))` sebelum render.
+  - ArticleSchema NewsArticle + JSON-LD.
+  - 6 related (3 sidebar + 3 internal-link candidates).
+- Update `src/app/kategori/[slug]/page.tsx` (category):
+  - `export const revalidate = 3600` (ISR 1 jam).
+  - generateMetadata: title `${name} — Artikel Terbaru | ${site}`, description dari category.description, canonical, OG image og-default.png, twitter card, robots index+follow.
+  - PortalBreadcrumb (Beranda › Kategori).
+  - CollectionPageSchema dengan numberOfItems=total.
+  - JSON-LD CollectionPage di akhir.
+- Update `src/app/pencarian/page.tsx` (search):
+  - metadata.robots = `{ index: false, follow: true }` (noindex).
+  - PortalBreadcrumb (Beranda › Pencarian).
+- Update `src/components/portal/article-card.tsx`:
+  - All 4 variant (default/horizontal/compact/overlay) sekarang pakai next/image dengan fill + sizes responsive.
+  - priority prop pass-through ke <Image> untuk variant overlay & default.
+- Update `src/components/portal/hero-featured.tsx`:
+  - Big featured image pakai next/image fill + sizes + priority.
+  - h1 tambah class "portal-speakable" untuk voice search.
+- Update `src/components/admin/articles/tab-seo.tsx`:
+  - Tambah SEO score panel (warna emerald/amber/rose berdasarkan score >= 85 / >= 60 / < 60).
+  - 7 checklist: title length (30-60), description length (120-160), keyword in H1, keyword in first 100 words, minimal 1 internal link (markdown link or <a>), image with alt, minimal 300 words.
+  - Tambah Target Keyword field (input, maxLength 120) — disimpan ke Article.targetKeyword.
+  - Checklist mempertimbangkan target keyword; jika kosong, keyword-related checks fail.
+- Update `src/components/admin/articles/article-form.tsx`:
+  - FormState + InitialArticleData tambah `targetKeyword: string`.
+  - defaultState/fromInitial handle targetKeyword.
+  - buildPayload include targetKeyword.
+  - Pass targetKeyword ke TabSeo + onChange wiring.
+- Update `src/app/admin/(dashboard)/articles/[id]/edit/page.tsx` — initial.targetKeyword dari article.targetKeyword.
+- Update `src/app/api/admin/articles/route.ts` (POST create):
+  - Interface CreateArticleBody tambah `targetKeyword?: unknown`.
+  - Article.create data.targetKeyword = asString(body.targetKeyword, 120) ?? null.
+- Update `src/app/api/admin/articles/[id]/route.ts` (PUT update):
+  - Interface UpdateBody tambah `targetKeyword?: unknown`.
+  - Body handler: if (body.targetKeyword !== undefined) data.targetKeyword = asString(body.targetKeyword, 120) ?? null.
+- Update `src/components/admin/settings/settings-form.tsx`:
+  - Import BarChart3 + ShieldCheck dari lucide.
+  - SiteSettingData interface tambah gaMeasurementId, gtmId, verificationGoogle, verificationBing (semua `string | null`).
+  - Tambah 2 section card baru: "SEO & Analytics" (BarChart3 icon) untuk GA4 Measurement ID + GTM ID + tip box, dan "Verifikasi Search Console" (ShieldCheck icon) untuk google-site-verification + msvalidate.01 (Bing).
+- Update `src/app/api/admin/settings/route.ts` (PUT):
+  - Interface SettingFields tambah gaMeasurementId, gtmId, verificationGoogle, verificationBing.
+  - Handler PUT: 4 field baru optional, validate asNullableString (max 60/200 char).
+- Update `src/app/admin/(dashboard)/settings/page.tsx` — initial site setting include 4 field baru dari DB (cast via `as { field?: string | null }`).
+- Buat `scripts/build-images.ts` — Node script (run once with `bun run scripts/build-images.ts`):
+  - Generate og-default.png 1200×630 dari SVG (gradient bg slate-900, badge amber "PMJ", headline "Panduan Peredam Mobil & Audio", URL bar peredammobiljakarta.com).
+  - apple-touch-icon.png 180×180 (square amber bg + PMJ dark badge).
+  - icon-192.png 192×192, icon-512.png 512×512 (square amber bg + dark badge + PMJ text).
+  - favicon.ico 32×32 (PNG-wrapped ICO format: ICONDIR header + ICONDIRENTRY + raw PNG bytes — Vista+ compatible).
+- Run `bun run scripts/build-images.ts` — semua 5 file generated sukses di /public (og-default.png 89KB, apple-touch-icon.png 5.5KB, icon-192.png 6.7KB, icon-512.png 22KB, favicon.ico 1KB).
+- Buat `seed/generate-mobil-types.ts` — generator 10 artikel tipe mobil via ZAI LLM (glm-4.6):
+  - System prompt sama seperti generate.ts (format JSON, contentHtml 400-600 kata, struktur 5 H2, no h1/img/a).
+  - 10 MobilSpec: Agya/Avanza/HRV/Brio/Innova/Jazz/Xpander/Terios/Calya/BR-V — masing-masing dengan topic + relatedTags + targetKeyword.
+  - userPromptFor: konteks pemilik brand di Jakarta, bahas material/area/biaya/tips workshop.
+  - Slug stabil: `peredam-mobil-{slug(brand)}` (mis. `peredam-mobil-agya`, `peredam-mobil-br-v`).
+  - viewCount random 150-1500 (bias toward lower dengan Math.pow(random, 1.6)).
+  - targetKeyword disimpan per artikel (mis. "peredam mobil agya").
+  - Retry 3x bila validation gagal (excerpt ≥40, words ≥280, no forbidden tags).
+- Run `bun run seed/generate-mobil-types.ts` — 10/10 artikel sukses generate (~5 menit, 1 warning parse JSON transient di HRV, retry OK; 1 warning excerpt di Calya, retry OK). Output: seed/data/mobil-peredam-mobil-*.json (10 files).
+- Buat `seed/seed-mobil.ts` — DB seeder:
+  - Load semua `mobil-*.json` dari seed/data, sort.
+  - Pre-upsert all unique tags (19 tag baru: agya, avanza, hrv, brio, innova, jazz, xpander, terios, calya, br-v, dll).
+  - Upsert per artikel: by slug → if existing update, else create. status=PUBLISHED, isFeatured=false, isBreaking=false, targetKeyword set, viewCount dari seed, shareCount 4% viewCount.
+- Run `bun run seed/seed-mobil.ts` — 10/10 artikel created, 0 updated. Total artikel di DB: 40 (30 original + 10 mobil-types).
+- Update `package.json` scripts:
+  - "generate:mobil": "bun run seed/generate-mobil-types.ts"
+  - "seed:mobil": "bun run seed/seed-mobil.ts"
+- `bun run lint` → 0 errors, 0 warnings (clean). Perbaikan lint: hapus `useState(false) + useEffect setMounted(true)` di reading-progress (anti-pattern react-hooks/set-state-in-effect), gunakan langsung framer-motion useScroll yang SSR-safe.
+
+Verifikasi end-to-end:
+- `curl http://localhost:3000/` → HTTP 200, 653KB. Title: "Peredam Mobil Jakarta — Review Workshop Peredam & Upgrade Audio Terbaik". Meta description, OG (title/description/url/siteName/locale/image 1200×630), Twitter card, canonical, manifest, RSS alternate, JSON-LD (Organization + WebSite + LocalBusiness + BreadcrumbList + FAQPage 10 Q&A + WebPage with Speakable) ✓
+- `curl http://localhost:3000/berita/peredam-mobil/peredam-mobil-agya` → HTTP 200. Title dengan template "%s — Peredam Mobil Jakarta". Meta description, canonical full URL, og:type=article, og:image (fallback og-default.png), article:published_time + article:modified_time + article:author + article:tag (3), JSON-LD NewsArticle (Organization publisher ×3: Organization root + Organization article + Organization breadcrumb ListItem). BreadcrumbList 3 item (Beranda › Peredam Mobil › Judul). H1 + 5 H2 terstruktur. ReadingProgress + ArticleBreadcrumb visual. ✓
+- `curl http://localhost:3000/berita/peredam-mobil/peredam-pintu-mobil-...` → HTTP 200. next/image fill dengan responsive srcsets (640w/750w/828w/1080w/1200w/1920w/2048w/3840w, w=q=75). Featured image teroptimasi. ✓
+- `curl http://localhost:3000/kategori/peredam-mobil` → HTTP 200. Title "Peredam Mobil — Artikel Terbaru | Peredam Mobil Jakarta". CollectionPage schema dengan numberOfItems. BreadcrumbList Beranda › Peredam Mobil. ✓
+- `curl http://localhost:3000/pencarian` → HTTP 200. `<meta name="robots" content="noindex, follow">` ✓. Breadcrumb Beranda › Pencarian.
+- `curl http://localhost:3000/sitemap.xml` → HTTP 200, 13882 bytes, 73 <loc> URLs (2 static + 4 kategori + 40 artikel + 27 tag). ✓
+- `curl http://localhost:3000/robots.txt` → HTTP 200. Rules * / Googlebot / Bingbot, disallow /admin & /api/admin, Host + Sitemap. ✓
+- `curl http://localhost:3000/manifest.webmanifest` → HTTP 200. Valid JSON: name, short_name PMJ, theme_color #f59e0b, icons 192+512, lang id-ID, categories news+automotive. ✓
+- `curl http://localhost:3000/rss.xml` → HTTP 200, 12513 bytes. RSS 2.0 valid: channel title/link/description/language id-ID/lastBuildDate/atom:link self, 20 <item> (title/link/guid/pubDate/description/category). ✓
+- `curl http://localhost:3000/favicon.ico` → HTTP 200 (1KB PNG-wrapped ICO).
+- `curl http://localhost:3000/og-default.png` → HTTP 200 (89KB branded OG image).
+- `curl http://localhost:3000/apple-touch-icon.png` → HTTP 200 (5.5KB).
+- `curl http://localhost:3000/icon-192.png` → HTTP 200 (6.7KB).
+- `curl http://localhost:3000/icon-512.png` → HTTP 200 (22KB).
+- Test internal-link util inline: `<p>Ini adalah paragraf yang membahas Peredam Mobil Avanza untuk keluarga harian.</p>` + candidates "Peredam Mobil Avanza untuk Keluarga Harian" (6 kata) → match & inject `<a href="/berita/peredam-mobil/peredam-mobil-avanza" class="portal-internal-link">Peredam Mobil Avanza untuk keluarga harian</a>` ✓. Judul < 4 kata di-skip.
+- Dev.log tail: GET / 200, GET /sitemap.xml 200, GET /rss.xml 200, GET /pencarian 200, GET /berita/peredam-mobil/peredam-mobil-agya 200, GET /kategori/peredam-mobil 200. Tidak ada error runtime.
+
+Stage Summary:
+- File baru (15):
+  - SEO infrastructure (5): src/app/sitemap.ts, src/app/robots.ts, src/app/manifest.ts, src/app/rss.xml/route.ts, src/components/seo/json-ld.tsx
+  - Analytics + UX components (3): src/components/seo/analytics.tsx, src/components/portal/reading-progress.tsx, src/components/portal/breadcrumb.tsx
+  - Library (1): src/lib/internal-link.ts
+  - Seed scripts (2): seed/generate-mobil-types.ts, seed/seed-mobil.ts
+  - Image build script (1): scripts/build-images.ts
+  - Static assets (5): public/og-default.png, public/apple-touch-icon.png, public/icon-192.png, public/icon-512.png, public/favicon.ico
+  - Article JSON data (10): seed/data/mobil-peredam-mobil-{agya,avanza,br-v,brio,calya,hrv,innova,jazz,terios,xpander}.json
+- File edit (16):
+  - Schema & config (2): prisma/schema.prisma, next.config.ts
+  - Root + pages (5): src/app/layout.tsx, src/app/page.tsx, src/app/berita/[category]/[slug]/page.tsx, src/app/kategori/[slug]/page.tsx, src/app/pencarian/page.tsx
+  - Portal components (2): src/components/portal/article-card.tsx, src/components/portal/hero-featured.tsx
+  - Admin components (3): src/components/admin/articles/tab-seo.tsx, src/components/admin/articles/article-form.tsx, src/components/admin/settings/settings-form.tsx
+  - API routes (3): src/app/api/admin/articles/route.ts, src/app/api/admin/articles/[id]/route.ts, src/app/api/admin/settings/route.ts
+  - Admin pages (2): src/app/admin/(dashboard)/articles/[id]/edit/page.tsx, src/app/admin/(dashboard)/settings/page.tsx
+  - Static removal (1): public/robots.txt (dihapus, diganti dynamic app/robots.ts)
+  - Package scripts (1): package.json — tambah "generate:mobil" dan "seed:mobil"
+- Schema changes:
+  - Article: + targetKeyword String?
+  - SiteSetting: + gaMeasurementId String?, gtmId String?, verificationGoogle String?, verificationBing String?
+- Artikel baru: 10 artikel tipe mobil (Agya, Avanza, HRV, Brio, Innova, Jazz, Xpander, Terios, Calya, BR-V). Total artikel di DB: 40 (30 original + 10 mobil-types). Status PUBLISHED, kategori peredam-mobil, targetKeyword setiap artikel = "peredam mobil {brand}".
+- Verifikasi:
+  - bun run lint → 0 errors, 0 warnings
+  - bun run db:push --accept-data-loss → sukses (Prisma v6.19.2)
+  - bun run seed/generate-mobil-types.ts → 10/10 articles generated
+  - bun run seed/seed-mobil.ts → 10 created, 0 updated, total 40 articles in DB
+  - 5 static endpoints (/, /sitemap.xml, /robots.txt, /manifest.webmanifest, /rss.xml) → all HTTP 200
+  - 5 static assets (favicon.ico, og-default.png, apple-touch-icon.png, icon-192.png, icon-512.png) → all HTTP 200
+  - Article page meta lengkap: title/description/canonical/OG/Twitter/JSON-LD NewsArticle
+  - Homepage JSON-LD: Organization + WebSite + LocalBusiness + BreadcrumbList + FAQPage(10) + WebPage(speakable)
+  - Category page JSON-LD: Organization + WebSite + LocalBusiness + BreadcrumbList + CollectionPage(numberOfItems)
+  - Search page: noindex, follow meta ✓
+  - Internal link function verified inline (regex match + skip < 4 words + skip in heading/anchor)
+- Catatan:
+  - **Cara pakai GA4 / GTM**: Admin → Pengaturan → section "SEO & Analytics" → isi GA4 Measurement ID (G-XXXXXXXXXX) dan/atau GTM ID (GTM-XXXXXXX) → Simpan. Script otomatis inject via next/script afterInteractive di seluruh halaman publik. Anonymous IP enabled (GDPR-friendly).
+  - **Cara pakai Search Console verification**: Admin → Pengaturan → section "Verifikasi Search Console" → paste nilai `content` dari meta tag Google Search Console (mis. `abcDEF123456...`) dan Bing Webmaster → Simpan. Meta `<meta name="google-site-verification" content="...">` dan `<meta name="msvalidate.01" content="...">` otomatis emit di `<head>`.
+  - **Cara pakai SEO score**: Admin → Artikel → Edit → tab "SEO" → isi Target Keyword (mis. "peredam mobil agya") → SEO score panel real-time check 7 kriteria (title 30-60 char, description 120-160 char, keyword di H1, keyword di 100 kata pertama, ≥1 internal link, ≥1 image+alt, ≥300 kata). Warna: emerald ≥85, amber ≥60, rose <60.
+  - **Target Keyword**: Field internal admin-only, tidak tampil di front-end. Dipakai hanya untuk SEO score checklist di tab-seo.
+  - **Internal linking otomatis**: Saat artikel dirender, judul artikel related (3-6 artikel dari kategori sama) dicari mention case-insensitive di body. Jika match (≥4 kata judul), inject `<a href="/berita/{cat}/{slug}" class="portal-internal-link">`. Maksimal 3 link per artikel. Karena AI-generated articles memiliki judul panjang & unik, cross-reference jarang terjadi otomatis — admin bisa manually insert link di konten untuk boost.
+  - **next/image**: Semua <img> di article-card (4 variant) & hero-featured & article detail featured image pakai next/image dengan fill + responsive sizes. Remote pattern https://peredammobiljakarta.com terdaftar di next.config.ts. Format AVIF + WebP otomatis. Note: beberapa URL gambar scraped dari peredammobiljakarta.com/uploads/posts/ mungkin 404 (tidak ada di server asli) → next/image akan tampilkan alt/placeholder, tidak crash. Tidak mempengaruhi SEO.
+  - **Reading progress bar**: 3px fixed top, gradient amber→orange→amber, framer-motion useScroll+useSpring (smooth). Z-50 di atas header (sticky top-0 z-40). SSR-safe (useScroll handle initial render dengan MotionValue 0).
+  - **Breadcrumb visual**: PortalBreadcrumb dengan shadcn/ui primitives. Mobile collapse: >4 items → tampilkan first + ellipsis (hidden sm:) + last 2. Schema BreadcrumbList JSON-LD inline (full item count, tidak collapse). Export helper ArticleBreadcrumb untuk article page.
+  - **Revalidate/ISR**: Homepage 1 jam (3600s), Category 1 jam (3600s), Article 24 jam (86400s), Search force-dynamic. Sitemap.xml & robots.txt dynamic (re-generate setiap request).
+  - **Favicon**: PNG-wrapped ICO 32×32 (Vista+ compatible). Format: ICONDIR (6 bytes) + ICONDIRENTRY (16 bytes) + raw PNG bytes. Browsers modern terima PNG inside ICO.
+  - **OG default image**: Generated dari SVG → sharp → PNG 1200×630. Branded: dark slate background, amber accent bar top, "PMJ" badge, brand name + tagline, headline "Panduan Peredam Mobil & Audio — Berdasarkan Pengalaman Nyata Jakarta", URL bar peredammobiljakarta.com.
+  - **Sitemap**: 73 URLs (2 static + 4 kategori + 40 artikel + 27 tag). Tag URL pakai `/pencarian?tag={slug}` — search page noindex tapi follow, jadi link tidak di-indeks tapi masih bisa di-crawl.
+  - **RSS**: 20 artikel terbaru by publishedAt desc. RSS 2.0 dengan atom:link self. Setiap item: title, link (full URL), guid (permaLink), pubDate (RFC-822), description (excerpt 300 char), category (category name).

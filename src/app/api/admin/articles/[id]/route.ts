@@ -27,6 +27,7 @@ interface UpdateBody {
   metaDescription?: unknown
   metaKeywords?: unknown
   ogImageUrl?: unknown
+  targetKeyword?: unknown
   publishedAt?: unknown
   tagIds?: unknown
 }
@@ -190,6 +191,8 @@ export async function PUT(
     data.metaKeywords = asString(body.metaKeywords) ?? null
   if (body.ogImageUrl !== undefined)
     data.ogImageUrl = asString(body.ogImageUrl) ?? null
+  if (body.targetKeyword !== undefined)
+    data.targetKeyword = asString(body.targetKeyword, 120) ?? null
 
   if (body.publishedAt !== undefined) {
     const p = asString(body.publishedAt)

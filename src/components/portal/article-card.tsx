@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { CalendarDays, Clock, Eye } from 'lucide-react'
 import { formatTanggalPendek, formatNumber, relativeTime } from '@/lib/format-tanggal'
 import type { PortalArticleListItem } from '@/lib/portal'
@@ -12,6 +13,8 @@ import { categoryBadgeClass } from '@/lib/portal'
  *  - 'horizontal' : horizontal layout untuk sidebar
  *  - 'compact'    : image kecil + title (untuk popular sidebar)
  *  - 'overlay'    : image dengan overlay teks (untuk hero big)
+ *
+ * All images use next/image with responsive `sizes`.
  */
 type Variant = 'default' | 'horizontal' | 'compact' | 'overlay'
 
@@ -37,11 +40,12 @@ export function ArticleCard({
         <article className="flex gap-3 items-start">
           <div className="shrink-0 size-16 overflow-hidden rounded-md bg-muted relative">
             {hasImage ? (
-              <img
+              <Image
                 src={article.featuredImageUrl!}
                 alt={imageAlt}
-                className="absolute inset-0 size-full object-cover transition-transform group-hover:scale-105"
-                loading="lazy"
+                fill
+                sizes="64px"
+                className="object-cover transition-transform group-hover:scale-105"
               />
             ) : (
               <div className="absolute inset-0 grid place-items-center text-muted-foreground/40">
@@ -72,11 +76,12 @@ export function ArticleCard({
         <article className="flex gap-4 items-start">
           <div className="shrink-0 w-32 sm:w-40 aspect-[16/10] overflow-hidden rounded-lg bg-muted relative">
             {hasImage ? (
-              <img
+              <Image
                 src={article.featuredImageUrl!}
                 alt={imageAlt}
-                className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
+                fill
+                sizes="(min-width: 640px) 160px, 128px"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
               <div className="absolute inset-0 grid place-items-center text-muted-foreground/30 text-xs">
@@ -116,11 +121,13 @@ export function ArticleCard({
         className="group relative block overflow-hidden rounded-xl aspect-[16/10] sm:aspect-[16/9]"
       >
         {hasImage ? (
-          <img
+          <Image
             src={article.featuredImageUrl!}
             alt={imageAlt}
-            className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading={priority ? 'eager' : 'lazy'}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            priority={priority}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-amber-500/30 to-slate-800/50" />
@@ -161,11 +168,13 @@ export function ArticleCard({
       <article className="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-200 hover:shadow-md hover:border-primary/40">
         <div className="relative aspect-[16/9] overflow-hidden bg-muted">
           {hasImage ? (
-            <img
+            <Image
               src={article.featuredImageUrl!}
               alt={imageAlt}
-              className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105"
-              loading={priority ? 'eager' : 'lazy'}
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              priority={priority}
             />
           ) : (
             <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-slate-800">
@@ -208,4 +217,3 @@ export function ArticleCard({
     </Link>
   )
 }
-

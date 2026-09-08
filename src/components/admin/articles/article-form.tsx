@@ -62,6 +62,7 @@ export interface InitialArticleData {
   metaDescription: string
   metaKeywords: string
   ogImageUrl: string | null
+  targetKeyword: string
   publishedAt: string | null
   tagIds: string[]
   versions: VersionInfo[]
@@ -102,6 +103,7 @@ interface FormState {
   metaDescription: string
   metaKeywords: string
   ogImageUrl: string | null
+  targetKeyword: string
   publishedAt: string | null
   tagIds: string[]
 }
@@ -124,6 +126,7 @@ function defaultState(): FormState {
     metaDescription: '',
     metaKeywords: '',
     ogImageUrl: null,
+    targetKeyword: '',
     publishedAt: null,
     tagIds: [],
   }
@@ -147,6 +150,7 @@ function fromInitial(i: InitialArticleData): FormState {
     metaDescription: i.metaDescription ?? '',
     metaKeywords: i.metaKeywords ?? '',
     ogImageUrl: i.ogImageUrl,
+    targetKeyword: i.targetKeyword ?? '',
     publishedAt: i.publishedAt,
     tagIds: i.tagIds,
   }
@@ -253,6 +257,7 @@ export function ArticleForm({
       metaDescription: state.metaDescription,
       metaKeywords: state.metaKeywords,
       ogImageUrl: state.ogImageUrl,
+      targetKeyword: state.targetKeyword,
       publishedAt: state.publishedAt,
       tagIds: state.tagIds,
     }
@@ -539,6 +544,7 @@ export function ArticleForm({
             metaKeywords={state.metaKeywords}
             ogImageUrl={state.ogImageUrl}
             featuredImageUrl={state.featuredImageUrl}
+            targetKeyword={state.targetKeyword}
             onChange={(p) => patch(p)}
           />
         </TabsContent>

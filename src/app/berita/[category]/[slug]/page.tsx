@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import {
   CalendarDays,
@@ -7,7 +8,6 @@ import {
   Eye,
   User,
   ChevronRight,
-  Home as HomeIcon,
 } from 'lucide-react'
 import { db } from '@/lib/db'
 import {
@@ -17,19 +17,28 @@ import {
   getApprovedComments,
   categoryBadgeClass,
 } from '@/lib/portal'
+import { addInternalLinks, type InternalLinkTarget } from '@/lib/internal-link'
 import { Header } from '@/components/portal/header'
 import { Footer } from '@/components/portal/footer'
 import { ArticleCard } from '@/components/portal/article-card'
 import { NewsletterForm } from '@/components/portal/newsletter-form'
 import { ViewTracker, ShareButtons } from '@/components/portal/view-tracker'
 import { CommentSection } from '@/components/portal/comment-section'
+import { ReadingProgress } from '@/components/portal/reading-progress'
+import { ArticleBreadcrumb } from '@/components/portal/breadcrumb'
 import { formatTanggalPanjang, formatNumber } from '@/lib/format-tanggal'
+import {
+  JsonLd,
+  ArticleSchema,
+} from '@/components/seo/json-ld'
 
-// Revalidate every 60s for ISR
-export const revalidate = 60
+// Revalidate every 24 hours (ISR) — article pages are nearly static.
+export const revalidate = 86400
+
+const SITE_URL = 'https://peredammobiljakarta.com'
 
 /**
- * Generate <title>, <meta>, OpenGraph, Twitter, dan JSON-LD dari data artikel.
+ * Generate <title>, <meta>, OpenGraph, Twitter, JSON-LD dari data artikel.
  */
 export async function generateMetadata({
   params,
@@ -60,6 +69,7 @@ export async function generateMetadata({
     : article.tags.map((t) => t.name)
   const imageUrl = article.ogImageUrl || article.featuredImageUrl || undefined
   const url = `/berita/${article.category.slug}/${article.slug}`
+  const fullUrl = `${SITE_URL}${url}`
 
   return {
     title,
@@ -71,19 +81,29 @@ export async function generateMetadata({
       type: 'article',
       title,
       description,
-      url,
+      url: fullUrl,
       siteName: settings.siteName,
       locale: 'id_ID',
       publishedTime: article.publishedAt?.toISOString(),
+      modifiedTime: article.updatedAt?.toISOString(),
       authors: [article.authorName],
       tags: article.tags.map((t) => t.name),
-      images: imageUrl ? [{ url: imageUrl, alt: article.featuredImageAlt || article.title }] : undefined,
+      images: imageUrl
+        ? [
+            {
+              url: imageUrl,
+              width: 1200,
+              height: 630,
+              alt: article.featuredImageAlt || article.title,
+            },
+          ]
+        : [{ url: '/og-default.png', width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: imageUrl ? [imageUrl] : undefined,
+      images: imageUrl ? [imageUrl] : ['/og-default.png'],
     },
     robots: { index: true, follow: true },
   }
@@ -102,49 +122,52 @@ export default async function ArticleDetailPage({
 
   // Related articles (same category) + approved comments + site settings — parallel.
   const [related, comments, settings] = await Promise.all([
-    getRelatedArticles(article.id, article.category.id, 3),
+    getRelatedArticles(article.id, article.category.id, 6),
     getApprovedComments(article.id),
     getSiteSetting(),
   ])
+
+  // Build internal link candidates from related articles (3 first, by publishedAt desc).
+  const linkCandidates: InternalLinkTarget[] = related.slice(0, 6).map((a) => ({
+    title: a.title,
+    slug: a.slug,
+    categorySlug: a.category.slug,
+  }))
+  // Apply internal linking to article content.
+  const processedContent = addInternalLinks(article.content || '', linkCandidates)
 
   const badgeClass = categoryBadgeClass(article.category.color)
   const dateLabel = formatTanggalPanjang(article.publishedAt)
   const articleUrl = `/berita/${article.category.slug}/${article.slug}`
   const ogImage = article.ogImageUrl || article.featuredImageUrl
 
-  // JSON-LD NewsArticle schema
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'NewsArticle',
-    headline: article.title,
-    description:
-      article.metaDescription || article.excerpt || undefined,
-    image: ogImage ? [ogImage] : undefined,
-    datePublished: article.publishedAt?.toISOString(),
-    dateModified: article.updatedAt?.toISOString(),
-    author: {
-      '@type': 'Organization',
-      name: article.authorName,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: settings.siteName,
-      logo: settings.logoUrl
-        ? { '@type': 'ImageObject', url: settings.logoUrl }
-        : undefined,
-    },
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': articleUrl,
-    },
-    articleSection: article.category.name,
-    keywords: article.tags.map((t) => t.name).join(', '),
+  // JSON-LD NewsArticle schema.
+  const articleJsonLd = ArticleSchema({
+    title: article.title,
+    excerpt: article.excerpt,
+    metaDescription: article.metaDescription,
+    featuredImageUrl: article.featuredImageUrl,
+    ogImageUrl: article.ogImageUrl,
+    publishedAt: article.publishedAt,
+    updatedAt: article.updatedAt,
+    authorName: article.authorName,
+    siteName: settings.siteName,
+    siteLogoUrl: settings.logoUrl,
+    categorySlug: article.category.slug,
+    categoryName: article.category.name,
+    articleSlug: article.slug,
+    tagNames: article.tags.map((t) => t.name),
     wordCount: article.wordCount,
-    articleBody: article.contentMarkdown || undefined,
-  }
+    contentMarkdown: article.contentMarkdown,
+  })
+
+  // BreadcrumbList JSON-LD is emitted by ArticleBreadcrumb component.
+  // Pick 3 related for sidebar (the rest were used for internal links).
+  const relatedSidebar = related.slice(0, 3)
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <ReadingProgress />
       <Header
         siteName={settings.siteName}
         logoUrl={settings.logoUrl}
@@ -152,32 +175,14 @@ export default async function ArticleDetailPage({
       />
       <main className="flex-1">
         <div className="container mx-auto max-w-7xl px-4 py-6">
-          {/* Breadcrumb */}
-          <nav
-            aria-label="Breadcrumb"
-            className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground mb-4"
-          >
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1 hover:text-primary"
-            >
-              <HomeIcon className="size-3.5" />
-              Beranda
-            </Link>
-            <ChevronRight className="size-3.5" aria-hidden />
-            <Link
-              href={`/kategori/${article.category.slug}`}
-              className="hover:text-primary"
-            >
-              {article.category.name}
-            </Link>
-            <ChevronRight className="size-3.5" aria-hidden />
-            <span className="text-foreground font-medium line-clamp-1">
-              {article.title}
-            </span>
-          </nav>
+          {/* Breadcrumb (visual + JSON-LD inline via component). */}
+          <ArticleBreadcrumb
+            categoryName={article.category.name}
+            categorySlug={article.category.slug}
+            title={article.title}
+          />
 
-          <div className="grid gap-8 lg:grid-cols-12">
+          <div className="mt-4 grid gap-8 lg:grid-cols-12">
             {/* Main article */}
             <article className="lg:col-span-8 min-w-0">
               {/* Category badge */}
@@ -221,16 +226,17 @@ export default async function ArticleDetailPage({
                 </span>
               </div>
 
-              {/* Featured image */}
+              {/* Featured image (next/image for optimization). */}
               {article.featuredImageUrl && (
                 <figure className="mt-6">
                   <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-muted">
-                    <img
+                    <Image
                       src={article.featuredImageUrl}
                       alt={article.featuredImageAlt || article.title}
-                      className="absolute inset-0 size-full object-cover"
-                      loading="eager"
-                      fetchPriority="high"
+                      fill
+                      sizes="(min-width: 1024px) 768px, 100vw"
+                      className="object-cover"
+                      priority
                     />
                   </div>
                   {article.featuredImageAlt && (
@@ -246,10 +252,10 @@ export default async function ArticleDetailPage({
                 <ShareButtons url={articleUrl} title={article.title} />
               </div>
 
-              {/* Content */}
+              {/* Content with internal links injected. */}
               <div
                 className="portal-article mt-8 text-[17px] leading-8 text-foreground/90 [&_p]:my-4 [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:tracking-tight [&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-xl [&_h3]:font-semibold [&_h4]:mt-4 [&_h4]:mb-2 [&_h4]:text-lg [&_h4]:font-semibold [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 [&_blockquote]:my-4 [&_blockquote]:border-l-4 [&_blockquote]:border-amber-500 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_a]:text-primary [&_a]:underline [&_a:hover]:no-underline [&_img]:my-4 [&_img]:rounded-lg [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-sm [&_code]:font-mono [&_pre]:my-4 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-900 [&_pre]:p-4 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-slate-100 [&_hr]:my-6 [&_hr]:border-border [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-border [&_th]:bg-muted [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold [&_td]:border [&_td]:border-border [&_td]:p-2"
-                dangerouslySetInnerHTML={{ __html: article.content || '' }}
+                dangerouslySetInnerHTML={{ __html: processedContent }}
               />
 
               {/* Tags */}
@@ -298,8 +304,8 @@ export default async function ArticleDetailPage({
                   <h3 className="font-bold text-base">Artikel Terkait</h3>
                 </div>
                 <div className="p-4 space-y-4">
-                  {related.length > 0 ? (
-                    related.map((a) => (
+                  {relatedSidebar.length > 0 ? (
+                    relatedSidebar.map((a) => (
                       <ArticleCard key={a.id} article={a} variant="horizontal" />
                     ))
                   ) : (
@@ -320,13 +326,8 @@ export default async function ArticleDetailPage({
       </main>
       <Footer settings={settings} />
 
-      {/* JSON-LD structured data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
-        }}
-      />
+      {/* JSON-LD structured data: NewsArticle (BreadcrumbList emitted by ArticleBreadcrumb). */}
+      <JsonLd schema={articleJsonLd} />
 
       {/* View tracker (client component, fire & forget) */}
       <ViewTracker slug={article.slug} />
