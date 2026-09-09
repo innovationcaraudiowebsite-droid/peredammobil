@@ -60,3 +60,6 @@ server.log
 /tests/database-runtime-*.sh
 dev-test.log
 dev-wrap*.log
+
+# Dev runtime
+.zscripts/dev.pid
