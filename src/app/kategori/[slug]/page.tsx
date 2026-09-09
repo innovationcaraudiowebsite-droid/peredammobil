@@ -18,8 +18,9 @@ import {
 } from '@/components/seo/json-ld'
 import { db } from '@/lib/db'
 
-// Revalidate every 1 hour — category listing rarely changes.
-export const revalidate = 3600
+// Always render at request time — env vars (Supabase) are runtime-injected.
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 const PAGE_SIZE = 12
 const SITE_URL = 'https://peredammobiljakarta.com'

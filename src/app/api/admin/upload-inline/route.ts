@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
 
 import { requireAdmin } from '@/lib/auth'
-import { supabaseAdmin, publicStorageUrl, BUCKETS } from '@/lib/supabase-server'
+import { getSupabaseAdmin, publicStorageUrl, BUCKETS } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs'
 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
   const ext = contentType === 'image/gif' ? 'gif' : 'webp'
   const filename = `inline-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
 
-  const { error } = await supabaseAdmin.storage
+  const { error } = await getSupabaseAdmin().storage
     .from(BUCKETS.ARTICLES_INLINE)
     .upload(filename, uploadBuf, {
       contentType,

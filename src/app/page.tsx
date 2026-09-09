@@ -25,8 +25,13 @@ import {
   WebPageSchema,
 } from '@/components/seo/json-ld'
 
-// Revalidate setiap 1 jam (ISR) — homepage semi-statis.
-export const revalidate = 3600
+// Always render at request time (runtime) — Vercel injects env vars at
+// runtime, not build time. force-dynamic prevents build-time DB queries
+// that would fail when SUPABASE_URL / DATABASE_URL aren't available during
+// the "Collecting page data" build phase.
+export const dynamic = 'force-dynamic'
+// Revalidate hint (ignored when force-dynamic, kept for documentation).
+export const revalidate = 0
 
 export default async function HomePage() {
   // SiteSetting (singleton).

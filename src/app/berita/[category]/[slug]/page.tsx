@@ -32,8 +32,9 @@ import {
   ArticleSchema,
 } from '@/components/seo/json-ld'
 
-// Revalidate every 24 hours (ISR) — article pages are nearly static.
-export const revalidate = 86400
+// Always render at request time — env vars (Supabase) are runtime-injected.
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 const SITE_URL = 'https://peredammobiljakarta.com'
 
