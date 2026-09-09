@@ -54,7 +54,7 @@ async function verifyToken(token: string | undefined): Promise<boolean> {
   }
   if (!valid) return false
 
-  let payload: { email?: string; exp?: number }
+  let payload: { userId?: string; email?: string; role?: string; exp?: number }
   try {
     const pad = '='.repeat((4 - (payloadB64.length % 4)) % 4)
     const b64 = (payloadB64 + pad).replace(/-/g, '+').replace(/_/g, '/')
@@ -64,7 +64,9 @@ async function verifyToken(token: string | undefined): Promise<boolean> {
   }
   if (!payload || typeof payload.exp !== 'number') return false
   if (Date.now() > payload.exp) return false
-  if (payload.email !== process.env.ADMIN_EMAIL) return false
+  if (!payload.userId || !payload.role) return false
+  // Must be one of valid roles
+  if (!['admin', 'editor', 'writer'].includes(payload.role)) return false
   return true
 }
 

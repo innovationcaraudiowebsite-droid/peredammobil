@@ -12,6 +12,8 @@ import {
   MessageSquare,
   Mail,
   Settings,
+  Users,
+  UserCircle,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -23,6 +25,8 @@ export interface NavItem {
   icon: LucideIcon
   /** When true, only active when pathname === href (no prefix match). */
   exact?: boolean
+  /** Roles allowed to see this item. Default: all roles. */
+  roles?: string[] // ['admin','editor','writer']
 }
 
 export interface NavSection {
@@ -32,7 +36,8 @@ export interface NavSection {
 
 /**
  * Source of truth for the admin sidebar navigation.
- * Future agents can import this list to render breadcrumbs, sitemap, etc.
+ * Items with `roles` only show untuk role yang diizinkan.
+ * Default (tanpa roles) → semua role bisa lihat.
  */
 export const navSections: NavSection[] = [
   {
@@ -45,22 +50,24 @@ export const navSections: NavSection[] = [
     items: [
       { label: 'Semua Artikel', href: '/admin/articles', icon: FileText },
       { label: 'Tambah Artikel', href: '/admin/articles/new', icon: Plus, exact: true },
-      { label: 'Kategori', href: '/admin/categories', icon: FolderTree },
-      { label: 'Tag', href: '/admin/tags', icon: Tags },
-      { label: 'FAQ', href: '/admin/faq', icon: HelpCircle },
+      { label: 'Kategori', href: '/admin/categories', icon: FolderTree, roles: ['admin'] },
+      { label: 'Tag', href: '/admin/tags', icon: Tags, roles: ['admin'] },
+      { label: 'FAQ', href: '/admin/faq', icon: HelpCircle, roles: ['admin'] },
     ],
   },
   {
     title: 'Interaksi',
     items: [
-      { label: 'Komentar', href: '/admin/comments', icon: MessageSquare },
-      { label: 'Subscriber', href: '/admin/subscribers', icon: Mail },
+      { label: 'Komentar', href: '/admin/comments', icon: MessageSquare, roles: ['admin','editor'] },
+      { label: 'Subscriber', href: '/admin/subscribers', icon: Mail, roles: ['admin'] },
     ],
   },
   {
     title: 'Sistem',
     items: [
-      { label: 'Pengaturan', href: '/admin/settings', icon: Settings },
+      { label: 'Akun', href: '/admin/users', icon: Users, roles: ['admin'] },
+      { label: 'Profil Saya', href: '/admin/profile', icon: UserCircle },
+      { label: 'Pengaturan', href: '/admin/settings', icon: Settings, roles: ['admin'] },
     ],
   },
 ]
@@ -125,23 +132,30 @@ export function NavLink({ item, onNavigate }: NavLinkProps) {
 
 interface SidebarNavProps {
   onNavigate?: () => void
+  role?: string // admin | editor | writer
 }
 
-export function SidebarNav({ onNavigate }: SidebarNavProps) {
+export function SidebarNav({ onNavigate, role = 'admin' }: SidebarNavProps) {
   return (
     <nav aria-label="Admin navigasi" className="flex flex-col gap-5 px-3 py-4">
-      {navSections.map((section, i) => (
-        <div key={i} className="flex flex-col gap-1">
-          {section.title && (
-            <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              {section.title}
-            </div>
-          )}
-          {section.items.map((item) => (
-            <NavLink key={item.href} item={item} onNavigate={onNavigate} />
-          ))}
-        </div>
-      ))}
+      {navSections.map((section, i) => {
+        const visibleItems = section.items.filter(
+          (item) => !item.roles || item.roles.includes(role)
+        )
+        if (visibleItems.length === 0) return null
+        return (
+          <div key={i} className="flex flex-col gap-1">
+            {section.title && (
+              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                {section.title}
+              </div>
+            )}
+            {visibleItems.map((item) => (
+              <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+            ))}
+          </div>
+        )
+      })}
     </nav>
   )
 }

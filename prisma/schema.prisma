@@ -61,6 +61,10 @@ model Article {
 
   authorName        String   @default("Innovation Car Audio")
 
+  // FK to Profile (Supabase Auth user). Nullable untuk artikel lama (pre-auth).
+  authorId          String?
+  author            Profile? @relation(fields: [authorId], references: [id])
+
   // DRAFT = masih draft, PUBLISHED = sudah publish, ARCHIVED = arsip
   status            String   @default("DRAFT")
 
@@ -97,6 +101,7 @@ model Article {
   @@index([categoryId])
   @@index([isFeatured])
   @@index([isBreaking])
+  @@index([authorId])
   @@map("articles")
 }
 
@@ -119,12 +124,34 @@ model ArticleVersion {
   content        String   @default("")
   excerpt        String?
   editedBy       String   @default("admin")
+  editedByUserId String?
+  editedByUser   Profile? @relation(fields: [editedByUserId], references: [id])
   editNote       String?
   createdAt      DateTime @default(now())
 
   @@unique([articleId, versionNumber])
   @@index([articleId])
   @@map("article_versions")
+}
+
+// ============================================================
+// 10. PROFILE — Admin/Editor/Writer (Supabase Auth users)
+// ============================================================
+model Profile {
+  id          String   @id  // UUID sama dengan auth.users.id
+  email       String   @unique
+  fullName    String?
+  role        String   @default("writer") // admin | editor | writer
+  avatarUrl   String?
+  isActive    Boolean  @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  articles Article[]
+  versions ArticleVersion[]
+
+  @@map("profiles")
 }
 
 // ============================================================

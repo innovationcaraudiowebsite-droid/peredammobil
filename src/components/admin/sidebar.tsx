@@ -7,6 +7,8 @@ import { LogoutButton } from './logout-button'
 
 interface SidebarContentProps {
   email: string
+  role?: string // admin | editor | writer
+  fullName?: string
   /** Called after any internal nav link is clicked (used to close mobile sheet). */
   onNavigate?: () => void
 }
@@ -15,8 +17,10 @@ interface SidebarContentProps {
  * The actual sidebar chrome — branded header + nav + user card.
  * Rendered both in the fixed desktop sidebar and inside the mobile Sheet.
  */
-export function SidebarContent({ email, onNavigate }: SidebarContentProps) {
+export function SidebarContent({ email, role = 'admin', fullName, onNavigate }: SidebarContentProps) {
   const initials = email.slice(0, 2).toUpperCase()
+  const displayName = fullName || email
+  const roleLabel = role === 'admin' ? 'Administrator' : role === 'editor' ? 'Editor' : role === 'writer' ? 'Writer' : 'User'
 
   return (
     <div className="flex h-full flex-col bg-slate-950 text-slate-200">
@@ -63,7 +67,7 @@ export function SidebarContent({ email, onNavigate }: SidebarContentProps) {
         className="custom-sidebar-scroll flex-1 overflow-y-auto"
         style={{ scrollbarWidth: 'thin' }}
       >
-        <SidebarNav onNavigate={onNavigate} />
+        <SidebarNav onNavigate={onNavigate} role={role} />
       </div>
 
       {/* User card footer */}
@@ -77,9 +81,9 @@ export function SidebarContent({ email, onNavigate }: SidebarContentProps) {
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-xs font-medium text-slate-100">
-              {email}
+              {displayName}
             </div>
-            <div className="text-[11px] text-slate-500">Administrator</div>
+            <div className="text-[11px] text-slate-500">{roleLabel}</div>
           </div>
           <LogoutButton
             compact

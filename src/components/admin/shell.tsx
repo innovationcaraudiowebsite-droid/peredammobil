@@ -17,18 +17,30 @@ import { LogoutButton } from './logout-button'
 
 interface AdminShellProps {
   email: string
+  role?: string // admin | editor | writer
+  fullName?: string
   children: React.ReactNode
 }
 
-export function AdminShell({ email, children }: AdminShellProps) {
+export function AdminShell({ email, role = 'admin', fullName, children }: AdminShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const initials = email.slice(0, 2).toUpperCase()
+  const displayName = fullName || email
+
+  const roleLabel =
+    role === 'admin' ? 'Administrator' :
+    role === 'editor' ? 'Editor' :
+    role === 'writer' ? 'Writer' : 'User'
+  const roleBadgeClass =
+    role === 'admin' ? 'bg-amber-500 text-white' :
+    role === 'editor' ? 'bg-emerald-500 text-white' :
+    role === 'writer' ? 'bg-slate-500 text-white' : 'bg-slate-400 text-white'
 
   return (
     <div className="min-h-screen bg-muted/30">
       {/* Desktop fixed sidebar (lg+) */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-60 lg:block">
-        <SidebarContent email={email} />
+        <SidebarContent email={email} role={role} />
       </aside>
 
       {/* Mobile sheet (controlled externally) */}
@@ -40,6 +52,7 @@ export function AdminShell({ email, children }: AdminShellProps) {
           <SheetTitle className="sr-only">Menu navigasi admin</SheetTitle>
           <SidebarContent
             email={email}
+            role={role}
             onNavigate={() => setMobileOpen(false)}
           />
         </SheetContent>
@@ -77,10 +90,10 @@ export function AdminShell({ email, children }: AdminShellProps) {
               </div>
               <div className="hidden flex-col text-right leading-tight sm:flex">
                 <span className="max-w-[180px] truncate text-xs font-medium text-foreground">
-                  {email}
+                  {displayName}
                 </span>
-                <span className="text-[11px] text-muted-foreground">
-                  Administrator
+                <span className={`inline-block mt-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium ${roleBadgeClass}`}>
+                  {roleLabel}
                 </span>
               </div>
               <LogoutButton />

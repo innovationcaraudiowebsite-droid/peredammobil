@@ -24,16 +24,19 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const ok = await login(email, password)
-  if (!ok) {
+  const payload = await login(email, password)
+  if (!payload) {
     return NextResponse.json(
-      { ok: false, message: 'Email atau password salah.' },
+      { ok: false, message: 'Email atau password salah, atau akun tidak aktif.' },
       { status: 401 },
     )
   }
 
-  const token = createSessionToken()
-  const res = NextResponse.json({ ok: true })
+  const token = createSessionToken(payload)
+  const res = NextResponse.json({
+    ok: true,
+    user: { email: payload.email, role: payload.role },
+  })
   setSessionCookie(res, token)
   return res
 }
