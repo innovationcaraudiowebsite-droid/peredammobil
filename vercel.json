@@ -1,0 +1,62 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "bun install",
+  "git": {
+    "deploymentEnabled": true
+  },
+  "github": {
+    "enabled": true,
+    "silent": false,
+    "autoAlias": true
+  },
+  "regions": ["sin1"],
+  "functions": {
+    "src/app/api/admin/**/*.ts": {
+      "memory": 1024,
+      "maxDuration": 30
+    },
+    "src/app/api/subscribe/route.ts": {
+      "memory": 512,
+      "maxDuration": 15
+    },
+    "src/app/api/comments/route.ts": {
+      "memory": 512,
+      "maxDuration": 15
+    },
+    "src/app/api/articles/[slug]/view/route.ts": {
+      "memory": 512,
+      "maxDuration": 15
+    },
+    "src/app/api/health/route.ts": {
+      "memory": 512,
+      "maxDuration": 15
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }
+      ]
+    },
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ],
+  "redirects": [
+    { "source": "/admin/", "destination": "/admin", "permanent": true }
+  ]
+}
