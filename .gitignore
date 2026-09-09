@@ -65,3 +65,4 @@ dev-wrap*.log
 .zscripts/dev.pid
 db/*.db
 db/*.db-journal
+.env.vercel
