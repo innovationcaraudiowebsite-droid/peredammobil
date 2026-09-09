@@ -12,15 +12,63 @@ import type { SiteSetting } from '@prisma/client'
  *  - app/kategori/...      → listing per kategori
  *  - app/pencarian/...      → search result
  *
- * Pattern singleton SiteSetting: upsert dengan where:{id:"global"} update:{} create:{}
- * → auto-create default jika belum ada (idempotent).
+ * IMPORTANT — error handling:
+ *   Every DB-querying function wraps its query in try/catch and returns a
+ *   safe fallback (empty array / null / default object). This way, if the
+ *   database is unreachable from Vercel serverless (e.g. wrong DATABASE_URL,
+ *   pool exhausted, network issue), pages still render with empty content
+ *   instead of throwing "server-side exception".
+ *
+ *   Errors are logged to console.error so they show up in Vercel logs.
  */
+
+// ---------------------------------------------------------------------------
+//  Default fallback SiteSetting (used when DB is unreachable)
+// ---------------------------------------------------------------------------
+
+const DEFAULT_SITE_SETTING: SiteSetting = {
+  id: 'global',
+  siteName: 'Peredam Mobil Jakarta',
+  tagline: 'Review Workshop Peredam & Upgrade Audio Terbaik',
+  logoUrl: null,
+  faviconUrl: null,
+  contactEmail: 'innovationcaraudio@gmail.com',
+  contactAddress:
+    'Jl. Taman Surya Boulevard 3 Blok H1 No.9, Pegadungan, Kalideres, Jakarta Barat 11830',
+  contactPhone: null,
+  socialFacebook: null,
+  socialInstagram: null,
+  socialYoutube: null,
+  authorName: 'Innovation Car Audio',
+  newsletterHeadline: 'Buletin Mingguan',
+  newsletterSubtext:
+    'Ringkasan review workshop dan panduan peredam, sekali seminggu.',
+  footerCopyright:
+    '© 2026 Peredam Mobil Jakarta. Seluruh hak cipta dilindungi.',
+  primaryColor: 'amber',
+  gaMeasurementId: null,
+  gtmId: null,
+  verificationGoogle: null,
+  verificationBing: null,
+  updatedAt: new Date(),
+}
+
+function logDbError(fn: string, err: unknown): void {
+  const msg = err instanceof Error ? err.message : String(err)
+  console.error(`[portal:${fn}] DB error:`, msg)
+}
+
 export async function getSiteSetting(): Promise<SiteSetting> {
-  return db.siteSetting.upsert({
-    where: { id: 'global' },
-    update: {},
-    create: {},
-  })
+  try {
+    return await db.siteSetting.upsert({
+      where: { id: 'global' },
+      update: {},
+      create: {},
+    })
+  } catch (err) {
+    logDbError('getSiteSetting', err)
+    return DEFAULT_SITE_SETTING
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -164,23 +212,29 @@ export function categoryDotClass(color: string | null | undefined): string {
 export async function getFeaturedArticles(
   minCount = 3,
 ): Promise<PortalArticleListItem[]> {
-  const featured = await db.article.findMany({
-    where: { ...PUBLISHED_WHERE, isFeatured: true },
-    orderBy: [{ publishedAt: 'desc' }],
-    take: minCount,
-    select: articleListSelect,
-  })
-  if (featured.length >= minCount) return featured as PortalArticleListItem[]
-  // Tambahan: ambil populer yg bukan featured
-  const need = minCount - featured.length
-  const excludeIds = featured.map((a) => a.id)
-  const popular = await db.article.findMany({
-    where: { ...PUBLISHED_WHERE, id: { notIn: excludeIds } },
-    orderBy: [{ viewCount: 'desc' }, { publishedAt: 'desc' }],
-    take: need,
-    select: articleListSelect,
-  })
-  return [...featured, ...popular] as PortalArticleListItem[]
+  try {
+    const featured = await db.article.findMany({
+      where: { ...PUBLISHED_WHERE, isFeatured: true },
+      orderBy: [{ publishedAt: 'desc' }],
+      take: minCount,
+      select: articleListSelect,
+    })
+    if (featured.length >= minCount)
+      return featured as PortalArticleListItem[]
+    // Tambahan: ambil populer yg bukan featured
+    const need = minCount - featured.length
+    const excludeIds = featured.map((a) => a.id)
+    const popular = await db.article.findMany({
+      where: { ...PUBLISHED_WHERE, id: { notIn: excludeIds } },
+      orderBy: [{ viewCount: 'desc' }, { publishedAt: 'desc' }],
+      take: need,
+      select: articleListSelect,
+    })
+    return [...featured, ...popular] as PortalArticleListItem[]
+  } catch (err) {
+    logDbError('getFeaturedArticles', err)
+    return []
+  }
 }
 
 /**
@@ -190,12 +244,17 @@ export async function getLatestArticles(
   take = 4,
   excludeIds: string[] = [],
 ): Promise<PortalArticleListItem[]> {
-  return (await db.article.findMany({
-    where: { ...PUBLISHED_WHERE, id: { notIn: excludeIds } },
-    orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-    take,
-    select: articleListSelect,
-  })) as PortalArticleListItem[]
+  try {
+    return (await db.article.findMany({
+      where: { ...PUBLISHED_WHERE, id: { notIn: excludeIds } },
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+      take,
+      select: articleListSelect,
+    })) as PortalArticleListItem[]
+  } catch (err) {
+    logDbError('getLatestArticles', err)
+    return []
+  }
 }
 
 /**
@@ -206,34 +265,42 @@ export async function getArticlesPerCategory(
   perCategory = 4,
   excludeIds: string[] = [],
 ): Promise<{ category: PortalCategory; articles: PortalArticleListItem[] }[]> {
-  const categories = await db.category.findMany({
-    orderBy: { order: 'asc' },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      description: true,
-      color: true,
-    },
-  })
-  const result: { category: PortalCategory; articles: PortalArticleListItem[] }[] =
-    []
-  for (const c of categories) {
-    const articles = await db.article.findMany({
-      where: {
-        ...PUBLISHED_WHERE,
-        categoryId: c.id,
-        id: { notIn: excludeIds },
+  try {
+    const categories = await db.category.findMany({
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        color: true,
       },
-      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-      take: perCategory,
-      select: articleListSelect,
     })
-    if (articles.length > 0) {
-      result.push({ category: c as PortalCategory, articles: articles as PortalArticleListItem[] })
+    const result: { category: PortalCategory; articles: PortalArticleListItem[] }[] =
+      []
+    for (const c of categories) {
+      const articles = await db.article.findMany({
+        where: {
+          ...PUBLISHED_WHERE,
+          categoryId: c.id,
+          id: { notIn: excludeIds },
+        },
+        orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+        take: perCategory,
+        select: articleListSelect,
+      })
+      if (articles.length > 0) {
+        result.push({
+          category: c as PortalCategory,
+          articles: articles as PortalArticleListItem[],
+        })
+      }
     }
+    return result
+  } catch (err) {
+    logDbError('getArticlesPerCategory', err)
+    return []
   }
-  return result
 }
 
 /**
@@ -242,12 +309,17 @@ export async function getArticlesPerCategory(
 export async function getMostReadArticles(
   take = 6,
 ): Promise<PortalArticleListItem[]> {
-  return (await db.article.findMany({
-    where: PUBLISHED_WHERE,
-    orderBy: [{ viewCount: 'desc' }, { publishedAt: 'desc' }],
-    take,
-    select: articleListSelect,
-  })) as PortalArticleListItem[]
+  try {
+    return (await db.article.findMany({
+      where: PUBLISHED_WHERE,
+      orderBy: [{ viewCount: 'desc' }, { publishedAt: 'desc' }],
+      take,
+      select: articleListSelect,
+    })) as PortalArticleListItem[]
+  } catch (err) {
+    logDbError('getMostReadArticles', err)
+    return []
+  }
 }
 
 /**
@@ -256,36 +328,45 @@ export async function getMostReadArticles(
 export async function getPopularTags(
   take = 12,
 ): Promise<PortalTag[]> {
-  // Ambil semua tag, lalu hitung article count per tag di aplikasi (simple & reliable di SQLite).
-  const tags = await db.tag.findMany({
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      articles: { select: { id: true } },
-    },
-  })
-  return tags
-    .map((t) => ({
-      id: t.id,
-      name: t.name,
-      slug: t.slug,
-      articleCount: t.articles.length,
-    }))
-    .filter((t) => t.articleCount > 0)
-    .sort((a, b) => b.articleCount - a.articleCount)
-    .slice(0, take)
+  try {
+    const tags = await db.tag.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        articles: { select: { id: true } },
+      },
+    })
+    return tags
+      .map((t) => ({
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        articleCount: t.articles.length,
+      }))
+      .filter((t) => t.articleCount > 0)
+      .sort((a, b) => b.articleCount - a.articleCount)
+      .slice(0, take)
+  } catch (err) {
+    logDbError('getPopularTags', err)
+    return []
+  }
 }
 
 /**
  * FAQ list (published only, sort by order asc).
  */
 export async function getPublishedFaqs(): Promise<PortalFaq[]> {
-  return db.faq.findMany({
-    where: { isPublished: true },
-    orderBy: { order: 'asc' },
-    select: { id: true, question: true, answer: true, order: true },
-  })
+  try {
+    return await db.faq.findMany({
+      where: { isPublished: true },
+      orderBy: { order: 'asc' },
+      select: { id: true, question: true, answer: true, order: true },
+    })
+  } catch (err) {
+    logDbError('getPublishedFaqs', err)
+    return []
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -295,51 +376,61 @@ export async function getPublishedFaqs(): Promise<PortalFaq[]> {
 export async function getArticleBySlug(
   slug: string,
 ): Promise<PortalArticleDetail | null> {
-  const a = await db.article.findFirst({
-    where: { slug, status: 'PUBLISHED' },
-    select: {
-      ...articleListSelect,
-      content: true,
-      contentMarkdown: true,
-      metaTitle: true,
-      metaDescription: true,
-      metaKeywords: true,
-      ogImageUrl: true,
-      wordCount: true,
-      shareCount: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  })
-  return a as unknown as PortalArticleDetail | null
+  try {
+    const a = await db.article.findFirst({
+      where: { slug, status: 'PUBLISHED' },
+      select: {
+        ...articleListSelect,
+        content: true,
+        contentMarkdown: true,
+        metaTitle: true,
+        metaDescription: true,
+        metaKeywords: true,
+        ogImageUrl: true,
+        wordCount: true,
+        shareCount: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+    return a as unknown as PortalArticleDetail | null
+  } catch (err) {
+    logDbError('getArticleBySlug', err)
+    return null
+  }
 }
 
 export async function getArticleByCategoryAndSlug(
   categorySlug: string,
   articleSlug: string,
 ): Promise<PortalArticleDetail | null> {
-  const category = await db.category.findUnique({
-    where: { slug: categorySlug },
-    select: { id: true },
-  })
-  if (!category) return null
-  const a = await db.article.findFirst({
-    where: { slug: articleSlug, categoryId: category.id, status: 'PUBLISHED' },
-    select: {
-      ...articleListSelect,
-      content: true,
-      contentMarkdown: true,
-      metaTitle: true,
-      metaDescription: true,
-      metaKeywords: true,
-      ogImageUrl: true,
-      wordCount: true,
-      shareCount: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  })
-  return a as unknown as PortalArticleDetail | null
+  try {
+    const category = await db.category.findUnique({
+      where: { slug: categorySlug },
+      select: { id: true },
+    })
+    if (!category) return null
+    const a = await db.article.findFirst({
+      where: { slug: articleSlug, categoryId: category.id, status: 'PUBLISHED' },
+      select: {
+        ...articleListSelect,
+        content: true,
+        contentMarkdown: true,
+        metaTitle: true,
+        metaDescription: true,
+        metaKeywords: true,
+        ogImageUrl: true,
+        wordCount: true,
+        shareCount: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+    return a as unknown as PortalArticleDetail | null
+  } catch (err) {
+    logDbError('getArticleByCategoryAndSlug', err)
+    return null
+  }
 }
 
 /**
@@ -350,26 +441,36 @@ export async function getRelatedArticles(
   categoryId: string,
   take = 3,
 ): Promise<PortalArticleListItem[]> {
-  return (await db.article.findMany({
-    where: {
-      ...PUBLISHED_WHERE,
-      categoryId,
-      id: { not: articleId },
-    },
-    orderBy: [{ publishedAt: 'desc' }],
-    take,
-    select: articleListSelect,
-  })) as PortalArticleListItem[]
+  try {
+    return (await db.article.findMany({
+      where: {
+        ...PUBLISHED_WHERE,
+        categoryId,
+        id: { not: articleId },
+      },
+      orderBy: [{ publishedAt: 'desc' }],
+      take,
+      select: articleListSelect,
+    })) as PortalArticleListItem[]
+  } catch (err) {
+    logDbError('getRelatedArticles', err)
+    return []
+  }
 }
 
 /**
  * Increment viewCount — fire & forget.
  */
 export async function incrementArticleView(slug: string): Promise<void> {
-  await db.article.updateMany({
-    where: { slug, status: 'PUBLISHED' },
-    data: { viewCount: { increment: 1 } },
-  })
+  try {
+    await db.article.updateMany({
+      where: { slug, status: 'PUBLISHED' },
+      data: { viewCount: { increment: 1 } },
+    })
+  } catch (err) {
+    // View increment is non-critical; don't break the page on failure.
+    logDbError('incrementArticleView', err)
+  }
 }
 
 /**
@@ -382,29 +483,33 @@ export async function searchArticles(
 ): Promise<{ items: PortalArticleListItem[]; total: number }> {
   const q = query.trim()
   if (!q) return { items: [], total: 0 }
-  // SQLite LIKE case-insensitive secara default.
-  const where = {
-    status: 'PUBLISHED' as const,
-    OR: [
-      { title: { contains: q } },
-      { excerpt: { contains: q } },
-      { contentMarkdown: { contains: q } },
-      { authorName: { contains: q } },
-    ],
-  }
-  const [items, total] = await Promise.all([
-    db.article.findMany({
-      where,
-      orderBy: [{ publishedAt: 'desc' }, { viewCount: 'desc' }],
-      take,
-      skip,
-      select: articleListSelect,
-    }),
-    db.article.count({ where }),
-  ])
-  return {
-    items: items as PortalArticleListItem[],
-    total,
+  try {
+    const where = {
+      status: 'PUBLISHED' as const,
+      OR: [
+        { title: { contains: q } },
+        { excerpt: { contains: q } },
+        { contentMarkdown: { contains: q } },
+        { authorName: { contains: q } },
+      ],
+    }
+    const [items, total] = await Promise.all([
+      db.article.findMany({
+        where,
+        orderBy: [{ publishedAt: 'desc' }, { viewCount: 'desc' }],
+        take,
+        skip,
+        select: articleListSelect,
+      }),
+      db.article.count({ where }),
+    ])
+    return {
+      items: items as PortalArticleListItem[],
+      total,
+    }
+  } catch (err) {
+    logDbError('searchArticles', err)
+    return { items: [], total: 0 }
   }
 }
 
@@ -421,25 +526,30 @@ export async function getArticlesByCategory(
   items: PortalArticleListItem[]
   total: number
 }> {
-  const category = await db.category.findUnique({
-    where: { slug: categorySlug },
-    select: { id: true, name: true, slug: true, description: true, color: true },
-  })
-  if (!category) return { category: null, items: [], total: 0 }
-  const [items, total] = await Promise.all([
-    db.article.findMany({
-      where: { ...PUBLISHED_WHERE, categoryId: category.id },
-      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-      take,
-      skip,
-      select: articleListSelect,
-    }),
-    db.article.count({ where: { ...PUBLISHED_WHERE, categoryId: category.id } }),
-  ])
-  return {
-    category: category as PortalCategory,
-    items: items as PortalArticleListItem[],
-    total,
+  try {
+    const category = await db.category.findUnique({
+      where: { slug: categorySlug },
+      select: { id: true, name: true, slug: true, description: true, color: true },
+    })
+    if (!category) return { category: null, items: [], total: 0 }
+    const [items, total] = await Promise.all([
+      db.article.findMany({
+        where: { ...PUBLISHED_WHERE, categoryId: category.id },
+        orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+        take,
+        skip,
+        select: articleListSelect,
+      }),
+      db.article.count({ where: { ...PUBLISHED_WHERE, categoryId: category.id } }),
+    ])
+    return {
+      category: category as PortalCategory,
+      items: items as PortalArticleListItem[],
+      total,
+    }
+  } catch (err) {
+    logDbError('getArticlesByCategory', err)
+    return { category: null, items: [], total: 0 }
   }
 }
 
@@ -447,14 +557,19 @@ export async function getArticlesByCategory(
  * Approved comments untuk artikel (public, untuk halaman detail).
  */
 export async function getApprovedComments(articleId: string) {
-  return db.comment.findMany({
-    where: { articleId, status: 'APPROVED' },
-    orderBy: { createdAt: 'desc' },
-    select: {
-      id: true,
-      authorName: true,
-      content: true,
-      createdAt: true,
-    },
-  })
+  try {
+    return await db.comment.findMany({
+      where: { articleId, status: 'APPROVED' },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        authorName: true,
+        content: true,
+        createdAt: true,
+      },
+    })
+  } catch (err) {
+    logDbError('getApprovedComments', err)
+    return []
+  }
 }

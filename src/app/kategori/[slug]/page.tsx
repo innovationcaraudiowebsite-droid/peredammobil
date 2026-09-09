@@ -92,24 +92,30 @@ export default async function CategoryPage({
   const hasNext = page < totalPages
 
   // Category-specific tag breakdown (top 10 by article count).
-  const tagCountsRaw = await db.tag.findMany({
-    where: { articles: { some: { categoryId: category.id } } },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      articles: { where: { categoryId: category.id }, select: { id: true } },
-    },
-  })
-  const topTags = tagCountsRaw
-    .map((t) => ({
-      id: t.id,
-      name: t.name,
-      slug: t.slug,
-      count: t.articles.length,
-    }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10)
+  // Wrapped in try/catch so a DB hiccup doesn't crash the whole category page.
+  let topTags: { id: string; name: string; slug: string; count: number }[] = []
+  try {
+    const tagCountsRaw = await db.tag.findMany({
+      where: { articles: { some: { categoryId: category.id } } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        articles: { where: { categoryId: category.id }, select: { id: true } },
+      },
+    })
+    topTags = tagCountsRaw
+      .map((t) => ({
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        count: t.articles.length,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+  } catch (err) {
+    console.error('[kategori] tag breakdown error:', err)
+  }
 
   // JSON-LD schemas — BreadcrumbList is rendered by PortalBreadcrumb component,
   // here we only emit CollectionPage.
