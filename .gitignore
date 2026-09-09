@@ -63,3 +63,5 @@ dev-wrap*.log
 
 # Dev runtime
 .zscripts/dev.pid
+db/*.db
+db/*.db-journal

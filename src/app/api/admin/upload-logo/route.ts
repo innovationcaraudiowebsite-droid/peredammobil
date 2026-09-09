@@ -1,19 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
-import { randomUUID } from 'node:crypto'
-import { promises as fs } from 'node:fs'
-import path from 'node:path'
 
 import { requireAdmin } from '@/lib/auth'
+import { supabaseAdmin, publicStorageUrl, BUCKETS } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs'
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'site')
+const CACHE_CTRL = 'public,max-age=31536000,immutable'
 
 /**
  * POST /api/admin/upload-logo
- * Upload logo (multipart form-data, field "file"). Resize 512x512 (fit inside, preserve aspect).
- * Simpan PNG ke /public/uploads/site/. Return { url }.
+ * Upload logo (multipart form-data, field "file").
+ * Resize ke 512×512 (fit-inside, preserve aspect), composite on white background
+ * kalau ada transparency, convert ke PNG.
+ * Upload ke Supabase Storage bucket `site-assets`.
+ * Return { ok, url }.
  */
 export async function POST(req: NextRequest) {
   await requireAdmin()
@@ -43,14 +44,13 @@ export async function POST(req: NextRequest) {
   }
 
   const buf = Buffer.from(await file.arrayBuffer())
-  await fs.mkdir(UPLOAD_DIR, { recursive: true })
 
-  // Pakai PNG untuk logo (preserve transparency) — resize 512x512 fit-inside
-  const filename = `logo-${Date.now()}-${randomUUID().slice(0, 8)}.png`
-  const filepath = path.join(UPLOAD_DIR, filename)
-
+  let processed: Buffer
   try {
-    await sharp(buf, { failOn: 'none' })
+    // Resize fit-inside 512×512, lalu composite di atas background putih 512×512
+    // supaya transparency (PNG alpha) tidak jadi transparan di output PNG yang
+    // bisa kelihatan jelek di latar gelap.
+    processed = await sharp(buf, { failOn: 'none' })
       .rotate() // EXIF auto-rotate
       .resize({
         width: 512,
@@ -59,8 +59,9 @@ export async function POST(req: NextRequest) {
         withoutEnlargement: true,
         background: { r: 0, g: 0, b: 0, alpha: 0 },
       })
+      .flatten({ background: { r: 255, g: 255, b: 255 } }) // flatten alpha ke putih
       .png({ quality: 90, compressionLevel: 9 })
-      .toFile(filepath)
+      .toBuffer()
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     return NextResponse.json(
@@ -69,5 +70,22 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  return NextResponse.json({ ok: true, url: `/uploads/site/${filename}` })
+  const filename = `logo-${Date.now()}.png`
+
+  const { error } = await supabaseAdmin.storage
+    .from(BUCKETS.SITE_ASSETS)
+    .upload(filename, processed, {
+      contentType: 'image/png',
+      cacheControl: CACHE_CTRL,
+      upsert: false,
+    })
+
+  if (error) {
+    return NextResponse.json(
+      { ok: false, message: `Gagal upload ke Supabase Storage: ${error.message}` },
+      { status: 500 },
+    )
+  }
+
+  return NextResponse.json({ ok: true, url: publicStorageUrl(BUCKETS.SITE_ASSETS, filename) })
 }

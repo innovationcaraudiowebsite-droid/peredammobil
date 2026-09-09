@@ -9,12 +9,11 @@ export const runtime = 'nodejs'
 const CACHE_CTRL = 'public,max-age=31536000,immutable'
 
 /**
- * POST /api/admin/upload-favicon
- * Upload favicon (multipart form-data, field "file").
- * Resize ke 64×64 (fit-inside, preserve aspect), composite di atas background
- * putih kalau ada transparency, convert ke PNG.
- * Upload ke Supabase Storage bucket `site-assets`.
- * Return { ok, url }.
+ * POST /api/admin/upload
+ * Upload featured image (multipart form-data, field "file").
+ * Resize ke 1200×675 (16:9) via sharp cover-crop, convert to WebP q=80.
+ * Upload ke Supabase Storage bucket `articles-featured`.
+ * Return { ok, url } — `url` adalah public CDN URL Supabase.
  */
 export async function POST(req: NextRequest) {
   await requireAdmin()
@@ -39,43 +38,33 @@ export async function POST(req: NextRequest) {
       { status: 400 },
     )
   }
-  if (file.size > 2 * 1024 * 1024) {
-    return NextResponse.json(
-      { ok: false, message: 'Ukuran favicon maksimal 2 MB.' },
-      { status: 400 },
-    )
+  if (file.size > 8 * 1024 * 1024) {
+    return NextResponse.json({ ok: false, message: 'Ukuran gambar maksimal 8 MB.' }, { status: 400 })
   }
 
   const buf = Buffer.from(await file.arrayBuffer())
 
-  let processed: Buffer
+  let resized: Buffer
   try {
-    processed = await sharp(buf, { failOn: 'none' })
+    resized = await sharp(buf)
       .rotate() // EXIF auto-rotate
-      .resize({
-        width: 64,
-        height: 64,
-        fit: 'inside',
-        withoutEnlargement: true,
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
-      })
-      .flatten({ background: { r: 255, g: 255, b: 255 } }) // flatten alpha ke putih
-      .png({ quality: 90, compressionLevel: 9 })
+      .resize(1200, 675, { fit: 'cover', position: 'attention' })
+      .webp({ quality: 80 })
       .toBuffer()
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     return NextResponse.json(
-      { ok: false, message: `Gagal memproses favicon: ${msg}` },
+      { ok: false, message: `Gagal memproses gambar: ${msg}` },
       { status: 500 },
     )
   }
 
-  const filename = `favicon-${Date.now()}.png`
+  const filename = `article-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`
 
   const { error } = await supabaseAdmin.storage
-    .from(BUCKETS.SITE_ASSETS)
-    .upload(filename, processed, {
-      contentType: 'image/png',
+    .from(BUCKETS.ARTICLES_FEATURED)
+    .upload(filename, resized, {
+      contentType: 'image/webp',
       cacheControl: CACHE_CTRL,
       upsert: false,
     })
@@ -87,5 +76,5 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  return NextResponse.json({ ok: true, url: publicStorageUrl(BUCKETS.SITE_ASSETS, filename) })
+  return NextResponse.json({ ok: true, url: publicStorageUrl(BUCKETS.ARTICLES_FEATURED, filename) })
 }
