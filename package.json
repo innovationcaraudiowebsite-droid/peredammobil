@@ -7,7 +7,8 @@
     "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
-    "seed": "bun run src/scripts/seed-supabase.ts"
+    "seed": "bun run src/scripts/seed-supabase.ts",
+    "update-images": "bun run src/scripts/update-images.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
