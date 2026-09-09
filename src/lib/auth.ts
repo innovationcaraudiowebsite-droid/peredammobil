@@ -1,5 +1,7 @@
 import 'server-only'
 import { createHmac, timingSafeEqual, randomBytes } from 'node:crypto'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import fs from 'node:fs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { redirect } from 'next/navigation'
@@ -8,6 +10,42 @@ import { db } from '@/lib/db'
 
 const COOKIE_NAME = 'admin_session'
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+
+/**
+ * Get Supabase env vars (parse .env manually for sandbox compatibility).
+ * Same logic as supabase-server.ts pickEnv().
+ */
+function requireSupabaseEnv(): { url: string; secretKey: string } {
+  const getKey = (key: string): string => {
+    const fromProcess = process.env[key]
+    if (fromProcess && !fromProcess.startsWith('file:')) return fromProcess
+    // Fall back to .env file
+    try {
+      const text = fs.readFileSync(process.cwd() + '/.env', 'utf-8')
+      for (const raw of text.split('\n')) {
+        const m = /^([A-Z_][A-Z0-9_]*)\s*=\s*"?(.+?)"?\s*$/.exec(raw.trim())
+        if (m && m[1] === key) return m[2].split(/\s+#/)[0]
+      }
+    } catch {}
+    return ''
+  }
+  const url = getKey('SUPABASE_URL')
+  const secretKey = getKey('SUPABASE_SECRET_KEY')
+  if (!url || !secretKey) {
+    throw new Error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY')
+  }
+  return { url, secretKey }
+}
+
+/**
+ * Create a fresh Supabase client (no cached session) — used after
+ * signInWithPassword to avoid session bleed into DB queries.
+ */
+function createClientFresh(url: string, secretKey: string) {
+  return createSupabaseClient(url, secretKey, {
+    auth: { persistSession: false, autoRefreshToken: false, storage: { getItem: () => null, setItem: () => {}, removeItem: () => {} } },
+  })
+}
 
 function getSecret(): string {
   const secret = process.env.ADMIN_SESSION_SECRET
@@ -48,8 +86,9 @@ export interface SessionPayload {
  */
 export async function login(email: string, password: string): Promise<SessionPayload | null> {
   try {
-    const supabase = getSupabaseAdmin()
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // Client 1: for auth verification only
+    const authClient = getSupabaseAdmin()
+    const { data, error } = await authClient.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
     })
@@ -58,29 +97,45 @@ export async function login(email: string, password: string): Promise<SessionPay
       return null
     }
 
-    // Profile lookup (trigger auto-creates row on register, but be defensive)
-    const profile = await db.profile.findUnique({
-      where: { id: data.user.id },
-    })
+
+    // Client 2: fresh client for DB query (signInWithPassword sets session in
+    // memory, which makes subsequent queries use user token instead of
+    // service_role — RLS then blocks the query)
+    const { url, secretKey } = requireSupabaseEnv()
+    const dbClient = createClientFresh(url, secretKey)
+
+    // Profile lookup using fresh client
+    const { data: profileData, error: profileErr } = await dbClient
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single()
+    
+    let profile = profileData as { id: string; email: string; role: string; isActive: boolean } | null
+    
+    if (!profile && profileErr && profileErr.code !== 'PGRST116') {
+      console.error('[auth] profile lookup error:', profileErr.message)
+    }
+    
     if (!profile) {
-      // Profile belum ada — create manual dengan role writer default
-      // (seharusnya trigger Supabase yang create, tapi fallback untuk safety)
+      // Profile belum ada — create manual
       try {
-        await db.profile.create({
-          data: {
+        const { data: created, error: createErr } = await dbClient
+          .from('profiles')
+          .insert({
             id: data.user.id,
             email: data.user.email || email.trim().toLowerCase(),
             role: 'writer',
-          },
-        })
+            isActive: true,
+          })
+          .select()
+          .single()
+        if (createErr) throw new Error(createErr.message)
+        profile = created as { id: string; email: string; role: string; isActive: boolean }
       } catch (e) {
         console.error('[auth] profile not found & create failed:', e)
         return null
       }
-      // Re-fetch
-      const newProfile = await db.profile.findUnique({ where: { id: data.user.id } })
-      if (!newProfile) return null
-      return makePayload(newProfile.id, newProfile.email, newProfile.role)
     }
     if (!profile.isActive) {
       console.error('[auth] user is inactive:', profile.email)
@@ -88,11 +143,11 @@ export async function login(email: string, password: string): Promise<SessionPay
     }
 
     // Update lastLoginAt (fire & forget)
-    db.profile
-      .update({
-        where: { id: profile.id },
-        data: { lastLoginAt: new Date() },
-      })
+    dbClient
+      .from('profiles')
+      .update({ lastLoginAt: new Date().toISOString() })
+      .eq('id', profile.id)
+      .then(() => {})
       .catch((e) => console.error('[auth] update lastLoginAt failed:', e))
 
     return makePayload(profile.id, profile.email, profile.role)

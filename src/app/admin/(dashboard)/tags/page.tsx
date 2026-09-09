@@ -58,14 +58,28 @@ export default async function TagsPage({
     db.tag.findMany({
       where,
       orderBy: [{ name: 'asc' }],
-      include: {
-        _count: {
-          select: { articles: true },
-        },
-      },
     }),
     db.article.count(),
   ])
+
+  // Fetch article counts per tag separately (replaces Prisma's _count)
+  const tagIds = tags.map((t: any) => t.id)
+  let countByTag = new Map<string, number>()
+  if (tagIds.length > 0) {
+    const { getSupabaseAdmin } = await import('@/lib/supabase-server')
+    const supabase = getSupabaseAdmin()
+    const { data: junction } = await supabase
+      .from('_ArticleTags')
+      .select('B')
+      .in('B', tagIds)
+    ;(junction || []).forEach((j: any) => {
+      countByTag.set(j.B, (countByTag.get(j.B) || 0) + 1)
+    })
+  }
+  // Add _count.articles to each tag for backward compat with rest of JSX
+  ;(tags as any[]).forEach((t: any) => {
+    t._count = { articles: countByTag.get(t.id) || 0 }
+  })
 
   const totalTaggedArticles = totalArticlesAgg
 

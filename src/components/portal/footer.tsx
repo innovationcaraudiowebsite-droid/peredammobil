@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Mail, MapPin, Phone, Facebook, Instagram, Youtube, ArrowRight, ShieldCheck } from 'lucide-react'
-import type { SiteSetting } from '@prisma/client'
+import type { SiteSetting } from '@/lib/types'
 import { NewsletterForm } from './newsletter-form'
 
 /**
@@ -164,7 +164,7 @@ export function Footer({ settings }: { settings: SiteSetting }) {
               `© ${year} ${settings.siteName}. Seluruh hak cipta dilindungi.`}
           </p>
           <p className="text-slate-600">
-            Dibangun dengan Next.js · Tailwind CSS · Prisma
+            Dibangun dengan Next.js · Tailwind CSS · Supabase
           </p>
         </div>
       </div>

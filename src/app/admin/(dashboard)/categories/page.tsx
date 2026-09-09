@@ -81,21 +81,31 @@ export default async function CategoriesPage() {
 
   const categories = await db.category.findMany({
     orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
-    include: {
-      _count: {
-        select: { articles: true },
-      },
-    },
   })
 
-  const rows: CategoryRow[] = categories.map((c) => ({
+  // Fetch article counts per category separately (replaces Prisma's _count)
+  const catIds = categories.map((c: any) => c.id)
+  let countByCat = new Map<string, number>()
+  if (catIds.length > 0) {
+    const { getSupabaseAdmin } = await import('@/lib/supabase-server')
+    const supabase = getSupabaseAdmin()
+    const { data: arts } = await supabase
+      .from('articles')
+      .select('categoryId')
+      .in('categoryId', catIds)
+    ;(arts || []).forEach((a: any) => {
+      countByCat.set(a.categoryId, (countByCat.get(a.categoryId) || 0) + 1)
+    })
+  }
+
+  const rows: CategoryRow[] = categories.map((c: any) => ({
     id: c.id,
     name: c.name,
     slug: c.slug,
     description: c.description,
     color: c.color ?? 'amber',
     order: c.order,
-    articleCount: c._count.articles,
+    articleCount: countByCat.get(c.id) || 0,
   }))
 
   const totalArticles = rows.reduce((s, r) => s + r.articleCount, 0)

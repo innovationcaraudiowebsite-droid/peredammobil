@@ -66,16 +66,25 @@ async function getSettings(): Promise<SiteSettingLite> {
     verificationBing: null,
   }
   try {
-    const s = await db.siteSetting.upsert({
+    const s = (await db.siteSetting.upsert({
       where: { id: "global" },
       update: {},
       create: {},
-    })
+    })) as {
+      siteName?: string | null
+      tagline?: string | null
+      logoUrl?: string | null
+      faviconUrl?: string | null
+      gaMeasurementId?: string | null
+      gtmId?: string | null
+      verificationGoogle?: string | null
+      verificationBing?: string | null
+    }
     return {
       siteName: s.siteName || fallback.siteName,
       tagline: s.tagline || fallback.tagline,
-      logoUrl: s.logoUrl,
-      faviconUrl: s.faviconUrl,
+      logoUrl: s.logoUrl ?? null,
+      faviconUrl: s.faviconUrl ?? null,
       gaMeasurementId: s.gaMeasurementId ?? null,
       gtmId: s.gtmId ?? null,
       verificationGoogle: s.verificationGoogle ?? null,

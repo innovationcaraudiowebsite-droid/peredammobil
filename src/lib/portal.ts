@@ -1,6 +1,7 @@
 import 'server-only'
 import { db } from '@/lib/db'
-import type { SiteSetting } from '@prisma/client'
+import { getSupabaseAdmin } from '@/lib/supabase-server'
+import type { SiteSetting } from '@/lib/types'
 
 /**
  * Server-only helpers untuk fetching SiteSetting & data homepage portal.
@@ -60,11 +61,12 @@ function logDbError(fn: string, err: unknown): void {
 
 export async function getSiteSetting(): Promise<SiteSetting> {
   try {
-    return await db.siteSetting.upsert({
+    const s = (await db.siteSetting.upsert({
       where: { id: 'global' },
       update: {},
-      create: {},
-    })
+      create: { id: 'global' },
+    })) as SiteSetting
+    return s
   } catch (err) {
     logDbError('getSiteSetting', err)
     return DEFAULT_SITE_SETTING
@@ -213,24 +215,24 @@ export async function getFeaturedArticles(
   minCount = 3,
 ): Promise<PortalArticleListItem[]> {
   try {
-    const featured = await db.article.findMany({
+    const featured = (await db.article.findMany({
       where: { ...PUBLISHED_WHERE, isFeatured: true },
       orderBy: [{ publishedAt: 'desc' }],
       take: minCount,
       select: articleListSelect,
-    })
+    } as never)) as PortalArticleListItem[]
     if (featured.length >= minCount)
-      return featured as PortalArticleListItem[]
+      return featured
     // Tambahan: ambil populer yg bukan featured
     const need = minCount - featured.length
     const excludeIds = featured.map((a) => a.id)
-    const popular = await db.article.findMany({
+    const popular = (await db.article.findMany({
       where: { ...PUBLISHED_WHERE, id: { notIn: excludeIds } },
       orderBy: [{ viewCount: 'desc' }, { publishedAt: 'desc' }],
       take: need,
       select: articleListSelect,
-    })
-    return [...featured, ...popular] as PortalArticleListItem[]
+    } as never)) as PortalArticleListItem[]
+    return [...featured, ...popular]
   } catch (err) {
     logDbError('getFeaturedArticles', err)
     return []
@@ -250,7 +252,7 @@ export async function getLatestArticles(
       orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
       take,
       select: articleListSelect,
-    })) as PortalArticleListItem[]
+    } as never)) as PortalArticleListItem[]
   } catch (err) {
     logDbError('getLatestArticles', err)
     return []
@@ -266,8 +268,8 @@ export async function getArticlesPerCategory(
   excludeIds: string[] = [],
 ): Promise<{ category: PortalCategory; articles: PortalArticleListItem[] }[]> {
   try {
-    const categories = await db.category.findMany({
-      orderBy: { order: 'asc' },
+    const categories = (await db.category.findMany({
+      orderBy: [{ order: 'asc' }],
       select: {
         id: true,
         name: true,
@@ -275,11 +277,11 @@ export async function getArticlesPerCategory(
         description: true,
         color: true,
       },
-    })
+    } as never)) as PortalCategory[]
     const result: { category: PortalCategory; articles: PortalArticleListItem[] }[] =
       []
     for (const c of categories) {
-      const articles = await db.article.findMany({
+      const articles = (await db.article.findMany({
         where: {
           ...PUBLISHED_WHERE,
           categoryId: c.id,
@@ -288,11 +290,11 @@ export async function getArticlesPerCategory(
         orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
         take: perCategory,
         select: articleListSelect,
-      })
+      } as never)) as PortalArticleListItem[]
       if (articles.length > 0) {
         result.push({
-          category: c as PortalCategory,
-          articles: articles as PortalArticleListItem[],
+          category: c,
+          articles,
         })
       }
     }
@@ -315,7 +317,7 @@ export async function getMostReadArticles(
       orderBy: [{ viewCount: 'desc' }, { publishedAt: 'desc' }],
       take,
       select: articleListSelect,
-    })) as PortalArticleListItem[]
+    } as never)) as PortalArticleListItem[]
   } catch (err) {
     logDbError('getMostReadArticles', err)
     return []
@@ -329,14 +331,19 @@ export async function getPopularTags(
   take = 12,
 ): Promise<PortalTag[]> {
   try {
-    const tags = await db.tag.findMany({
+    const tags = (await db.tag.findMany({
       select: {
         id: true,
         name: true,
         slug: true,
         articles: { select: { id: true } },
       },
-    })
+    } as never)) as {
+      id: string
+      name: string
+      slug: string
+      articles: { id: string }[]
+    }[]
     return tags
       .map((t) => ({
         id: t.id,
@@ -358,11 +365,11 @@ export async function getPopularTags(
  */
 export async function getPublishedFaqs(): Promise<PortalFaq[]> {
   try {
-    return await db.faq.findMany({
+    return (await db.faq.findMany({
       where: { isPublished: true },
-      orderBy: { order: 'asc' },
+      orderBy: [{ order: 'asc' }],
       select: { id: true, question: true, answer: true, order: true },
-    })
+    } as never)) as PortalFaq[]
   } catch (err) {
     logDbError('getPublishedFaqs', err)
     return []
@@ -377,7 +384,7 @@ export async function getArticleBySlug(
   slug: string,
 ): Promise<PortalArticleDetail | null> {
   try {
-    const a = await db.article.findFirst({
+    const a = (await db.article.findFirst({
       where: { slug, status: 'PUBLISHED' },
       select: {
         ...articleListSelect,
@@ -392,8 +399,8 @@ export async function getArticleBySlug(
         createdAt: true,
         updatedAt: true,
       },
-    })
-    return a as unknown as PortalArticleDetail | null
+    } as never)) as PortalArticleDetail | null
+    return a
   } catch (err) {
     logDbError('getArticleBySlug', err)
     return null
@@ -405,12 +412,12 @@ export async function getArticleByCategoryAndSlug(
   articleSlug: string,
 ): Promise<PortalArticleDetail | null> {
   try {
-    const category = await db.category.findUnique({
+    const category = (await db.category.findUnique({
       where: { slug: categorySlug },
       select: { id: true },
-    })
+    } as never)) as { id: string } | null
     if (!category) return null
-    const a = await db.article.findFirst({
+    const a = (await db.article.findFirst({
       where: { slug: articleSlug, categoryId: category.id, status: 'PUBLISHED' },
       select: {
         ...articleListSelect,
@@ -425,8 +432,8 @@ export async function getArticleByCategoryAndSlug(
         createdAt: true,
         updatedAt: true,
       },
-    })
-    return a as unknown as PortalArticleDetail | null
+    } as never)) as PortalArticleDetail | null
+    return a
   } catch (err) {
     logDbError('getArticleByCategoryAndSlug', err)
     return null
@@ -451,7 +458,7 @@ export async function getRelatedArticles(
       orderBy: [{ publishedAt: 'desc' }],
       take,
       select: articleListSelect,
-    })) as PortalArticleListItem[]
+    } as never)) as PortalArticleListItem[]
   } catch (err) {
     logDbError('getRelatedArticles', err)
     return []
@@ -460,15 +467,24 @@ export async function getRelatedArticles(
 
 /**
  * Increment viewCount — fire & forget.
+ * Supabase tidak punya atomic increment, jadi fetch + compute + update.
  */
 export async function incrementArticleView(slug: string): Promise<void> {
   try {
-    await db.article.updateMany({
-      where: { slug, status: 'PUBLISHED' },
-      data: { viewCount: { increment: 1 } },
-    })
+    const supabase = getSupabaseAdmin()
+    const { data, error } = await supabase
+      .from('articles')
+      .select('id,viewCount')
+      .eq('slug', slug)
+      .eq('status', 'PUBLISHED')
+      .limit(1)
+    if (error || !data || data.length === 0) return
+    const a = data[0] as { id: string; viewCount: number }
+    await supabase
+      .from('articles')
+      .update({ viewCount: (a.viewCount || 0) + 1 })
+      .eq('id', a.id)
   } catch (err) {
-    // View increment is non-critical; don't break the page on failure.
     logDbError('incrementArticleView', err)
   }
 }
@@ -500,7 +516,7 @@ export async function searchArticles(
         take,
         skip,
         select: articleListSelect,
-      }),
+      } as never),
       db.article.count({ where }),
     ])
     return {
@@ -527,10 +543,10 @@ export async function getArticlesByCategory(
   total: number
 }> {
   try {
-    const category = await db.category.findUnique({
+    const category = (await db.category.findUnique({
       where: { slug: categorySlug },
       select: { id: true, name: true, slug: true, description: true, color: true },
-    })
+    } as never)) as PortalCategory | null
     if (!category) return { category: null, items: [], total: 0 }
     const [items, total] = await Promise.all([
       db.article.findMany({
@@ -539,11 +555,11 @@ export async function getArticlesByCategory(
         take,
         skip,
         select: articleListSelect,
-      }),
+      } as never),
       db.article.count({ where: { ...PUBLISHED_WHERE, categoryId: category.id } }),
     ])
     return {
-      category: category as PortalCategory,
+      category,
       items: items as PortalArticleListItem[],
       total,
     }
@@ -558,16 +574,21 @@ export async function getArticlesByCategory(
  */
 export async function getApprovedComments(articleId: string) {
   try {
-    return await db.comment.findMany({
+    return (await db.comment.findMany({
       where: { articleId, status: 'APPROVED' },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }],
       select: {
         id: true,
         authorName: true,
         content: true,
         createdAt: true,
       },
-    })
+    } as never)) as {
+      id: string
+      authorName: string
+      content: string
+      createdAt: Date
+    }[]
   } catch (err) {
     logDbError('getApprovedComments', err)
     return []

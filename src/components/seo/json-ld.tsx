@@ -40,13 +40,13 @@ export async function OrganizationSchema(): Promise<JsonLdObject> {
   let logoUrl: string | null = null
   let siteName = 'Peredam Mobil Jakarta'
   try {
-    const s = await db.siteSetting.upsert({
+    const s = (await db.siteSetting.upsert({
       where: { id: 'global' },
       update: {},
       create: {},
-    })
+    })) as { siteName?: string; logoUrl?: string | null }
     siteName = s.siteName || siteName
-    logoUrl = s.logoUrl
+    logoUrl = s.logoUrl ?? null
   } catch {
     // ignore
   }
@@ -75,11 +75,11 @@ export async function OrganizationSchema(): Promise<JsonLdObject> {
 export async function WebSiteSchema(): Promise<JsonLdObject> {
   let siteName = 'Peredam Mobil Jakarta'
   try {
-    const s = await db.siteSetting.upsert({
+    const s = (await db.siteSetting.upsert({
       where: { id: 'global' },
       update: {},
       create: {},
-    })
+    })) as { siteName?: string }
     siteName = s.siteName || siteName
   } catch {
     // ignore
@@ -113,14 +113,19 @@ export async function LocalBusinessSchema(): Promise<JsonLdObject> {
   let name = 'Innovation Car Audio'
 
   try {
-    const s = await db.siteSetting.upsert({
+    const s = (await db.siteSetting.upsert({
       where: { id: 'global' },
       update: {},
       create: {},
-    })
+    })) as {
+      contactAddress?: string
+      contactEmail?: string
+      contactPhone?: string | null
+      authorName?: string
+    }
     address = s.contactAddress || address
     email = s.contactEmail || email
-    phone = s.contactPhone
+    phone = s.contactPhone ?? null
     name = s.authorName || name
   } catch {
     // ignore
