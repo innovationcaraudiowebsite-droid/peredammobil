@@ -50,8 +50,22 @@ export default async function CommentsPage({
     ]
   }
 
-  const [items, total, totalPending, totalApproved, totalRejected, totalSpam] =
-    await Promise.all([
+  let items: any[] = []
+  let total = 0
+  let totalPending = 0
+  let totalApproved = 0
+  let totalRejected = 0
+  let totalSpam = 0
+
+  try {
+    ;([
+      items,
+      total,
+      totalPending,
+      totalApproved,
+      totalRejected,
+      totalSpam,
+    ] = await Promise.all([
       db.comment.findMany({
         where,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -67,20 +81,23 @@ export default async function CommentsPage({
       db.comment.count({ where: { status: 'APPROVED' } }),
       db.comment.count({ where: { status: 'REJECTED' } }),
       db.comment.count({ where: { status: 'SPAM' } }),
-    ])
+    ] as any[]))
+  } catch (err) {
+    console.error('[admin/comments] DB query failed:', err)
+  }
 
-  const rows: CommentRow[] = items.map((c) => ({
+  const rows: CommentRow[] = (items || []).map((c: any) => ({
     id: c.id,
     articleId: c.articleId,
-    articleTitle: c.article.title,
-    articleSlug: c.article.slug,
-    authorName: c.authorName,
-    authorEmail: c.authorEmail,
-    content: c.content,
-    status: c.status as CommentStatus,
-    parentId: c.parentId,
-    ipAddress: c.ipAddress,
-    createdAt: c.createdAt.toISOString(),
+    articleTitle: c.article?.title ?? '—',
+    articleSlug: c.article?.slug ?? '',
+    authorName: c.authorName ?? '—',
+    authorEmail: c.authorEmail ?? '',
+    content: c.content ?? '',
+    status: (c.status ?? 'PENDING') as CommentStatus,
+    parentId: c.parentId ?? null,
+    ipAddress: c.ipAddress ?? null,
+    createdAt: c.createdAt instanceof Date ? c.createdAt.toISOString() : (c.createdAt ?? new Date().toISOString()),
   }))
 
   return (
