@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { Plus } from 'lucide-react'
 
 import { requireAdmin } from '@/lib/auth'
@@ -138,17 +139,19 @@ export default async function ArticlesListPage({
         </Button>
       </div>
 
-      <ArticlesTable
-        items={rows}
-        total={total}
-        page={page}
-        pageSize={PAGE_SIZE}
-        q={q}
-        categoryFilter={categoryFilter}
-        statusFilter={statusFilter === 'ALL' ? 'all' : statusFilter.toLowerCase()}
-        sort={sort}
-        categories={categories}
-      />
+      <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Memuat tabel artikel...</div>}>
+        <ArticlesTable
+          items={rows}
+          total={total}
+          page={page}
+          pageSize={PAGE_SIZE}
+          q={q}
+          categoryFilter={categoryFilter}
+          statusFilter={statusFilter === 'ALL' ? 'all' : statusFilter.toLowerCase()}
+          sort={sort}
+          categories={categories}
+        />
+      </Suspense>
 
       {/* Mount Sonner toaster for this page */}
       <SonnerToaster richColors position="top-right" />
