@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { ArrowLeft } from 'lucide-react'
 
 import { requireAdmin } from '@/lib/auth'
@@ -96,16 +97,18 @@ export default async function CommentsPage({
         </div>
       </div>
 
-      <CommentsTable
-        rows={rows}
-        total={total}
-        totalPending={totalPending}
-        totalApproved={totalApproved}
-        totalRejected={totalRejected}
-        totalSpam={totalSpam}
-        currentStatus={currentStatus}
-        initialQuery={q}
-      />
+      <Suspense fallback={<div className="p-8 text-center text-muted-foreground">Memuat komentar...</div>}>
+        <CommentsTable
+          rows={rows}
+          total={total}
+          totalPending={totalPending}
+          totalApproved={totalApproved}
+          totalRejected={totalRejected}
+          totalSpam={totalSpam}
+          currentStatus={currentStatus}
+          initialQuery={q}
+        />
+      </Suspense>
 
       <div className="flex justify-start">
         <Button asChild variant="ghost" size="sm">
