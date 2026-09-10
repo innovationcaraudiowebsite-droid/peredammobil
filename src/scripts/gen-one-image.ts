@@ -25,8 +25,24 @@ const imageSpecs: Record<string, { prompt: string; size: string }> = {
     prompt: 'Professional automotive workshop scene in Jakarta, mechanic installing soundproofing butyl material on car door, warm cinematic lighting, premium, photorealistic, no text',
     size: '1024x576',
   },
+  'landing-hero-bg': {
+    prompt: 'Cinematic wide shot of premium car audio workshop in Jakarta at golden hour, dramatic moody lighting, silhouette of mechanic working on car door panel with soundproofing material, sparks of craftsmanship, dark atmospheric background, professional automotive photography, depth of field, no text, no watermark, photorealistic, 16:9',
+    size: '1024x576',
+  },
   'landing-about': {
     prompt: 'Modern car audio workshop interior with cars being serviced, professional equipment, warm lighting, Jakarta, photorealistic, no text',
+    size: '1024x768',
+  },
+  'edu-kenapa-peredam': {
+    prompt: 'Serene car cabin interior, person sitting peacefully with eyes closed enjoying music, premium car seats, sunlight through window, quiet and calm atmosphere, automotive lifestyle photography, no text, no watermark, photorealistic',
+    size: '1024x768',
+  },
+  'edu-cara-memilih': {
+    prompt: 'Side by side comparison of two car soundproofing materials, black butyl rubber sheet on left vs gray asphalt sheet on right, studio product photography, clean white background, professional lighting, no text, no watermark, photorealistic',
+    size: '1024x768',
+  },
+  'edu-tips-biaya': {
+    prompt: 'Infographic style image of car soundproofing cost breakdown, multiple material rolls displayed with price tags concept, calculator and money symbols, clean professional layout, automotive service pricing, no text, no watermark, photorealistic',
     size: '1024x768',
   },
   'paket-gran-turismo-1-8mm': {

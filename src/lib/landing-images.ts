@@ -11,8 +11,19 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABAS
 const BASE = `${SUPABASE_URL}/storage/v1/object/public/site-assets/landing`
 
 export const landingImages = {
+  /** Hero background (full-bleed, dramatic cinematic) */
+  heroBg: `${BASE}/landing-hero-bg.webp`,
+  /** Hero image (used in old layout, kept for reference) */
   hero: `${BASE}/landing-hero.webp`,
+  /** About section image */
   about: `${BASE}/landing-about.webp`,
+  /** Edukasi card images */
+  edu: {
+    kenapaPeredam: `${BASE}/edu-kenapa-peredam.webp`,
+    caraMemilih: `${BASE}/edu-cara-memilih.webp`,
+    tipsBiaya: `${BASE}/edu-tips-biaya.webp`,
+  },
+  /** Paket produk images */
   paket: {
     granTurismo18mm: `${BASE}/paket-gran-turismo-1-8mm.webp`,
     granTurismo2mm: `${BASE}/paket-gran-turismo-2mm.webp`,
@@ -38,4 +49,16 @@ export function paketImageUrl(slug: string): string {
     'silent-coat-2mm': landingImages.paket.silentCoat2mm,
   }
   return map[slug] || landingImages.paket.granTurismo18mm
+}
+
+/**
+ * Get image URL for an education card by slug.
+ */
+export function eduImageUrl(slug: string): string {
+  const map: Record<string, string> = {
+    'kenapa-peredam': landingImages.edu.kenapaPeredam,
+    'cara-memilih': landingImages.edu.caraMemilih,
+    'tips-biaya': landingImages.edu.tipsBiaya,
+  }
+  return map[slug] || landingImages.edu.kenapaPeredam
 }

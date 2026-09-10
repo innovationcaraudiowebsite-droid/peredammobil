@@ -1,18 +1,21 @@
 import Link from 'next/link'
-import { Lightbulb, Search, Coins, ArrowRight, Check } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowRight, Check } from 'lucide-react'
 import {
   Card,
   CardContent,
 } from '@/components/ui/card'
+import { eduImageUrl } from '@/lib/landing-images'
 
 /**
  * Edukasi section landing — section id="edukasi".
  * 3 card grid (responsive: 3 kolom desktop, 2 tablet, 1 mobile).
+ * Setiap card punya gambar AI di atas + konten di bawah.
  *
  * Server component — static content.
  */
 type EduCard = {
-  icon: typeof Lightbulb
+  slug: string
   title: string
   bullets: string[]
   href: string
@@ -20,7 +23,7 @@ type EduCard = {
 
 const CARDS: EduCard[] = [
   {
-    icon: Lightbulb,
+    slug: 'kenapa-peredam',
     title: 'Kenapa Peredam?',
     bullets: [
       'Kurangi kebisingan kabin',
@@ -31,7 +34,7 @@ const CARDS: EduCard[] = [
     href: '/berita/peredam-mobil',
   },
   {
-    icon: Search,
+    slug: 'cara-memilih',
     title: 'Cara Memilih Peredam',
     bullets: [
       'Material butyl vs aspal',
@@ -42,7 +45,7 @@ const CARDS: EduCard[] = [
     href: '/berita/peredam-mobil/beda-damper-absorber-dan-barrier-yang-sering-tertukar',
   },
   {
-    icon: Coins,
+    slug: 'tips-biaya',
     title: 'Tips & Biaya',
     bullets: [
       'Paket 4 pintu hemat',
@@ -72,43 +75,52 @@ export function Education() {
           </p>
         </div>
 
-        {/* 3 card grid */}
+        {/* 3 card grid dengan AI image */}
         <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {CARDS.map((c) => (
             <Card
               key={c.title}
-              className="gap-4 p-6 transition-all duration-200 hover:shadow-md hover:border-amber-500/40"
+              className="overflow-hidden p-0 transition-all duration-200 hover:shadow-lg hover:border-amber-500/40"
             >
               <CardContent className="px-0">
-                {/* Icon badge */}
-                <div className="inline-grid place-items-center size-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-sm">
-                  <c.icon className="size-6" aria-hidden />
+                {/* AI Image di atas — full width, 16:9 */}
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
+                  <Image
+                    src={eduImageUrl(c.slug)}
+                    alt={`Edukasi: ${c.title}`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-300 hover:scale-105"
+                  />
                 </div>
 
-                <h3 className="mt-4 text-xl font-semibold">{c.title}</h3>
+                {/* Konten di bawah */}
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold">{c.title}</h3>
 
-                <ul className="mt-3 space-y-2">
-                  {c.bullets.map((b) => (
-                    <li
-                      key={b}
-                      className="flex items-start gap-2 text-sm text-muted-foreground"
-                    >
-                      <Check
-                        className="mt-0.5 size-4 shrink-0 text-emerald-500"
-                        aria-hidden
-                      />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
+                  <ul className="mt-3 space-y-2">
+                    {c.bullets.map((b) => (
+                      <li
+                        key={b}
+                        className="flex items-start gap-2 text-sm text-muted-foreground"
+                      >
+                        <Check
+                          className="mt-0.5 size-4 shrink-0 text-emerald-500"
+                          aria-hidden
+                        />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-                <Link
-                  href={c.href}
-                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:gap-2.5 transition-all"
-                >
-                  Pelajari
-                  <ArrowRight className="size-4" />
-                </Link>
+                  <Link
+                    href={c.href}
+                    className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:gap-2.5 transition-all"
+                  >
+                    Pelajari
+                    <ArrowRight className="size-4" />
+                  </Link>
+                </div>
               </CardContent>
             </Card>
           ))}
