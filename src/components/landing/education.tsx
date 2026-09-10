@@ -1,16 +1,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Check } from 'lucide-react'
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card'
+import { Clock, ArrowRight } from 'lucide-react'
 import { eduImageUrl } from '@/lib/landing-images'
 
 /**
  * Edukasi section landing — section id="edukasi".
- * 3 card grid (responsive: 3 kolom desktop, 2 tablet, 1 mobile).
- * Setiap card punya gambar AI di atas + konten di bawah.
+ * Vertical list dengan horizontal cards (gambar kiri 120×80 + konten kanan).
+ * Konsisten dengan LatestArticles section.
  *
  * Server component — static content.
  */
@@ -19,6 +15,7 @@ type EduCard = {
   title: string
   bullets: string[]
   href: string
+  readTime: string
 }
 
 const CARDS: EduCard[] = [
@@ -32,6 +29,7 @@ const CARDS: EduCard[] = [
       'Nilai jual mobil naik',
     ],
     href: '/berita/peredam-mobil',
+    readTime: '2 mnt',
   },
   {
     slug: 'cara-memilih',
@@ -43,6 +41,7 @@ const CARDS: EduCard[] = [
       'Sesuai budget',
     ],
     href: '/berita/peredam-mobil/beda-damper-absorber-dan-barrier-yang-sering-tertukar',
+    readTime: '2 mnt',
   },
   {
     slug: 'tips-biaya',
@@ -54,15 +53,23 @@ const CARDS: EduCard[] = [
       'Tips hemat tanpa kompromi',
     ],
     href: '/berita/tips-biaya',
+    readTime: '2 mnt',
   },
 ]
+
+/**
+ * Join bullets jadi 1 paragraf dengan ". " separator.
+ */
+function joinBullets(bullets: string[]): string {
+  return bullets.join('. ') + '.'
+}
 
 export function Education() {
   return (
     <section id="edukasi" className="border-t border-border bg-muted/30">
       <div className="container mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
         {/* Section header */}
-        <div className="mx-auto max-w-2xl text-center">
+        <div className="max-w-2xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
             <span className="size-1.5 rounded-full bg-amber-500" />
             Edukasi
@@ -75,56 +82,58 @@ export function Education() {
           </p>
         </div>
 
-        {/* 3 card grid dengan AI image */}
-        <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {/* Vertical list — horizontal cards (gambar kiri + konten kanan) */}
+        <ul className="mt-8 space-y-4">
           {CARDS.map((c) => (
-            <Card
+            <li
               key={c.title}
-              className="overflow-hidden p-0 transition-all duration-200 hover:shadow-lg hover:border-amber-500/40"
+              className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-amber-500/40"
             >
-              <CardContent className="px-0">
-                {/* AI Image di atas — full width, 16:9 */}
-                <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
+              <Link href={c.href} className="group flex gap-3 sm:gap-4 items-start">
+                {/* Gambar kecil kiri 120×80 */}
+                <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[120px] h-[80px] sm:w-[140px] sm:h-[94px]">
                   <Image
                     src={eduImageUrl(c.slug)}
                     alt={`Edukasi: ${c.title}`}
                     fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover transition-transform duration-300 hover:scale-105"
+                    sizes="(min-width: 640px) 140px, 120px"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
 
-                {/* Konten di bawah */}
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold">{c.title}</h3>
+                {/* Konten kanan */}
+                <div className="min-w-0 flex-1">
+                  {/* Meta: badge Edukasi + read time */}
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-block rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                      Edukasi
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {c.readTime} baca
+                    </span>
+                  </div>
 
-                  <ul className="mt-3 space-y-2">
-                    {c.bullets.map((b) => (
-                      <li
-                        key={b}
-                        className="flex items-start gap-2 text-sm text-muted-foreground"
-                      >
-                        <Check
-                          className="mt-0.5 size-4 shrink-0 text-emerald-500"
-                          aria-hidden
-                        />
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Title */}
+                  <h3 className="mt-1.5 font-semibold leading-snug group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                    {c.title}
+                  </h3>
 
-                  <Link
-                    href={c.href}
-                    className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:gap-2.5 transition-all"
-                  >
+                  {/* Excerpt — join bullets jadi paragraf */}
+                  <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
+                    {joinBullets(c.bullets)}
+                  </p>
+
+                  {/* CTA */}
+                  <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-amber-700 dark:text-amber-400 group-hover:gap-1.5 transition-all">
                     Pelajari
-                    <ArrowRight className="size-4" />
-                  </Link>
+                    <ArrowRight className="size-3.5" />
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   )
