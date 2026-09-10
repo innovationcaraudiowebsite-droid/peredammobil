@@ -353,52 +353,69 @@ function EmptyState({ label, hint }: { label: string; hint?: string }) {
 /* -------------------------------------------------------------------------- */
 
 export default async function OverviewPage() {
-  // Aggregate stats in parallel
-  const [
-    totalArticles,
-    publishedArticles,
-    draftArticles,
-    archivedArticles,
-    totalViewsAgg,
-    activeSubscribers,
-    pendingComments,
-    recentArticles,
-    topArticles,
-    allArticlesForChart,
-    categoriesWithArticles,
-  ] = await Promise.all([
-    db.article.count(),
-    db.article.count({ where: { status: 'PUBLISHED' } }),
-    db.article.count({ where: { status: 'DRAFT' } }),
-    db.article.count({ where: { status: 'ARCHIVED' } }),
-    db.article.aggregate({ _sum: { viewCount: true } }),
-    db.subscriber.count({ where: { status: 'ACTIVE' } }),
-    db.comment.count({ where: { status: 'PENDING' } }),
-    db.article.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      include: { category: { select: { name: true } } },
-    }),
-    db.article.findMany({
-      orderBy: { viewCount: 'desc' },
-      take: 5,
-      include: { category: { select: { name: true } } },
-    }),
-    // For monthly chart: take published or createdAt of all articles (12mo window)
-    db.article.findMany({
-      where: {
-        OR: [
-          { publishedAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth() - 11, 1) } },
-          { publishedAt: null, createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth() - 11, 1) } },
-        ],
-      },
-      select: { publishedAt: true, createdAt: true },
-    }),
-    db.category.findMany({
-      orderBy: { order: 'asc' },
-      include: { articles: { select: { viewCount: true } } },
-    }),
-  ])
+  // Aggregate stats in parallel — wrapped in try/catch to prevent 500 crash
+  // if any DB query fails (Supabase cold start, RLS edge case, etc.)
+  let totalArticles = 0
+  let publishedArticles = 0
+  let draftArticles = 0
+  let archivedArticles = 0
+  let totalViewsAgg: { _sum: { viewCount?: number } } = { _sum: {} }
+  let activeSubscribers = 0
+  let pendingComments = 0
+  let recentArticles: any[] = []
+  let topArticles: any[] = []
+  let allArticlesForChart: any[] = []
+  let categoriesWithArticles: any[] = []
+  
+  try {
+    ;([
+      totalArticles,
+      publishedArticles,
+      draftArticles,
+      archivedArticles,
+      totalViewsAgg,
+      activeSubscribers,
+      pendingComments,
+      recentArticles,
+      topArticles,
+      allArticlesForChart,
+      categoriesWithArticles,
+    ] = await Promise.all([
+      db.article.count(),
+      db.article.count({ where: { status: 'PUBLISHED' } }),
+      db.article.count({ where: { status: 'DRAFT' } }),
+      db.article.count({ where: { status: 'ARCHIVED' } }),
+      db.article.aggregate({ _sum: { viewCount: true } }),
+      db.subscriber.count({ where: { status: 'ACTIVE' } }),
+      db.comment.count({ where: { status: 'PENDING' } }),
+      db.article.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        include: { category: { select: { name: true } } },
+      }),
+      db.article.findMany({
+        orderBy: { viewCount: 'desc' },
+        take: 5,
+        include: { category: { select: { name: true } } },
+      }),
+      db.article.findMany({
+        where: {
+          OR: [
+            { publishedAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth() - 11, 1) } },
+            { publishedAt: null, createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth() - 11, 1) } },
+          ],
+        },
+        select: { publishedAt: true, createdAt: true },
+      }),
+      db.category.findMany({
+        orderBy: { order: 'asc' },
+        include: { articles: { select: { viewCount: true } } },
+      }),
+    ] as any[]))
+  } catch (err) {
+    console.error('[admin/overview] DB query failed:', err)
+    // Fallback: render page with zeros & empty arrays
+  }
 
   const totalViews = totalViewsAgg._sum.viewCount ?? 0
 

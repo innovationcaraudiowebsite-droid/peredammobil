@@ -64,26 +64,39 @@ export default async function ArticlesListPage({
       orderBy = { createdAt: 'desc' }
   }
 
-  const [total, items, categories] = await Promise.all([
-    db.article.count({ where }),
-    db.article.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      include: {
-        category: {
-          select: { id: true, name: true, slug: true, color: true },
+  // Wrap in try/catch to prevent 500 crash if DB query fails
+  let total = 0
+  let items: any[] = []
+  let categories: any[] = []
+  
+  try {
+    ;([
+      total,
+      items,
+      categories,
+    ] = await Promise.all([
+      db.article.count({ where }),
+      db.article.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        include: {
+          category: {
+            select: { id: true, name: true, slug: true, color: true },
+          },
         },
-      },
-    }),
-    db.category.findMany({
-      orderBy: { order: 'asc' },
-      select: { id: true, name: true, slug: true, color: true },
-    }),
-  ])
+      }),
+      db.category.findMany({
+        orderBy: { order: 'asc' },
+        select: { id: true, name: true, slug: true, color: true },
+      }),
+    ] as any[]))
+  } catch (err) {
+    console.error('[admin/articles] DB query failed:', err)
+  }
 
-  const rows: ArticleListItem[] = items.map((a) => ({
+  const rows: ArticleListItem[] = (items || []).map((a: any) => ({
     id: a.id,
     title: a.title,
     slug: a.slug,
