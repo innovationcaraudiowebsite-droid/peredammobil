@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { Menu } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -58,12 +58,14 @@ export function AdminShell({
     <div className="min-h-screen bg-muted/30">
       {/* Desktop fixed sidebar (lg+) */}
       <aside className="fixed inset-y-0 left-0 z-40 hidden lg:block">
-        <SidebarContent
-          email={email}
-          role={role}
-          fullName={fullName}
-          pendingCommentsCount={pendingCommentsCount}
-        />
+        <Suspense fallback={<div className="h-full w-60 bg-slate-950" />}>
+          <SidebarContent
+            email={email}
+            role={role}
+            fullName={fullName}
+            pendingCommentsCount={pendingCommentsCount}
+          />
+        </Suspense>
       </aside>
 
       {/* Mobile sheet (controlled externally) */}
@@ -74,14 +76,16 @@ export function AdminShell({
         >
           <SheetTitle className="sr-only">Menu navigasi admin</SheetTitle>
           {/* Mobile sidebar selalu expanded (forceExpanded) — ignore desktop collapse state */}
-          <SidebarContent
-            email={email}
-            role={role}
-            fullName={fullName}
-            onNavigate={() => setMobileOpen(false)}
-            forceExpanded
-            pendingCommentsCount={pendingCommentsCount}
-          />
+          <Suspense fallback={<div className="h-full w-72 bg-slate-950" />}>
+            <SidebarContent
+              email={email}
+              role={role}
+              fullName={fullName}
+              onNavigate={() => setMobileOpen(false)}
+              forceExpanded
+              pendingCommentsCount={pendingCommentsCount}
+            />
+          </Suspense>
         </SheetContent>
       </Sheet>
 
