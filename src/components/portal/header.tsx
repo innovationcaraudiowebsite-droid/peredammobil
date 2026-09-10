@@ -20,6 +20,7 @@ type NavLink = { href: string; label: string }
 
 const NAV_LINKS: NavLink[] = [
   { href: '/', label: 'Beranda' },
+  { href: '/berita', label: 'Portal Berita' },
   { href: '/kategori/peredam-mobil', label: 'Peredam Mobil' },
   { href: '/kategori/upgrade-audio', label: 'Upgrade Audio' },
   { href: '/kategori/review-workshop', label: 'Review Workshop' },
