@@ -20,20 +20,28 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const session = await requireAdmin()
   // Fetch fullName untuk tampil di sidebar/header (lebih ramah dari email)
   let fullName: string | undefined
+  let pendingCommentsCount = 0
   try {
-    const profile = await db.profile.findUnique({
-      where: { id: session.userId },
-      select: { fullName: true },
-    })
+    const [profile, pendingCount] = await Promise.all([
+      db.profile.findUnique({
+        where: { id: session.userId },
+        select: { fullName: true },
+      }),
+      db.comment.count({
+        where: { status: 'PENDING' },
+      }),
+    ])
     fullName = profile?.fullName || undefined
+    pendingCommentsCount = pendingCount
   } catch {
-    // ignore — fallback ke email
+    // ignore — fallback ke email + 0 pending
   }
   return (
     <AdminShell
       email={session.email}
       role={session.role}
       fullName={fullName}
+      pendingCommentsCount={pendingCommentsCount}
     >
       {children}
     </AdminShell>
