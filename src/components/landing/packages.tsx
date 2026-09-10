@@ -1,15 +1,17 @@
 import Link from 'next/link'
-import { Package, MessageCircle } from 'lucide-react'
+import Image from 'next/image'
+import { MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
 } from '@/components/ui/card'
+import { paketImageUrl } from '@/lib/landing-images'
 
 /**
  * Paket section landing — section id="paket".
  * Grid 4 kolom (desktop), 2 (tablet), 1 (mobile).
- * 7 produk card (data hard-coded).
+ * 7 produk card (data hard-coded) dengan gambar AI per produk.
  *
  * Server component — static content.
  */
@@ -17,36 +19,44 @@ const WA_NUMBER = '6282111222989'
 
 type Pkg = {
   name: string
+  slug: string
   desc: string
 }
 
 const PACKAGES: Pkg[] = [
   {
     name: 'Gran Turismo 1.8mm',
+    slug: 'gran-turismo-1-8mm',
     desc: 'Peredam butyl premium 1.8mm, fleksibel & tahan panas. Cocok untuk pintu dan panel kabin. Hasil damping maksimal.',
   },
   {
     name: 'Gran Turismo 2mm',
+    slug: 'gran-turismo-2mm',
     desc: 'Peredam butyl 2mm dengan lapisan aluminium tebal. Redam getaran pelat, kurangi derau jalan. Pilihan banyak workshop.',
   },
   {
     name: 'Infinity',
+    slug: 'infinity',
     desc: 'Material peredam Infinity, kualitas premium dengan harga kompetitif. Tahan lama & tidak meleleh di suhu Jakarta.',
   },
   {
     name: 'Rainbow 2mm',
+    slug: 'rainbow-2mm',
     desc: 'Peredam Rainbow 2mm, butyl rubber berkualitas. Pilihan ekonomis untuk daily car. Hasil damping yang solid.',
   },
   {
     name: 'Rainbow 3.5mm',
+    slug: 'rainbow-3-5mm',
     desc: 'Peredam Rainbow 3.5mm, ketebalan optimal untuk lantai & wheel housing. Redam derau ban & jalan.',
   },
   {
     name: 'Rainbow 4mm',
+    slug: 'rainbow-4mm',
     desc: 'Peredam Rainbow 4mm, premium thickness. Maksimal damping untuk kabin senyap. Cocok untuk audiophile.',
   },
   {
     name: 'Silent Coat 2mm',
+    slug: 'silent-coat-2mm',
     desc: 'Silent Coat 2mm, material import Eropa. Kualitas terbaik untuk kabin premium. Tahan panas & lembab.',
   },
 ]
@@ -82,25 +92,16 @@ export function Packages() {
               className="gap-3 p-4 sm:p-5 transition-all duration-200 hover:shadow-md hover:border-amber-500/40"
             >
               <CardContent className="px-0">
-                {/* Thumbnail — CSS gradient + Package icon */}
-                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-gradient-to-br from-amber-500 via-orange-500 to-orange-700 shadow-inner">
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 opacity-20"
-                    style={{
-                      backgroundImage:
-                        'linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px)',
-                      backgroundSize: '20px 20px',
-                    }}
+                {/* Thumbnail — gambar AI per produk */}
+                <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-slate-100 shadow-inner">
+                  <Image
+                    src={paketImageUrl(p.slug)}
+                    alt={`Paket peredam mobil ${p.name} Innovation Car Audio Jakarta`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-300 hover:scale-105"
                   />
-                  <div className="absolute inset-0 grid place-items-center">
-                    <Package
-                      className="size-12 text-white/90"
-                      strokeWidth={1.4}
-                      aria-hidden
-                    />
-                  </div>
-                  <span className="absolute bottom-1.5 right-1.5 rounded bg-black/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/90 backdrop-blur">
+                  <span className="absolute bottom-1.5 right-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white backdrop-blur">
                     Premium
                   </span>
                 </div>

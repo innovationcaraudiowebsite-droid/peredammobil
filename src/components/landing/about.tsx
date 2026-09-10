@@ -1,8 +1,10 @@
-import { Wrench, Check, Award, Users, Star, ShieldCheck } from 'lucide-react'
+import { Check, Award, Users, Star, ShieldCheck } from 'lucide-react'
+import Image from 'next/image'
 import {
   Card,
   CardContent,
 } from '@/components/ui/card'
+import { landingImages } from '@/lib/landing-images'
 
 /**
  * About section landing — section id="about".
@@ -30,26 +32,16 @@ export function About() {
     <section id="about" className="border-t border-border bg-background">
       <div className="container mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
         <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
-          {/* Kiri — Gambar (placeholder CSS gradient + icon Wrench) */}
+          {/* Kiri — Gambar AI workshop interior */}
           <div className="order-1">
-            <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full rounded-2xl border border-border bg-gradient-to-br from-slate-900 via-amber-900/40 to-orange-700/50 shadow-lg overflow-hidden">
-              {/* Diagonal stripes overlay */}
-              <div
-                aria-hidden
-                className="absolute inset-0 opacity-15"
-                style={{
-                  backgroundImage:
-                    'repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 2px, transparent 2px 12px)',
-                }}
+            <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full rounded-2xl border border-border shadow-lg overflow-hidden bg-slate-100">
+              <Image
+                src={landingImages.about}
+                alt="Interior workshop Innovation Car Audio Jakarta — peralatan audio mobil profesional"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
+                className="object-cover"
               />
-              <div className="absolute inset-0 grid place-items-center">
-                <div className="flex flex-col items-center gap-3 text-white/90">
-                  <Wrench className="size-20 sm:size-28 lg:size-36" strokeWidth={1.4} />
-                  <span className="text-xs sm:text-sm font-medium uppercase tracking-[0.25em] text-amber-200">
-                    Pengerjaan Profesional
-                  </span>
-                </div>
-              </div>
               <div className="absolute bottom-3 left-3 right-3 rounded-lg bg-black/50 px-3 py-2 text-xs text-white/90 backdrop-blur">
                 Workshop Kalideres · Sejak 2015
               </div>

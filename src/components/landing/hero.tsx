@@ -1,6 +1,8 @@
 import Link from 'next/link'
-import { Car, MessageCircle, ArrowRight, ShieldCheck, Star, Users, Award } from 'lucide-react'
+import Image from 'next/image'
+import { MessageCircle, ArrowRight, ShieldCheck, Star, Users, Award } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { landingImages } from '@/lib/landing-images'
 
 /**
  * Hero section landing page — section id="hero".
@@ -37,28 +39,22 @@ export function Hero() {
 
       <div className="container mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
         <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
-          {/* Kiri — Gambar ilustrasi (placeholder CSS gradient + icon Car) */}
+          {/* Kiri — Gambar AI workshop Jakarta */}
           <div className="order-1 lg:order-1">
-            <div className="relative aspect-[4/3] sm:aspect-[16/10] lg:aspect-[5/4] w-full rounded-2xl border border-white/20 bg-gradient-to-br from-slate-900/60 via-orange-900/40 to-amber-900/40 shadow-2xl overflow-hidden">
-              {/* Grid pattern overlay */}
+            <div className="relative aspect-[4/3] sm:aspect-[16/10] lg:aspect-[5/4] w-full rounded-2xl border border-white/20 shadow-2xl overflow-hidden bg-slate-900">
+              <Image
+                src={landingImages.hero}
+                alt="Workshop Innovation Car Audio Jakarta — mekanik memasang peredam mobil"
+                fill
+                priority
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
+                className="object-cover"
+              />
+              {/* Gradient overlay untuk kontras dengan badge */}
               <div
                 aria-hidden
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.15) 1px, transparent 1px)',
-                  backgroundSize: '32px 32px',
-                }}
+                className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"
               />
-              {/* Big Car icon center */}
-              <div className="absolute inset-0 grid place-items-center">
-                <div className="flex flex-col items-center gap-3 text-white/90">
-                  <Car className="size-24 sm:size-32 lg:size-40" strokeWidth={1.2} />
-                  <span className="text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-amber-200">
-                    Innovation Car Audio
-                  </span>
-                </div>
-              </div>
               {/* Bottom badge */}
               <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 rounded-lg bg-black/40 px-3 py-2 text-xs text-white/90 backdrop-blur">
                 <span className="inline-flex items-center gap-1.5">
