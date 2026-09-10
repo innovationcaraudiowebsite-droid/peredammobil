@@ -439,33 +439,33 @@ export default async function OverviewPage() {
   }
 
   // Views per category (sum viewCount of its articles)
-  const categoryViews: CategorySlice[] = categoriesWithArticles
-    .map((c) => ({
+  const categoryViews: CategorySlice[] = (categoriesWithArticles || [])
+    .map((c: any) => ({
       name: c.name,
-      views: c.articles.reduce((sum, a) => sum + a.viewCount, 0),
+      views: (c.articles || []).reduce((sum: number, a: any) => sum + (a.viewCount || 0), 0),
     }))
     .filter((c) => c.views > 0)
     .sort((a, b) => b.views - a.views)
 
   // Serialize articles for client tables (we keep them as plain objects)
-  const recentRows: ArticleRow[] = recentArticles.map((a) => ({
+  const recentRows: ArticleRow[] = (recentArticles || []).map((a: any) => ({
     id: a.id,
     title: a.title,
     status: a.status,
-    categoryName: a.category.name,
-    createdAt: a.createdAt.toISOString(),
-    viewCount: a.viewCount,
-    publishedAt: a.publishedAt?.toISOString() ?? null,
+    categoryName: a.category?.name ?? '—',
+    createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : (a.createdAt ?? new Date().toISOString()),
+    viewCount: a.viewCount ?? 0,
+    publishedAt: a.publishedAt instanceof Date ? a.publishedAt.toISOString() : (a.publishedAt ?? null),
   }))
 
-  const topRows: ArticleRow[] = topArticles.map((a) => ({
+  const topRows: ArticleRow[] = (topArticles || []).map((a: any) => ({
     id: a.id,
     title: a.title,
     status: a.status,
-    categoryName: a.category.name,
-    createdAt: a.createdAt.toISOString(),
-    viewCount: a.viewCount,
-    publishedAt: a.publishedAt?.toISOString() ?? null,
+    categoryName: a.category?.name ?? '—',
+    createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : (a.createdAt ?? new Date().toISOString()),
+    viewCount: a.viewCount ?? 0,
+    publishedAt: a.publishedAt instanceof Date ? a.publishedAt.toISOString() : (a.publishedAt ?? null),
   }))
 
   return (
