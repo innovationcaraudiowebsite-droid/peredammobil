@@ -142,66 +142,88 @@ export async function POST(req: NextRequest) {
   }
 
   // publishedAt
-  let publishedAt: Date | null = null
+  let publishedAt: string | null = null
   if (statusRaw === 'PUBLISHED' || statusRaw === 'ARCHIVED') {
     const provided = asString(body.publishedAt)
     if (provided) {
       const d = new Date(provided)
-      if (!Number.isNaN(d.getTime())) publishedAt = d
+      if (!Number.isNaN(d.getTime())) publishedAt = d.toISOString()
     }
-    if (!publishedAt && statusRaw === 'PUBLISHED') publishedAt = new Date()
+    if (!publishedAt && statusRaw === 'PUBLISHED') publishedAt = new Date().toISOString()
   }
 
-  const article = await db.article.create({
-    data: {
-      title,
-      slug: finalSlug,
-      excerpt: asString(body.excerpt, 280) ?? null,
-      content: contentHtml,
-      contentMarkdown,
-      featuredImageUrl: asString(body.featuredImageUrl) ?? null,
-      featuredImageAlt: asString(body.featuredImageAlt) ?? null,
-      categoryId,
-      authorName: asString(body.authorName) ?? 'Innovation Car Audio',
-      status: statusRaw,
-      isFeatured: body.isFeatured === true,
-      isBreaking: body.isBreaking === true,
-      metaTitle,
-      metaDescription,
-      metaKeywords: metaKeywords || null,
-      ogImageUrl: asString(body.ogImageUrl) ?? null,
-      targetKeyword: asString(body.targetKeyword, 120) ?? null,
-      readingTimeMinutes,
-      wordCount,
-      viewCount: 0,
-      shareCount: 0,
-      publishedAt,
-      tags: finalTagIds.length
-        ? { connect: finalTagIds.map((id) => ({ id })) }
-        : undefined,
-    },
-  })
-
-  // Buat ArticleVersion snapshot pertama saat publish
-  if (statusRaw === 'PUBLISHED') {
-    const lastVer = await db.articleVersion.findFirst({
-      where: { articleId: article.id },
-      orderBy: { versionNumber: 'desc' },
-      select: { versionNumber: true },
-    })
-    const nextVer = (lastVer?.versionNumber ?? 0) + 1
-    await db.articleVersion.create({
+  let article: any = null
+  try {
+    // Create article (tanpa tags — connect via junction terpisah)
+    article = await db.article.create({
       data: {
-        articleId: article.id,
-        versionNumber: nextVer,
         title,
-        content: contentMarkdown,
+        slug: finalSlug,
         excerpt: asString(body.excerpt, 280) ?? null,
-        editedBy: 'admin',
-        editNote: 'Versi awal saat publish',
+        content: contentHtml,
+        contentMarkdown,
+        featuredImageUrl: asString(body.featuredImageUrl) ?? null,
+        featuredImageAlt: asString(body.featuredImageAlt) ?? null,
+        categoryId,
+        authorName: asString(body.authorName) ?? 'Innovation Car Audio',
+        status: statusRaw,
+        isFeatured: body.isFeatured === true,
+        isBreaking: body.isBreaking === true,
+        metaTitle,
+        metaDescription,
+        metaKeywords: metaKeywords || null,
+        ogImageUrl: asString(body.ogImageUrl) ?? null,
+        targetKeyword: asString(body.targetKeyword, 120) ?? null,
+        readingTimeMinutes,
+        wordCount,
+        viewCount: 0,
+        shareCount: 0,
+        publishedAt,
       },
     })
+  } catch (err) {
+    console.error('[api/articles] create failed:', err)
+    return NextResponse.json(
+      { ok: false, message: `Gagal membuat artikel: ${err instanceof Error ? err.message : String(err)}` },
+      { status: 500 },
+    )
   }
 
-  return NextResponse.json({ ok: true, id: article.id, slug: article.slug })
+  // Connect tags via junction table (adapter support)
+  if (finalTagIds.length > 0 && article?.id) {
+    try {
+      const { connectArticleTags } = await import('@/lib/db')
+      await connectArticleTags(article.id, finalTagIds)
+    } catch (err) {
+      console.error('[api/articles] connect tags failed:', err)
+      // Non-critical — article sudah created
+    }
+  }
+
+  // Buat ArticleVersion snapshot pertama saat publish
+  if (statusRaw === 'PUBLISHED' && article?.id) {
+    try {
+      const lastVer = await db.articleVersion.findFirst({
+        where: { articleId: article.id },
+        orderBy: { versionNumber: 'desc' },
+        select: { versionNumber: true },
+      })
+      const nextVer = (lastVer?.versionNumber ?? 0) + 1
+      await db.articleVersion.create({
+        data: {
+          articleId: article.id,
+          versionNumber: nextVer,
+          title,
+          content: contentMarkdown,
+          excerpt: asString(body.excerpt, 280) ?? null,
+          editedBy: 'admin',
+          editNote: 'Versi awal saat publish',
+        },
+      })
+    } catch (err) {
+      console.error('[api/articles] version snapshot failed:', err)
+    }
+  }
+
+  return NextResponse.json({ ok: true, id: article?.id, slug: article?.slug })
 }
