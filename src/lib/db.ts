@@ -428,6 +428,10 @@ function makeModel<T = any>(table: string) {
     async create(opts: CreateOptions): Promise<T> {
       // Handle nested m-n connect (Prisma-style): data.tags.connect
       const { tags: tagsConnect, ...articleData } = opts.data as any
+      // Auto-generate UUID if 'id' not provided (Supabase doesn't auto-gen like Prisma's cuid)
+      if (!articleData.id) {
+        articleData.id = crypto.randomUUID()
+      }
       if (tagsConnect && tagsConnect.connect && Array.isArray(tagsConnect.connect) && table === 'articles') {
         // Create article first
         const { data, error } = await getSupabaseAdmin()
@@ -444,7 +448,7 @@ function makeModel<T = any>(table: string) {
       }
       const { data, error } = await getSupabaseAdmin()
         .from(table)
-        .insert(opts.data)
+        .insert(articleData)
         .select()
         .maybeSingle()
       if (error) throw new Error(`[db.${table}.create] ${error.message}`)
