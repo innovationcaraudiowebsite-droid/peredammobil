@@ -432,6 +432,11 @@ function makeModel<T = any>(table: string) {
       if (!articleData.id) {
         articleData.id = crypto.randomUUID()
       }
+      // Auto-add createdAt & updatedAt if not provided (Supabase doesn't auto-gen timestamps)
+      const now = new Date().toISOString()
+      if (!articleData.createdAt) articleData.createdAt = now
+      if (!articleData.updatedAt) articleData.updatedAt = now
+      if (!articleData.subscribedAt && table === 'subscribers') articleData.subscribedAt = now
       if (tagsConnect && tagsConnect.connect && Array.isArray(tagsConnect.connect) && table === 'articles') {
         // Create article first
         const { data, error } = await getSupabaseAdmin()
