@@ -217,18 +217,22 @@ function makeModel<T = any>(table: string) {
         )
         // Auto-add foreign key columns needed for relation joins
         // (Prisma's nested select doesn't include FK explicitly, but we need it)
-        if ((needsCategory || needsCategoryViaSelect) && !flatSelectKeys.includes('categoryId')) {
+        // ONLY auto-add if user specified explicit select (opts.select exists).
+        // If no opts.select (only include), we use '*' which already has all columns.
+        if (opts.select && (needsCategory || needsCategoryViaSelect) && !flatSelectKeys.includes('categoryId')) {
           flatSelectKeys.push('categoryId')
         }
-        if (needsAuthor && !flatSelectKeys.includes('authorId')) {
+        if (opts.select && needsAuthor && !flatSelectKeys.includes('authorId')) {
           flatSelectKeys.push('authorId')
         }
-        if ((includeKeys.includes('article') || needsArticleViaSelect) && !flatSelectKeys.includes('articleId')) {
+        if (opts.select && (includeKeys.includes('article') || needsArticleViaSelect) && !flatSelectKeys.includes('articleId')) {
           flatSelectKeys.push('articleId')
         }
         // Plain select without relations (we fetch separately)
-        const flatSelect = flatSelectKeys.length > 0
-          ? flatSelectKeys.join(',')
+        // If no explicit select (opts.select undefined), use '*' to get all columns
+        const hasExplicitSelect = opts.select && Object.keys(opts.select).length > 0
+        const flatSelect = hasExplicitSelect
+          ? (flatSelectKeys.length > 0 ? flatSelectKeys.join(',') : '*')
           : '*'
         q = q.select(flatSelect)
         q = applyWhere(q, opts.where)
