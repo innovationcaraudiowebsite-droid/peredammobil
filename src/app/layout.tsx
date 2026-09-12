@@ -25,22 +25,39 @@ const geistMono = Geist_Mono({
 
 // Default fallback metadata — akan di-override oleh generateMetadata di bawah.
 const SITE_NAME_FALLBACK = "Peredam Mobil Jakarta";
-const TAGLINE_FALLBACK = "Review Workshop Peredam & Upgrade Audio Terbaik";
+const TAGLINE_FALLBACK = "Spesialis Peredam Mobil & Audio Car Jakarta Jabodetabek";
 
 const DESCRIPTION =
-  "Portal media niche otomotif yang membahas peredam mobil, upgrade audio, review workshop Jakarta, tips & biaya pemasangan. Panduan teknis berbasis pengalaman nyata di kabin mobil harian Jakarta.";
+  "Jasa peredam mobil Jakarta terpercaya sejak 2015. Workshop Innovation Car Audio spesialis peredam pintu, lantai, kap mesin & upgrade audio mobil. Melayani Jabodetabek. Material premium, garansi resmi, harga terbaik.";
 
 const KEYWORDS = [
   "peredam mobil jakarta",
   "peredam mobil",
-  "upgrade audio mobil",
-  "workshop peredam jakarta",
-  "butyl peredam",
-  "speaker split",
-  "DSP mobil",
-  "biaya pasang peredam",
-  "review workshop jakarta",
-  "peredam pintu mobil",
+  "jasa peredam mobil jakarta",
+  "workshop peredam mobil jakarta",
+  "peredam mobil jabodetabek",
+  "upgrade audio mobil jakarta",
+  "audio car jakarta",
+  "innovation car audio",
+  "peredam pintu mobil jakarta",
+  "peredam lantai mobil",
+  "biaya pasang peredam mobil",
+  "peredam butyl jakarta",
+  "workshop audio mobil jakarta",
+  "jasa peredam suara mobil",
+  "soundproofing mobil jakarta",
+  "peredam mobil jakarta selatan",
+  "peredam mobil jakarta barat",
+  "peredam mobil jakarta timur",
+  "peredam mobil jakarta utara",
+  "peredam mobil tangerang",
+  "peredam mobil bekasi",
+  "peredam mobil depok",
+  "peredam mobil bogor",
+  "audio mobil jakarta",
+  "speaker mobil jakarta",
+  "DSP mobil jakarta",
+  "subwoofer mobil jakarta",
 ];
 
 type SiteSettingLite = {
@@ -98,10 +115,14 @@ async function getSettings(): Promise<SiteSettingLite> {
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings()
   const title = `${s.siteName} — ${s.tagline}`
+  // Use VERCEL_URL for production, fallback to peredammobiljakarta.com for future domain
+  const siteUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : process.env.NEXT_PUBLIC_SITE_URL || "https://peredammobiljakarta.com"
   const ogImage = "/og-default.png"
 
   return {
-    metadataBase: new URL("https://peredammobiljakarta.com"),
+    metadataBase: new URL(siteUrl),
     title: {
       default: title,
       template: `%s — ${s.siteName}`,
@@ -132,7 +153,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: "website",
       locale: "id_ID",
-      url: "https://peredammobiljakarta.com",
+      url: siteUrl,
       siteName: s.siteName,
       title,
       description: DESCRIPTION,

@@ -10,6 +10,9 @@ import type { MetadataRoute } from 'next'
  *  - Sitemap + host hints included for SEO.
  */
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : process.env.NEXT_PUBLIC_SITE_URL || 'https://peredammobiljakarta.com'
   return {
     rules: [
       {
@@ -28,7 +31,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin', '/api/admin'],
       },
     ],
-    sitemap: 'https://peredammobiljakarta.com/sitemap.xml',
-    host: 'https://peredammobiljakarta.com',
+    sitemap: `${baseUrl}/sitemap.xml`,
+    host: baseUrl,
   }
 }
