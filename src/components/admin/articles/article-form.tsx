@@ -459,20 +459,20 @@ export function ArticleForm({
         </Badge>
       </div>
 
-      {/* Title input */}
+      {/* Title input — VISIBLE dengan border & label */}
       <div className="mb-4 space-y-2">
-        <Label htmlFor="title" className="sr-only">
-          Judul Artikel
+        <Label htmlFor="title" className="text-sm font-semibold text-foreground">
+          Judul Artikel *
         </Label>
         <Input
           id="title"
           value={state.title}
           onChange={(e) => patch({ title: e.target.value })}
-          placeholder="Masukkan judul artikel..."
-          className={`text-2xl font-bold h-14 shadow-none border-none bg-transparent focus-visible:ring-0 px-0 ${
+          placeholder="Masukkan judul artikel di sini (min. 3 karakter)..."
+          className={`text-xl font-bold h-12 border-2 bg-background focus-visible:ring-2 ${
             state.title.trim().length > 0 && state.title.trim().length < 3
-              ? 'text-destructive placeholder:text-destructive/50'
-              : ''
+              ? 'border-destructive focus-visible:border-destructive'
+              : 'border-border focus-visible:border-amber-500'
           }`}
         />
         {/* Inline validation hint */}
