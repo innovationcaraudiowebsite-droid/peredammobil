@@ -109,10 +109,40 @@ export function Hero() {
             terpercaya di Kalideres, Jakarta Barat sejak 2015.
           </motion.p>
 
-          {/* CTA buttons */}
+          {/* Counter stats — 4 cards */}
           <motion.div
             variants={item}
-            className="mt-7 flex flex-col sm:flex-row gap-3"
+            className="mt-8 lg:mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl"
+          >
+            {TRUST_BADGES.map((b, i) => (
+              <motion.div
+                key={b.label}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.8 + i * 0.15, ease: 'backOut' }}
+                className="rounded-xl border border-white/15 bg-black/40 px-4 py-4 backdrop-blur-md text-center hover:border-amber-500/30 transition-colors"
+              >
+                <b.icon className="mx-auto size-5 text-amber-400" aria-hidden />
+                <div className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-bold text-white tabular-nums">
+                  <Counter
+                    value={b.value}
+                    duration={2}
+                    decimals={b.decimals}
+                    suffix={b.suffix}
+                    useComma={b.useComma}
+                  />
+                </div>
+                <div className="mt-1 text-xs font-medium uppercase tracking-wider text-white/70">
+                  {b.label}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* CTA buttons — pindah ke setelah counter */}
+          <motion.div
+            variants={item}
+            className="mt-8 flex flex-col sm:flex-row gap-3"
           >
             <Button
               asChild
@@ -135,36 +165,6 @@ export function Hero() {
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
-          </motion.div>
-
-          {/* Counter stats — 4 cards */}
-          <motion.div
-            variants={item}
-            className="mt-12 lg:mt-16 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-3xl"
-          >
-            {TRUST_BADGES.map((b, i) => (
-              <motion.div
-                key={b.label}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 1.2 + i * 0.15, ease: 'backOut' }}
-                className="rounded-xl border border-white/15 bg-black/40 px-4 py-4 backdrop-blur-md text-center hover:border-amber-500/30 transition-colors"
-              >
-                <b.icon className="mx-auto size-5 text-amber-400" aria-hidden />
-                <div className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-bold text-white tabular-nums">
-                  <Counter
-                    value={b.value}
-                    duration={2}
-                    decimals={b.decimals}
-                    suffix={b.suffix}
-                    useComma={b.useComma}
-                  />
-                </div>
-                <div className="mt-1 text-xs font-medium uppercase tracking-wider text-white/70">
-                  {b.label}
-                </div>
-              </motion.div>
-            ))}
           </motion.div>
         </motion.div>
       </div>
