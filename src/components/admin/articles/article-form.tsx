@@ -218,11 +218,11 @@ export function ArticleForm({
   /* --------------------------- Validation ------------------------------- */
   const errors = useMemo(() => {
     const errs: string[] = []
-    if (state.title.trim().length < 5)
-      errs.push('Judul minimal 5 karakter.')
+    if (state.title.trim().length < 3)
+      errs.push('Judul minimal 3 karakter.')
     if (!state.categoryId) errs.push('Kategori wajib dipilih.')
-    if (state.contentMarkdown.trim().length < 100)
-      errs.push('Konten minimal 100 karakter (wajib untuk publish).')
+    if (state.contentMarkdown.trim().length < 50)
+      errs.push('Konten minimal 50 karakter (wajib untuk publish).')
     return errs
   }, [state.title, state.categoryId, state.contentMarkdown])
 
@@ -265,8 +265,8 @@ export function ArticleForm({
 
   /* --------------------------- Save handlers ---------------------------- */
   async function saveAsDraft() {
-    if (state.title.trim().length < 5) {
-      toast.error('Judul minimal 5 karakter sebelum bisa disimpan.')
+    if (state.title.trim().length < 3) {
+      toast.error('Judul minimal 3 karakter sebelum bisa disimpan.')
       return
     }
     setBusy('draft')
@@ -469,8 +469,23 @@ export function ArticleForm({
           value={state.title}
           onChange={(e) => patch({ title: e.target.value })}
           placeholder="Masukkan judul artikel..."
-          className="text-2xl font-bold h-14 shadow-none border-none bg-transparent focus-visible:ring-0 px-0"
+          className={`text-2xl font-bold h-14 shadow-none border-none bg-transparent focus-visible:ring-0 px-0 ${
+            state.title.trim().length > 0 && state.title.trim().length < 3
+              ? 'text-destructive placeholder:text-destructive/50'
+              : ''
+          }`}
         />
+        {/* Inline validation hint */}
+        {state.title.trim().length > 0 && state.title.trim().length < 3 && (
+          <p className="text-xs text-destructive">
+            ⚠ Judul minimal 3 karakter ({state.title.trim().length}/3)
+          </p>
+        )}
+        {state.title.trim().length >= 3 && (
+          <p className="text-xs text-emerald-600 dark:text-emerald-400">
+            ✓ Judul valid ({state.title.trim().length} karakter)
+          </p>
+        )}
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
           <span className="text-xs text-muted-foreground">
             /berita/

@@ -56,9 +56,9 @@ export async function POST(req: NextRequest) {
   }
 
   const title = asString(body.title)
-  if (!title || title.length < 5) {
+  if (!title || title.length < 3) {
     return NextResponse.json(
-      { ok: false, message: 'Judul artikel wajib minimal 5 karakter.' },
+      { ok: false, message: 'Judul artikel wajib minimal 3 karakter.' },
       { status: 400 },
     )
   }
@@ -82,9 +82,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, message: 'Status tidak valid.' }, { status: 400 })
   }
 
-  if (statusRaw === 'PUBLISHED' && contentMarkdown.trim().length < 100) {
+  if (statusRaw === 'PUBLISHED' && contentMarkdown.trim().length < 50) {
     return NextResponse.json(
-      { ok: false, message: 'Konten artikel minimal 100 karakter untuk dipublikasikan.' },
+      { ok: false, message: 'Konten artikel minimal 50 karakter untuk dipublikasikan.' },
       { status: 400 },
     )
   }
