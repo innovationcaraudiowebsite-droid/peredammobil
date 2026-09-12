@@ -66,3 +66,4 @@ dev-wrap*.log
 db/*.db
 db/*.db-journal
 .env.vercel
+upload/
