@@ -115,10 +115,11 @@ async function getSettings(): Promise<SiteSettingLite> {
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings()
   const title = `${s.siteName} — ${s.tagline}`
-  // Use VERCEL_URL for production, fallback to peredammobiljakarta.com for future domain
-  const siteUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_SITE_URL || "https://peredammobiljakarta.com"
+  // Use production URL for OG/canonical (VERCEL_URL is preview-specific)
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL
+    || (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "https://peredammobil.vercel.app")
   const ogImage = "/og-default.png"
 
   return {
