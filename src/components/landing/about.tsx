@@ -85,19 +85,10 @@ export function About() {
           viewport={{ once: true, margin: '-100px' }}
           className="max-w-2xl"
         >
-          {/* Badge — "Tentang Kami" (no duplicate H2) */}
-          <motion.span
-            variants={item}
-            className="inline-flex items-center gap-2 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-300 backdrop-blur"
-          >
-            <span className="size-1.5 rounded-full bg-amber-400" />
-            Tentang Kami
-          </motion.span>
-
           {/* Headline = brand name (gradient text, dramatic) */}
           <motion.h2
             variants={item}
-            className="mt-4 text-4xl sm:text-5xl font-bold tracking-tight"
+            className="text-4xl sm:text-5xl font-bold tracking-tight"
           >
             <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-200 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(245,158,11,0.3)]">
               Innovation Car Audio

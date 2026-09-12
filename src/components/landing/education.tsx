@@ -70,11 +70,7 @@ export function Education() {
       <div className="container mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
         {/* Section header */}
         <div className="max-w-2xl">
-          <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-            <span className="size-1.5 rounded-full bg-amber-500" />
-            Edukasi
-          </span>
-          <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
             Edukasi Peredam Mobil
           </h2>
           <p className="mt-2 text-sm sm:text-base text-muted-foreground">

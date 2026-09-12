@@ -96,11 +96,7 @@ export async function LatestArticles() {
         {/* Section header */}
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-              <span className="size-1.5 rounded-full bg-amber-500" />
-              Artikel
-            </span>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
               Artikel Terbaru
             </h2>
             <p className="mt-2 text-sm sm:text-base text-muted-foreground">
