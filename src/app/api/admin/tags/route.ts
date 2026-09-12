@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { slugify, ensureUniqueSlug } from '@/lib/slug'
 
@@ -23,7 +23,8 @@ function asString(v: unknown, max?: number): string | undefined {
  * Returns id, name, slug, createdAt, _count.articles. Sorted by createdAt desc.
  */
 export async function GET(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   const url = new URL(req.url)
   const q = (url.searchParams.get('q') ?? '').trim()
@@ -56,7 +57,8 @@ export async function GET(req: NextRequest) {
  * Validation: name wajib (>= 2 char). Slug auto from name if empty, must be unique.
  */
 export async function POST(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   let body: CreateBody
   try {

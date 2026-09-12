@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { getSupabaseAdmin, publicStorageUrl, BUCKETS } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs'
@@ -16,7 +16,8 @@ const CACHE_CTRL = 'public,max-age=31536000,immutable'
  * Return { ok, url } — `url` adalah public CDN URL Supabase.
  */
 export async function POST(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   let formData: FormData
   try {

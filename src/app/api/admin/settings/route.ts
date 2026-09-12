@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 
 export const runtime = 'nodejs'
@@ -47,7 +47,8 @@ function asNullableString(v: unknown, max?: number): string | null {
  * Jika belum ada di DB, upsert default (id="global") lalu return.
  */
 export async function GET() {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   const setting = await db.siteSetting.upsert({
     where: { id: 'global' },
@@ -63,7 +64,8 @@ export async function GET() {
  * Body: partial fields. primaryColor divalidasi terhadap whitelist.
  */
 export async function PUT(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   let body: SettingFields
   try {

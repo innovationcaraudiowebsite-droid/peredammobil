@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 
 export const runtime = 'nodejs'
@@ -32,7 +32,8 @@ function asInt(v: unknown, fallback = 0): number {
  * GET /api/admin/faq — list all FAQ ordered by order asc.
  */
 export async function GET() {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   const faqs = await db.faq.findMany({
     orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
@@ -56,7 +57,8 @@ export async function GET() {
  * Validation: question & answer wajib (>= 5 char). Order default = next order.
  */
 export async function POST(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   let body: CreateBody
   try {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { slugify } from '@/lib/slug'
 
@@ -57,7 +57,8 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
   const { id } = await params
 
   const existing = await db.category.findUnique({ where: { id }, select: { id: true, name: true } })
@@ -155,7 +156,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
   const { id } = await params
 
   const existing = await db.category.findUnique({

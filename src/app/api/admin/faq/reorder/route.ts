@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 
 export const runtime = 'nodejs'
@@ -16,7 +16,8 @@ interface ReorderBody {
  * IDs not in the array keep their current order.
  */
 export async function POST(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   let body: ReorderBody
   try {

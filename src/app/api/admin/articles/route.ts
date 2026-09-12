@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { slugify, ensureUniqueSlug } from '@/lib/slug'
 import {
@@ -45,7 +45,8 @@ function asString(v: unknown, max?: number): string | undefined {
  * Untuk publish (status=PUBLISHED): konten minimal 100 char.
  */
 export async function POST(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   let body: CreateArticleBody
   try {

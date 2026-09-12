@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import ZAI from 'z-ai-web-dev-sdk'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 
 export const runtime = 'nodejs'
 
@@ -24,7 +24,8 @@ function asString(v: unknown, max = 6000): string {
  * meta description 120-160 char (cocok untuk SEO Google).
  */
 export async function POST(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   let body: GenMetaBody
   try {

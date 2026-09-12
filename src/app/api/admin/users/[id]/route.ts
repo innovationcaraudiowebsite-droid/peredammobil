@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireSuperAdmin } from '@/lib/auth'
+import { requireSuperAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { getSupabaseAdmin } from '@/lib/supabase-server'
 
@@ -10,7 +10,8 @@ export const runtime = 'nodejs'
  * Admin only. Note: tidak bisa ubah email (hard-coded di Supabase Auth).
  */
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  await requireSuperAdmin()
+  const session = await requireSuperAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
   const { id: userId } = await params
 
   let body: { fullName?: unknown; role?: unknown; isActive?: unknown }
@@ -45,7 +46,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
  * atau kita delete manual di sini.
  */
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  await requireSuperAdmin()
+  const session = await requireSuperAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
   const { id: userId } = await params
 
   try {

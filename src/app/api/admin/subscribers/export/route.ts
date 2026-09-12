@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 
 export const runtime = 'nodejs'
@@ -12,7 +12,8 @@ export const runtime = 'nodejs'
  * CSV columns: email, status, source, subscribedAt, unsubscribedAt
  */
 export async function GET(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   const url = new URL(req.url)
   const statusParam = (url.searchParams.get('status') ?? 'active').toLowerCase()

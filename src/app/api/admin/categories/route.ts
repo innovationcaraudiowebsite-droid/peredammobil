@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { slugify, ensureUniqueSlug } from '@/lib/slug'
 
@@ -55,7 +55,8 @@ function asInt(v: unknown, fallback = 0): number {
  * Validation: name wajib (>= 2 char). Slug auto from name if empty, must be unique.
  */
 export async function POST(req: NextRequest) {
-  await requireAdmin()
+  const session = await requireAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   let body: CreateBody
   try {

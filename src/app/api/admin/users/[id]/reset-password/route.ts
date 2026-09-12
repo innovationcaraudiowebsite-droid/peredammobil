@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireSuperAdmin } from '@/lib/auth'
+import { requireSuperAdminApi } from '@/lib/auth'
 import { getSupabaseAdmin } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs'
@@ -14,7 +14,8 @@ export const runtime = 'nodejs'
  * untuk admin. Endpoint akan lookup userId via listUsers.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  await requireSuperAdmin()
+  const session = await requireSuperAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
   const email = decodeURIComponent((await params).id)
 
   let body: { password?: unknown }

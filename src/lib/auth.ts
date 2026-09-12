@@ -270,7 +270,7 @@ async function verifyProfileActive(userId: string): Promise<boolean> {
 
 /**
  * Require any authenticated admin (admin/editor/writer).
- * Use for halaman admin umum.
+ * Use for halaman admin umum (server components — uses redirect()).
  */
 export async function requireAdmin(): Promise<Session> {
   const session = await getSession()
@@ -282,6 +282,57 @@ export async function requireAdmin(): Promise<Session> {
   }
   if (!(await verifyProfileActive(session.userId))) {
     redirect('/admin/login')
+  }
+  return session
+}
+
+/**
+ * Require any authenticated admin — for API Route Handlers.
+ * Returns Session or throws error (does NOT use redirect() which
+ * doesn't work in API routes).
+ *
+ * Usage in API route:
+ *   const session = await requireAdminApi()
+ *   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+ */
+export async function requireAdminApi(): Promise<Session | null> {
+  const session = await getSession()
+  if (
+    !session ||
+    !['admin', 'editor', 'writer'].includes(session.role)
+  ) {
+    return null
+  }
+  if (!(await verifyProfileActive(session.userId))) {
+    return null
+  }
+  return session
+}
+
+/**
+ * Require admin or editor role — for API Route Handlers.
+ */
+export async function requireEditorApi(): Promise<Session | null> {
+  const session = await getSession()
+  if (!session || !['admin', 'editor'].includes(session.role)) {
+    return null
+  }
+  if (!(await verifyProfileActive(session.userId))) {
+    return null
+  }
+  return session
+}
+
+/**
+ * Require admin role only — for API Route Handlers.
+ */
+export async function requireSuperAdminApi(): Promise<Session | null> {
+  const session = await getSession()
+  if (!session || session.role !== 'admin') {
+    return null
+  }
+  if (!(await verifyProfileActive(session.userId))) {
+    return null
   }
   return session
 }

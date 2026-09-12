@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireSuperAdmin } from '@/lib/auth'
+import { requireSuperAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { getSupabaseAdmin } from '@/lib/supabase-server'
 
@@ -9,7 +9,8 @@ export const runtime = 'nodejs'
  * GET /api/admin/users — list all profiles (admin only).
  */
 export async function GET() {
-  await requireSuperAdmin()
+  const session = await requireSuperAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
   try {
     const profiles = await db.profile.findMany({
       orderBy: { createdAt: 'desc' },
@@ -38,7 +39,8 @@ export async function GET() {
  * Body: { email, password, fullName?, role }
  */
 export async function POST(req: NextRequest) {
-  await requireSuperAdmin()
+  const session = await requireSuperAdminApi()
+  if (!session) return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 })
 
   let body: { email?: unknown; password?: unknown; fullName?: unknown; role?: unknown }
   try {

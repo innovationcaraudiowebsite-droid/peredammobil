@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth'
+import { requireAdminApi } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { getSupabaseAdmin } from '@/lib/supabase-server'
 
@@ -9,7 +9,7 @@ export const runtime = 'nodejs'
  * GET /api/admin/profile — return profile dari session.userId.
  */
 export async function GET() {
-  const session = await requireAdmin()
+  const session = await requireAdminApi()
   try {
     const profile = await db.profile.findUnique({
       where: { id: session.userId },
@@ -39,7 +39,7 @@ export async function GET() {
  * Body: { fullName?: string, password?: string }
  */
 export async function PUT(req: NextRequest) {
-  const session = await requireAdmin()
+  const session = await requireAdminApi()
 
   let body: { fullName?: unknown; password?: unknown }
   try {
