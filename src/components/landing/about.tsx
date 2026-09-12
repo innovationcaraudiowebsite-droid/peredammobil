@@ -1,107 +1,170 @@
-import { Check, Award, Users, Star, ShieldCheck } from 'lucide-react'
+'use client'
+
 import Image from 'next/image'
-import {
-  Card,
-  CardContent,
-} from '@/components/ui/card'
+import { motion } from 'framer-motion'
+import { Check, Award, Users, Star, ShieldCheck } from 'lucide-react'
+import { Counter } from '@/components/landing/counter'
 import { landingImages } from '@/lib/landing-images'
 
 /**
- * About section landing — section id="about".
- * 2 kolom desktop (kiri gambar placeholder, kanan teks).
- * Mobile: stack vertical.
+ * About section — section id="about".
+ * Full background image (AI workshop interior) + dramatic dark overlay.
+ * Konsisten dengan hero section (sama style: full bg + overlay + text putih).
  *
- * Server component — static content.
+ * Tidak ada duplicate "Tentang Kami" — hanya badge, headline = brand name.
  */
 const STATS = [
-  { icon: Award, value: '10+ Tahun', label: 'Pengalaman' },
-  { icon: Users, value: '1000+', label: 'Mobil Dilayani' },
-  { icon: Star, value: '4.9★', label: 'Rating Google' },
-  { icon: ShieldCheck, value: '100%', label: 'Garansi Resmi' },
-]
+  { icon: Award, value: 10, suffix: '+', label: 'Tahun', decimals: 0, useComma: false },
+  { icon: Users, value: 1000, suffix: '+', label: 'Mobil', decimals: 0, useComma: true },
+  { icon: Star, value: 4.9, suffix: '★', label: 'Rating', decimals: 1, useComma: false },
+  { icon: ShieldCheck, value: 100, suffix: '%', label: 'Garansi', decimals: 0, useComma: false },
+] as const
 
 const SPECIALTIES = [
-  'Peredam pintu/lantai/atap/kap mesin',
+  'Peredam pintu, lantai, atap, kap mesin',
   'Upgrade audio mobil (speaker, DSP, subwoofer)',
-  'Material premium (butyl, aluminium, EVA)',
-  'Garansi pengerjaan & hasil damping',
+  'Material premium import',
+  'Garansi pengerjaan resmi',
 ]
+
+// Animation variants
+const container = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
+  },
+}
+
+const item = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const },
+  },
+}
 
 export function About() {
   return (
-    <section id="about" className="border-t border-border bg-background">
-      <div className="container mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
-        <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
-          {/* Kiri — Gambar AI workshop interior */}
-          <div className="order-1">
-            <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full rounded-2xl border border-border shadow-lg overflow-hidden bg-slate-100">
-              <Image
-                src={landingImages.about}
-                alt="Interior workshop Innovation Car Audio Jakarta — peralatan audio mobil profesional"
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
-                className="object-cover"
-              />
-              <div className="absolute bottom-3 left-3 right-3 rounded-lg bg-black/50 px-3 py-2 text-xs text-white/90 backdrop-blur">
-                Workshop Kalideres · Sejak 2015
-              </div>
-            </div>
-          </div>
+    <section
+      id="about"
+      className="relative min-h-[600px] lg:min-h-[700px] flex items-center overflow-hidden bg-slate-950 border-t border-border"
+    >
+      {/* Full background image — dramatic */}
+      <Image
+        src={landingImages.about}
+        alt="Interior workshop Innovation Car Audio Jakarta — peralatan audio mobil profesional"
+        fill
+        sizes="100vw"
+        className="object-cover"
+      />
 
-          {/* Kanan — Teks + stats + spesialisasi */}
-          <div className="order-2">
-            <span className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-              <span className="size-1.5 rounded-full bg-amber-500" />
-              Tentang Kami
+      {/* Dramatic dark gradient overlay */}
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/75 to-black/50"
+      />
+      {/* Bottom fade */}
+      <div
+        aria-hidden
+        className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent"
+      />
+      {/* Decorative glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute bottom-1/4 left-1/4 size-72 rounded-full bg-amber-500/10 blur-3xl"
+      />
+
+      {/* Konten */}
+      <div className="relative z-10 container mx-auto max-w-7xl px-4 py-16 sm:py-20 lg:py-24">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+          className="max-w-2xl"
+        >
+          {/* Badge — "Tentang Kami" (no duplicate H2) */}
+          <motion.span
+            variants={item}
+            className="inline-flex items-center gap-2 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-300 backdrop-blur"
+          >
+            <span className="size-1.5 rounded-full bg-amber-400" />
+            Tentang Kami
+          </motion.span>
+
+          {/* Headline = brand name (gradient text, dramatic) */}
+          <motion.h2
+            variants={item}
+            className="mt-4 text-4xl sm:text-5xl font-bold tracking-tight"
+          >
+            <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-amber-200 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(245,158,11,0.3)]">
+              Innovation Car Audio
             </span>
+          </motion.h2>
 
-            <h2 className="mt-4 text-3xl sm:text-4xl font-bold tracking-tight">
-              Tentang Kami
-            </h2>
+          {/* Description */}
+          <motion.p
+            variants={item}
+            className="mt-5 max-w-xl text-sm sm:text-base text-white/80 leading-relaxed"
+          >
+            Innovation Car Audio adalah workshop spesialis peredam mobil dan
+            upgrade audio yang berlokasi di Kalideres, Jakarta Barat. Kami
+            telah melayani ribuan pelanggan dengan material premium dan
+            pengerjaan profesional.
+          </motion.p>
 
-            <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Innovation Car Audio adalah workshop spesialis peredam mobil dan
-              upgrade audio yang berlokasi di Kalideres, Jakarta Barat. Kami
-              telah melayani ribuan pelanggan dengan material premium dan
-              pengerjaan profesional.
-            </p>
+          {/* 4 stat cards dengan counter (sama dengan hero) */}
+          <motion.div
+            variants={item}
+            className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-2xl"
+          >
+            {STATS.map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.4 + i * 0.1, ease: 'backOut' }}
+                className="rounded-xl border border-white/15 bg-black/40 px-3 py-3 backdrop-blur-md text-center hover:border-amber-500/30 transition-colors"
+              >
+                <s.icon className="mx-auto size-4 text-amber-400" aria-hidden />
+                <div className="mt-1.5 text-xl sm:text-2xl font-bold text-white tabular-nums">
+                  <Counter
+                    value={s.value}
+                    duration={2}
+                    decimals={s.decimals}
+                    suffix={s.suffix}
+                    useComma={s.useComma}
+                  />
+                </div>
+                <div className="mt-0.5 text-[11px] font-medium uppercase tracking-wider text-white/70">
+                  {s.label}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
 
-            {/* 4 stat cards */}
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {STATS.map((s) => (
-                <Card key={s.label} className="gap-2 p-3 sm:p-4 text-center">
-                  <CardContent className="px-0">
-                    <s.icon className="mx-auto size-5 text-amber-500" aria-hidden />
-                    <div className="mt-1.5 text-lg font-bold leading-none">
-                      {s.value}
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {s.label}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Spesialisasi list */}
-            <div className="mt-6 rounded-xl border border-border bg-muted/40 p-4 sm:p-5">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-                Spesialisasi
-              </h3>
-              <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
-                {SPECIALTIES.map((s) => (
-                  <li
-                    key={s}
-                    className="flex items-start gap-2 text-sm text-foreground/90"
-                  >
-                    <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" aria-hidden />
-                    <span>{s}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
+          {/* Spesialisasi */}
+          <motion.ul
+            variants={item}
+            className="mt-8 grid sm:grid-cols-2 gap-2 max-w-xl"
+          >
+            {SPECIALTIES.map((spec) => (
+              <li
+                key={spec}
+                className="flex items-start gap-2 text-sm text-white/85"
+              >
+                <Check
+                  className="mt-0.5 size-4 shrink-0 text-amber-400"
+                  aria-hidden
+                />
+                <span>{spec}</span>
+              </li>
+            ))}
+          </motion.ul>
+        </motion.div>
       </div>
     </section>
   )

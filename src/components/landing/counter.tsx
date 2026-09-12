@@ -22,13 +22,12 @@ interface CounterProps {
 
 /**
  * Animated counter — counts up from 0 to `value` when section enters viewport.
- * Uses framer-motion's `useInView` for scroll-trigger detection.
  *
- * Example:
- *   <Counter value={10} suffix="+" />
- *   <Counter value={1000} suffix="+" useComma />
- *   <Counter value={4.9} decimals={1} suffix="★" />
- *   <Counter value={100} suffix="%" />
+ * IMPORTANT: SSR renders the TARGET value (not 0) so crawlers and users
+ * see the correct number immediately. The animation only runs in browser
+ * when the element scrolls into view.
+ *
+ * Uses framer-motion's `useInView` for scroll-trigger detection.
  */
 export function Counter({
   value,
@@ -41,37 +40,42 @@ export function Counter({
 }: CounterProps) {
   const ref = useRef<HTMLSpanElement>(null)
   const isInView = useInView(ref, { once: true, margin: '-100px' })
-  const [displayValue, setDisplayValue] = useState(0)
+  // SSR & initial: show target value (not 0)
+  const [displayValue, setDisplayValue] = useState(value)
+  const [hasAnimated, setHasAnimated] = useState(false)
 
   useEffect(() => {
-    if (!isInView) return
+    if (!isInView || hasAnimated) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasAnimated(true)
 
+    // Start animation from 0 (inside rAF callback = async, not synchronous)
     let startTime: number | null = null
     let animationFrame: number
 
     const animate = (timestamp: number) => {
-      if (startTime === null) startTime = timestamp
+      if (startTime === null) {
+        startTime = timestamp
+      }
       const progress = Math.min((timestamp - startTime) / (duration * 1000), 1)
-
-      // Ease-out cubic for smooth deceleration
       const eased = 1 - Math.pow(1 - progress, 3)
-      const current = eased * value
-
-      setDisplayValue(current)
+      setDisplayValue(eased * value)
 
       if (progress < 1) {
         animationFrame = requestAnimationFrame(animate)
       } else {
-        setDisplayValue(value) // Ensure exact final value
+        setDisplayValue(value)
       }
     }
 
+    // Start from 0
+    setDisplayValue(0)
     animationFrame = requestAnimationFrame(animate)
 
     return () => {
       if (animationFrame) cancelAnimationFrame(animationFrame)
     }
-  }, [isInView, value, duration])
+  }, [isInView, value, duration, hasAnimated])
 
   const formatted = () => {
     const fixed = displayValue.toFixed(decimals)
