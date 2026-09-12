@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useInView } from 'framer-motion'
+import { useInView, animate } from 'framer-motion'
 
 interface CounterProps {
-  /** Target value to count up to */
+  /** Target value to display */
   value: number
   /** Animation duration in seconds (default 2) */
   duration?: number
@@ -21,13 +21,19 @@ interface CounterProps {
 }
 
 /**
- * Animated counter — counts up from 0 to `value` when section enters viewport.
+ * Animated counter.
  *
- * IMPORTANT: SSR renders the TARGET value (not 0) so crawlers and users
- * see the correct number immediately. The animation only runs in browser
- * when the element scrolls into view.
+ * BEHAVIOR:
+ * - SSR: renders the TARGET value immediately (SEO-friendly, no 0 flash)
+ * - Client: renders the TARGET value on mount (matches SSR, no hydration error)
+ * - When scrolled into view: animates from 0 to target via framer-motion's
+ *   animate() function. The reset to 0 happens inside the animation's
+ *   first frame (via requestAnimationFrame), so the browser has already
+ *   painted the SSR value before the flash occurs.
  *
- * Uses framer-motion's `useInView` for scroll-trigger detection.
+ * The key fix: we use framer-motion's `animate()` which handles the
+ * timing internally, avoiding React state batching issues that caused
+ * the counter to get stuck at 0.
  */
 export function Counter({
   value,
@@ -39,43 +45,24 @@ export function Counter({
   className = '',
 }: CounterProps) {
   const ref = useRef<HTMLSpanElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-100px' })
-  // SSR & initial: show target value (not 0)
+  const isInView = useInView(ref, { once: true, margin: '-50px' })
+
+  // SSR & initial client render: show target value
   const [displayValue, setDisplayValue] = useState(value)
-  const [hasAnimated, setHasAnimated] = useState(false)
 
   useEffect(() => {
-    if (!isInView || hasAnimated) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasAnimated(true)
+    if (!isInView) return
 
-    // Start animation from 0 (inside rAF callback = async, not synchronous)
-    let startTime: number | null = null
-    let animationFrame: number
+    // Use framer-motion's animate() — handles rAF internally
+    // Starts from 0, animates to target value
+    const controls = animate(0, value, {
+      duration,
+      ease: [0.22, 1, 0.36, 1], // easeOutCubic
+      onUpdate: (v) => setDisplayValue(v),
+    })
 
-    const animate = (timestamp: number) => {
-      if (startTime === null) {
-        startTime = timestamp
-      }
-      const progress = Math.min((timestamp - startTime) / (duration * 1000), 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setDisplayValue(eased * value)
-
-      if (progress < 1) {
-        animationFrame = requestAnimationFrame(animate)
-      } else {
-        setDisplayValue(value)
-      }
-    }
-
-    // Start from 0
-    setDisplayValue(0)
-    animationFrame = requestAnimationFrame(animate)
-
-    return () => {
-      if (animationFrame) cancelAnimationFrame(animationFrame)
-    }
-  }, [isInView, value, duration, hasAnimated])
+    return () => controls.stop()
+  }, [isInView, value, duration])
 
   const formatted = () => {
     const fixed = displayValue.toFixed(decimals)
