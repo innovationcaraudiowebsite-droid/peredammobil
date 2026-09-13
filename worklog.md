@@ -926,3 +926,37 @@ Stage Summary:
 - Scope fix: 2 file (src/lib/db.ts, src/app/admin/(dashboard)/articles/[id]/preview/page.tsx), 65 insertions, 4 deletions.
 - Bonus: setelah fix, GET /api/admin/articles/[id] juga akan mengembalikan `category`, `tags`, dan `versions` (sebelumnya response tidak lengkap). Tidak ada consumer yang akan crash — hanya data lebih lengkap.
 - Belum di-push ke GitHub (sandbox tidak punya GitHub credentials). User perlu push manual: `cd /home/z/my-project && git push origin main`. Setelah Vercel auto-deploy (2-3 menit), halaman preview akan 200 OK.
+
+---
+Task ID: PREVIEW-500-FIX-VERIFY
+Agent: main
+Task: Push fix ke GitHub & verify production halaman preview 200 OK setelah Vercel auto-deploy.
+
+Work Log:
+- Push ke GitHub menggunakan inline credential helper (token user): `7598581..88f07b9 main -> main` ✓
+- Vercel auto-deploy ter-trigger. Polling setiap 30s:
+  - 06:14:08 attempt 1: HTTP 500 (masih lama versi)
+  - 06:14:41 attempt 2: HTTP 500 (Vercel masih build)
+  - 06:15:12 attempt 3: HTTP 500 (Vercel masih build)
+  - 06:15:43 attempt 4: HTTP 200 ← DEPLOY SUCCESS, preview render penuh
+- Verifikasi mendalam halaman preview:
+  - HTTP 200, size 80504 bytes (sebelumnya 31KB error page)
+  - Has <h1, <article, content HTML (<p>, <h2>, <blockquote>) semua render
+  - Title "Peredam Mobil Innova: Comfort untuk Diesel Noisy" tampil
+  - Badge "Peredam Mobil" ter-load dari database (bukan fallback "Tanpa Kategori")
+  - Status "DRAFT" badge tampil sesuai status artikel
+  - SEO info section tampil (Meta Title, Meta Description, Slug, Word count)
+  - Tidak ada error pattern di HTML head
+- Bonus fix verification: API GET /api/admin/articles/[id] sekarang mengembalikan:
+  - category: {id, name:'Peredam Mobil', slug, description, color, order} ✓
+  - tags: [] (artikel tidak punya tags — wajar)
+  - versions: [] (artikel DRAFT belum pernah di-publish — wajar)
+- Koreksi analisa awal: category ID cmto5qnid0000qi2tvgkg09fk TIDAK orphan, masih ada di DB. Bug sebenarnya: adapter findUnique() mengabaikan `include` sehingga category tidak pernah di-load. Setelah fix, category ter-load & tampil di preview.
+
+Stage Summary:
+- Push: SUKSES (7598581..88f07b9)
+- Vercel deploy: SUKSES (~3 menit dari push ke live)
+- Production preview URL: HTTP 200, semua elemen render dengan benar
+- Root cause terkonfirmasi: bug adapter findUnique di src/lib/db.ts — TIDAK menghonor `include` parameter
+- Fix 100% berfungsi: preview page 200 OK, API GET response lengkap
+- Task COMPLETE.
