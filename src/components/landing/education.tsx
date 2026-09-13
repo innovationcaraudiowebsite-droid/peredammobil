@@ -1,68 +1,44 @@
-import Link from 'next/link'
-import Image from 'next/image'
-import { Clock, ArrowRight } from 'lucide-react'
-import { eduImageUrl } from '@/lib/landing-images'
-
 /**
- * Edukasi section landing — section id="edukasi".
- * Vertical list dengan horizontal cards (gambar kiri 120×80 + konten kanan).
- * Konsisten dengan LatestArticles section.
+ * Jenis Bahan Peredam & Fungsinya section — section id="edukasi".
+ * Sesuai permintaan user: tampilkan 4 jenis bahan peredam (Butyl, Absorber,
+ * Spant, Nex) dengan deskripsi singkat fungsi masing-masing.
  *
- * Server component — static content.
+ * Layout: grid 2×2 (mobile: 1 kolom). Tiap card punya nomor besar (amber),
+ * nama bahan, dan deskripsi fungsi.
  */
-type EduCard = {
-  slug: string
-  title: string
-  bullets: string[]
-  href: string
-  readTime: string
+
+type BahanItem = {
+  no: number
+  name: string
+  fungsi: string
 }
 
-const CARDS: EduCard[] = [
+const BAHAN_LIST: BahanItem[] = [
   {
-    slug: 'kenapa-peredam',
-    title: 'Kenapa Peredam?',
-    bullets: [
-      'Kurangi kebisingan kabin',
-      'Audio lebih jernih',
-      'Kabin senyap & nyaman',
-      'Nilai jual mobil naik',
-    ],
-    href: '/berita/peredam-mobil',
-    readTime: '2 mnt',
+    no: 1,
+    name: 'Butyl',
+    fungsi:
+      'Peredam getaran utama yang dipasang langsung ke pelat logam (pintu, lantai, kap mesin). Butyl rubber tebal 2–4mm menyerap getaran mesin & jalan, menambah massa pelat sehingga mengurangi resonansi. Tahan panas dan tidak meleleh di suhu Jakarta.',
   },
   {
-    slug: 'cara-memilih',
-    title: 'Cara Memilih Peredam',
-    bullets: [
-      'Material butyl vs aspal',
-      'Ketebalan material',
-      'Brand terpercaya',
-      'Sesuai budget',
-    ],
-    href: '/berita/peredam-mobil/beda-damper-absorber-dan-barrier-yang-sering-tertukar',
-    readTime: '2 mnt',
+    no: 2,
+    name: 'Absorber',
+    fungsi:
+      'Material busa / foam berdaya serap tinggi yang menyerap suara udara di dalam kabin. Dipasang di atas lapisan butyl untuk menangkap frekuensi menengah-tinggi. Cocok untuk plafon, door trim, dan bawah kursi.',
   },
   {
-    slug: 'tips-biaya',
-    title: 'Tips & Biaya',
-    bullets: [
-      'Paket 4 pintu hemat',
-      'Paket full body',
-      'Estimasi biaya per area',
-      'Tips hemat tanpa kompromi',
-    ],
-    href: '/berita/tips-biaya',
-    readTime: '2 mnt',
+    no: 3,
+    name: 'Spant',
+    fungsi:
+      'Lapisan barrier (biasanya Mass Loaded Vinyl / MLV) yang menahan suara lolos dari luar ke kabin. Berat 1–4 kg/m², dipasang di lantai dan firewall. Efektif untuk frekuensi rendah mesin diesel & knalpot.',
+  },
+  {
+    no: 4,
+    name: 'Nex',
+    fungsi:
+      'Lapisan akustik komposit (kombinasi foam + barrier + foil) all-in-one. Praktis untuk area sempit, dipasang di pintu setelah butyl, atau di plafon. Memberikan damping + absorpsi + barrier dalam satu lapisan.',
   },
 ]
-
-/**
- * Join bullets jadi 1 paragraf dengan ". " separator.
- */
-function joinBullets(bullets: string[]): string {
-  return bullets.join('. ') + '.'
-}
 
 export function Education() {
   return (
@@ -71,62 +47,39 @@ export function Education() {
         {/* Section header */}
         <div className="max-w-2xl">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-            Edukasi Peredam Mobil
+            Jenis Bahan Peredam &amp; Fungsinya
           </h2>
           <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-            Pelajari dasar-dasar peredam sebelum pasang.
+            Kenali 4 jenis material utama yang dipakai workshop profesional.
           </p>
         </div>
 
-        {/* Vertical list — horizontal cards (gambar kiri + konten kanan) */}
-        <ul className="mt-8 space-y-4">
-          {CARDS.map((c) => (
+        {/* Grid 2×2 — 4 jenis bahan */}
+        <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+          {BAHAN_LIST.map((b) => (
             <li
-              key={c.title}
-              className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-amber-500/40"
+              key={b.no}
+              className="rounded-xl border border-border bg-card p-4 sm:p-6 transition-all duration-200 hover:shadow-md hover:border-amber-500/40"
             >
-              <Link href={c.href} className="group flex gap-3 sm:gap-4 items-start">
-                {/* Gambar kecil kiri 120×80 */}
-                <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[120px] h-[80px] sm:w-[140px] sm:h-[94px]">
-                  <Image
-                    src={eduImageUrl(c.slug)}
-                    alt={`Edukasi: ${c.title}`}
-                    fill
-                    sizes="(min-width: 640px) 140px, 120px"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
+              <div className="flex items-start gap-4">
+                {/* Nomor besar */}
+                <span
+                  className="shrink-0 flex size-12 sm:size-14 items-center justify-center rounded-full bg-amber-500 text-xl sm:text-2xl font-bold text-white tabular-nums"
+                  aria-hidden
+                >
+                  {b.no}
+                </span>
 
-                {/* Konten kanan */}
+                {/* Konten */}
                 <div className="min-w-0 flex-1">
-                  {/* Meta: badge Edukasi + read time */}
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-block rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                      Edukasi
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <Clock className="size-3" />
-                      {c.readTime} baca
-                    </span>
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="mt-1.5 font-semibold leading-snug group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                    {c.title}
+                  <h3 className="text-xl sm:text-2xl font-bold leading-tight">
+                    {b.name}
                   </h3>
-
-                  {/* Excerpt — join bullets jadi paragraf */}
-                  <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
-                    {joinBullets(c.bullets)}
+                  <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">
+                    {b.fungsi}
                   </p>
-
-                  {/* CTA */}
-                  <span className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-amber-700 dark:text-amber-400 group-hover:gap-1.5 transition-all">
-                    Pelajari
-                    <ArrowRight className="size-3.5" />
-                  </span>
                 </div>
-              </Link>
+              </div>
             </li>
           ))}
         </ul>

@@ -28,9 +28,8 @@ type NavLink = { href: string; label: string; isAnchor?: boolean }
 const NAV_LINKS: NavLink[] = [
   { href: '#hero', label: 'Beranda', isAnchor: true },
   { href: '#about', label: 'About', isAnchor: true },
-  { href: '#edukasi', label: 'Edukasi', isAnchor: true },
+  { href: '#edukasi', label: 'Jenis Bahan', isAnchor: true },
   { href: '#paket', label: 'Paket', isAnchor: true },
-  { href: '#artikel', label: 'Artikel', isAnchor: true },
   { href: '/berita', label: 'Portal Berita' },
 ]
 
@@ -68,17 +67,17 @@ export function LandingHeader() {
             </SheetTrigger>
             <SheetContent side="left" className="w-72 p-0">
               <SheetTitle className="sr-only">
-                Innovation Car Audio — Navigasi
+                Peredam Mobil Jakarta — Navigasi
               </SheetTitle>
               <SheetDescription className="sr-only">
-                Menu utama landing page Innovation Car Audio.
+                Menu utama landing page Peredam Mobil Jakarta.
               </SheetDescription>
               <div className="px-4 py-3 border-b border-border flex items-center gap-2">
                 <span className="inline-grid place-items-center size-9 rounded-md bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold text-sm">
-                  ICA
+                  PMJ
                 </span>
                 <span className="font-bold text-base bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent">
-                  Innovation Car Audio
+                  Peredam Mobil Jakarta
                 </span>
               </div>
               <nav className="px-2 py-2">
@@ -139,13 +138,13 @@ export function LandingHeader() {
           <Link
             href="/"
             className="flex items-center gap-2 shrink-0"
-            aria-label="Innovation Car Audio — Beranda"
+            aria-label="Peredam Mobil Jakarta — Beranda"
           >
             <span className="inline-grid place-items-center size-9 rounded-md bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold text-sm">
-              ICA
+              PMJ
             </span>
             <span className="font-bold text-base sm:text-lg leading-none tracking-tight bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent">
-              Innovation Car Audio
+              Peredam Mobil Jakarta
             </span>
           </Link>
 

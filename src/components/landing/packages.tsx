@@ -1,64 +1,73 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import { MessageCircle, ArrowRight } from 'lucide-react'
+import { MessageCircle, ArrowRight, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { paketImageUrl } from '@/lib/landing-images'
 
 /**
- * Paket section landing — section id="paket".
- * 2-column grid dengan horizontal cards (gambar kiri 120×80 + konten kanan).
- * Konsisten dengan LatestArticles & Education section.
- *
- * Server component — static content.
+ * Paket Layanan section — section id="paket".
+ * Sesuai permintaan user: 4 kotak paket layanan relevan untuk workshop peredam mobil.
+ * Bukan list produk material, tapi paket jasa pengerjaan berdasarkan area & kebutuhan.
  */
+
 const WA_NUMBER = '6282111222989'
 
 type Pkg = {
   name: string
-  slug: string
+  tagline: string
   desc: string
+  features: string[]
+  popular?: boolean
 }
 
 const PACKAGES: Pkg[] = [
   {
-    name: 'Gran Turismo 1.8mm',
-    slug: 'gran-turismo-1-8mm',
-    desc: 'Peredam butyl premium 1.8mm, fleksibel & tahan panas. Cocok untuk pintu dan panel kabin. Hasil damping maksimal.',
+    name: 'Paket 4 Pintu',
+    tagline: 'Hemat & paling diminta',
+    desc: 'Peredam 4 pintu dengan butyl 2mm + foam absorber. Audio speaker jernih, suara jalan berkurang.',
+    features: [
+      'Butyl 2mm di 4 pintu',
+      'Foam absorber di door trim',
+      'Pengerjaan 2–3 jam',
+      'Garansi 1 tahun',
+    ],
+    popular: true,
   },
   {
-    name: 'Gran Turismo 2mm',
-    slug: 'gran-turismo-2mm',
-    desc: 'Peredam butyl 2mm dengan lapisan aluminium tebal. Redam getaran pelat, kurangi derau jalan. Pilihan banyak workshop.',
+    name: 'Paket Full Kabin',
+    tagline: 'Komplit & senyap maksimal',
+    desc: 'Peredam lantai + 4 pintu + plafon. Redam derau jalan, mesin, dan getaran body secara menyeluruh.',
+    features: [
+      'Lantai: butyl 2mm + MLV barrier',
+      '4 pintu: butyl 2mm + foam',
+      'Plafon: foam absorber tebal',
+      'Pengerjaan 6–8 jam',
+    ],
   },
   {
-    name: 'Infinity',
-    slug: 'infinity',
-    desc: 'Material peredam Infinity, kualitas premium dengan harga kompetitif. Tahan lama & tidak meleleh di suhu Jakarta.',
+    name: 'Paket Kap Mesin',
+    tagline: 'Redam panas & suara mesin',
+    desc: 'Peredam kap mesin + firewall dengan heat barrier + butyl. Kurangi panas & derau mesin masuk kabin.',
+    features: [
+      'Butyl 3mm di kap mesin',
+      'Heat barrier alumunium foil',
+      'Firewall: MLV + foam',
+      'Tahan panas sampai 120°C',
+    ],
   },
   {
-    name: 'Rainbow 2mm',
-    slug: 'rainbow-2mm',
-    desc: 'Peredam Rainbow 2mm, butyl rubber berkualitas. Pilihan ekonomis untuk daily car. Hasil damping yang solid.',
-  },
-  {
-    name: 'Rainbow 3.5mm',
-    slug: 'rainbow-3-5mm',
-    desc: 'Peredam Rainbow 3.5mm, ketebalan optimal untuk lantai & wheel housing. Redam derau ban & jalan.',
-  },
-  {
-    name: 'Rainbow 4mm',
-    slug: 'rainbow-4mm',
-    desc: 'Peredam Rainbow 4mm, premium thickness. Maksimal damping untuk kabin senyap. Cocok untuk audiophile.',
-  },
-  {
-    name: 'Silent Coat 2mm',
-    slug: 'silent-coat-2mm',
-    desc: 'Silent Coat 2mm, material import Eropa. Kualitas terbaik untuk kabin premium. Tahan panas & lembab.',
+    name: 'Paket Wheel Housing',
+    tagline: 'Anti derau ban & suspensi',
+    desc: 'Peredam wheel housing (4 fender) dengan butyl tebal + foam. Redam suara ban & suspensi di jalan rusak.',
+    features: [
+      'Butyl 3.5mm di 4 fender',
+      'Foam absorber tebal',
+      'Anti air & tahan lembab',
+      'Pengerjaan 3–4 jam',
+    ],
   },
 ]
 
 function waLinkFor(name: string): string {
-  const text = `Halo, saya tertarik paket ${name}. Mohon info lengkap.`
+  const text = `Halo, saya tertarik ${name}. Mohon info harga & detail.`
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`
 }
 
@@ -69,88 +78,88 @@ export function Packages() {
         {/* Section header */}
         <div className="max-w-2xl">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-            Paket Produk Jasa Layanan
+            Paket Layanan
           </h2>
           <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-            Pilih material peredam premium untuk mobil Anda.
+            Pilih paket pengerjaan sesuai kebutuhan & budget mobil Anda.
           </p>
         </div>
 
-        {/* 2-col grid horizontal cards */}
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+        {/* 4 kotak — grid 2×2 (mobile: 1 kolom, lg: 4 kolom) */}
+        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {PACKAGES.map((p) => (
             <li
               key={p.name}
-              className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-amber-500/40"
+              className={`relative flex flex-col rounded-xl border bg-card p-4 sm:p-5 transition-all duration-200 hover:shadow-lg ${
+                p.popular
+                  ? 'border-amber-500 shadow-md'
+                  : 'border-border hover:border-amber-500/40'
+              }`}
             >
-              <div className="flex gap-3 sm:gap-4 items-start">
-                {/* Gambar kecil kiri 120×80 */}
-                <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[120px] h-[80px] sm:w-[140px] sm:h-[94px]">
-                  <Image
-                    src={paketImageUrl(p.slug)}
-                    alt={`Paket peredam mobil ${p.name} Innovation Car Audio Jakarta`}
-                    fill
-                    sizes="(min-width: 640px) 140px, 120px"
-                    className="object-cover transition-transform duration-300 hover:scale-105"
-                  />
-                </div>
+              {/* Badge popular */}
+              {p.popular && (
+                <span className="absolute -top-2.5 left-4 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow">
+                  Populer
+                </span>
+              )}
 
-                {/* Konten kanan */}
-                <div className="min-w-0 flex-1">
-                  {/* Meta: badge Premium */}
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-block rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                      Premium
-                    </span>
-                  </div>
+              {/* Tagline */}
+              <span className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                {p.tagline}
+              </span>
 
-                  {/* Title */}
-                  <h3 className="mt-1.5 font-semibold leading-snug">
-                    {p.name}
-                  </h3>
+              {/* Title */}
+              <h3 className="mt-1 text-lg sm:text-xl font-bold leading-tight">
+                {p.name}
+              </h3>
 
-                  {/* Deskripsi */}
-                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                    {p.desc}
-                  </p>
+              {/* Description */}
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                {p.desc}
+              </p>
 
-                  {/* Harga + Tombol Pesan */}
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Harga:
-                      </span>
-                      <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">
-                        Hubungi admin
-                      </span>
-                    </div>
-                    <Button
-                      asChild
-                      size="sm"
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                    >
-                      <a
-                        href={waLinkFor(p.name)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <MessageCircle className="size-3.5" />
-                        Pesan via WA
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              {/* Features */}
+              <ul className="mt-4 space-y-1.5 flex-1">
+                {p.features.map((f) => (
+                  <li
+                    key={f}
+                    className="flex items-start gap-2 text-xs sm:text-sm text-foreground/90"
+                  >
+                    <Check
+                      className="mt-0.5 size-3.5 shrink-0 text-amber-500"
+                      aria-hidden
+                    />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* CTA */}
+              <Button
+                asChild
+                size="sm"
+                className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white"
+              >
+                <a
+                  href={waLinkFor(p.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <MessageCircle className="size-3.5" />
+                  Pesan via WA
+                </a>
+              </Button>
             </li>
           ))}
         </ul>
 
-        {/* Note di bawah grid */}
+        {/* Note */}
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          * Harga bisa berubah, hubungi admin untuk harga terbaru.
+          * Harga bisa berubah, hubungi admin untuk harga terbaru & estimasi
+          khusus mobil Anda.
         </p>
 
-        {/* CTA secondary — lihat semua artikel (link ke /berita) */}
+        {/* CTA secondary */}
         <div className="mt-6 text-center">
           <Button asChild variant="outline" size="sm">
             <Link href="/berita">

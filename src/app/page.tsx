@@ -3,7 +3,6 @@ import { Hero } from '@/components/landing/hero'
 import { About } from '@/components/landing/about'
 import { Education } from '@/components/landing/education'
 import { Packages } from '@/components/landing/packages'
-import { LatestArticles } from '@/components/landing/latest-articles'
 import { SectionDivider } from '@/components/landing/section-divider'
 
 // Always render at request time (runtime) — Vercel injects env vars at
@@ -15,21 +14,13 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 /**
- * Landing page workshop "Innovation Car Audio" — root route `/`.
+ * Landing page "Peredam Mobil Jakarta" — root route `/`.
  *
- * 5 section + dividers:
- *  1. Hero             — headline, subtitle, CTA WhatsApp + Lihat Paket, trust badges
- *  2. About            — foto AI, teks, 4 stat cards, spesialisasi
- *  3. Edukasi          — 3 card (Kenapa Peredam, Cara Memilih, Tips & Biaya)
- *  4. Paket            — 7 produk card (Gran Turismo, Infinity, Rainbow, Silent Coat)
- *  5. Artikel Terbaru  — 4 card vertical list dari DB
- *
- * Dividers:
- *  Hero → About:       gradient line (dark → dark)
- *  About → Edukasi:    wave SVG (dark → light)
- *  Edukasi → Paket:    gradient line (light → light)
- *  Paket → Artikel:    gradient line (light → light)
- *  Artikel → Footer:   wave SVG (light → dark)
+ * 4 section + divider line sederhana antar section:
+ *  1. Hero             — banner gambar lengkap (sudah berisi judul, subtitle, icon)
+ *  2. About            — "About me" + lorem ipsum 100 karakter
+ *  3. Jenis Bahan      — 4 jenis material peredam (Butyl, Absorber, Spant, Nex)
+ *  4. Paket Layanan    — 4 paket jasa (4 Pintu, Full Kabin, Kap Mesin, Wheel Housing)
  *
  * Footer simpel 1 baris (kontak + alamat + copyright).
  */
@@ -39,42 +30,33 @@ export default async function LandingPage() {
       <LandingHeader />
 
       <main className="flex-1">
-        {/* Section 1: Hero (dark bg) */}
+        {/* Section 1: Hero (gambar saja) */}
         <Hero />
 
-        {/* Divider: Hero → About (dark → dark, gradient line) */}
+        {/* Divider: Hero → About */}
         <SectionDivider variant="line" />
 
-        {/* Section 2: About (dark bg) */}
+        {/* Section 2: About (judul + lorem ipsum) */}
         <About />
 
-        {/* Divider: About → Edukasi (dark → light, wave SVG) */}
-        <SectionDivider variant="wave-down" />
+        {/* Divider: About → Jenis Bahan */}
+        <SectionDivider variant="line" />
 
-        {/* Section 3: Edukasi (light bg) */}
+        {/* Section 3: Jenis Bahan Peredam & Fungsinya */}
         <Education />
 
-        {/* Divider: Edukasi → Paket (light → light, gradient line) */}
+        {/* Divider: Jenis Bahan → Paket */}
         <SectionDivider variant="line" />
 
-        {/* Section 4: Paket (light bg) */}
+        {/* Section 4: Paket Layanan */}
         <Packages />
-
-        {/* Divider: Paket → Artikel (light → light, gradient line) */}
-        <SectionDivider variant="line" />
-
-        {/* Section 5: Artikel (light bg) */}
-        <LatestArticles />
-
-        {/* Divider: Artikel → Footer (light → dark, wave SVG) */}
-        <SectionDivider variant="wave-up" />
       </main>
 
       {/* Footer simpel 1 baris */}
       <footer className="bg-slate-950 text-slate-300 py-6 mt-auto">
         <div className="container mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-2 text-center sm:text-left">
-            <span className="font-bold text-amber-500">Innovation Car Audio</span>
+            <span className="font-bold text-amber-500">Peredam Mobil Jakarta</span>
             <span className="hidden sm:inline text-slate-500">·</span>
             <span className="text-slate-400 text-xs sm:text-sm">
               Jl. Taman Surya Blvd 3 Blok H1 No.9, Kalideres, Jakarta Barat 11830
