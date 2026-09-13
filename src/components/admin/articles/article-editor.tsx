@@ -22,6 +22,7 @@ import {
   InsertThematicBreak,
   ListsToggle,
   UndoRedo,
+  Separator,
 } from '@mdxeditor/editor'
 
 import '@mdxeditor/editor/style.css'
@@ -37,6 +38,12 @@ interface ArticleEditorProps {
  * MDX editor wrapper untuk artikel body.
  * Plugins: headings, lists, link + dialog, image (with inline upload handler),
  * quote, thematic break, code block, markdown shortcut, toolbar.
+ *
+ * Catatan behavior Enter:
+ *  - Enter 1x di akhir paragraf = buat paragraf baru (Lexical default split).
+ *  - Shift+Enter = soft break (line break di dalam paragraf yang sama, <br>).
+ *  - Toolbar "Block type" (Paragraph / Heading / Quote) bisa pakai untuk
+ *    ganti tipe block tanpa harus ketik markdown.
  */
 export function ArticleEditor({
   value,
@@ -75,16 +82,20 @@ export function ArticleEditor({
         markdown={value}
         onChange={onChange}
         placeholder={placeholder}
-        contentEditableClassName="prose prose-sm dark:prose-invert max-w-none min-h-[400px] px-4 py-3 focus:outline-none"
+        contentEditableClassName="prose prose-sm dark:prose-invert max-w-none min-h-[400px] px-4 py-3 focus:outline-none prose-blockquote:border-amber-500 prose-blockquote:bg-amber-50 prose-blockquote:rounded-r-md prose-blockquote:px-4 prose-blockquote:py-2 prose-blockquote:not-italic"
         className="min-h-[460px]"
         plugins={[
           toolbarPlugin({
             toolbarContents: () => (
               <>
                 <UndoRedo />
+                <Separator />
                 <BlockTypeSelect />
+                <Separator />
                 <BoldItalicUnderlineToggles />
+                <Separator />
                 <ListsToggle />
+                <Separator />
                 <CreateLink />
                 <InsertImage />
                 <InsertThematicBreak />

@@ -146,7 +146,7 @@ export default async function PreviewPage({
 
           {/* Content */}
           <div
-            className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-a:text-amber-600 prose-img:rounded-lg"
+            className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-a:text-amber-600 prose-img:rounded-lg prose-blockquote:border-amber-500 prose-blockquote:bg-amber-50 prose-blockquote:not-italic prose-blockquote:rounded-r-md prose-blockquote:px-4 prose-blockquote:py-3"
             dangerouslySetInnerHTML={{ __html: article.content || '' }}
           />
 
