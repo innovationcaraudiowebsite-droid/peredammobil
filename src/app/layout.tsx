@@ -28,7 +28,7 @@ const SITE_NAME_FALLBACK = "Peredam Mobil Jakarta";
 const TAGLINE_FALLBACK = "Spesialis Peredam Mobil & Audio Car Jakarta Jabodetabek";
 
 const DESCRIPTION =
-  "Jasa peredam mobil Jakarta terpercaya sejak 2015. Workshop Innovation Car Audio spesialis peredam pintu, lantai, kap mesin & upgrade audio mobil. Melayani Jabodetabek. Material premium, garansi resmi, harga terbaik.";
+  "Jasa peredam mobil Jakarta terpercaya sejak 2015. Workshop Peredam Mobil Jakarta spesialis peredam pintu, lantai, kap mesin & upgrade audio mobil. Melayani Jabodetabek. Material premium, garansi resmi, harga terbaik.";
 
 const KEYWORDS = [
   // === Keyword Utama ===
@@ -255,9 +255,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: DESCRIPTION,
     keywords: KEYWORDS,
-    authors: [{ name: "Innovation Car Audio" }],
-    creator: "Innovation Car Audio",
-    publisher: "Innovation Car Audio",
+    authors: [{ name: "Peredam Mobil Jakarta" }],
+    creator: "Peredam Mobil Jakarta",
+    publisher: "Peredam Mobil Jakarta",
     applicationName: s.siteName,
     robots: {
       index: true,

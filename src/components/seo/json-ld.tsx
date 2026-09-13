@@ -102,7 +102,7 @@ export async function WebSiteSchema(): Promise<JsonLdObject> {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  LocalBusiness (Innovation Car Audio, Kalideres Jakarta)                    */
+/*  LocalBusiness (Peredam Mobil Jakarta, Kalideres Jakarta)                   */
 /* -------------------------------------------------------------------------- */
 
 export async function LocalBusinessSchema(): Promise<JsonLdObject> {
@@ -110,7 +110,7 @@ export async function LocalBusinessSchema(): Promise<JsonLdObject> {
     'Jl. Taman Surya Boulevard 3 Blok H1 No.9, Pegadungan, Kalideres, Jakarta Barat 11830'
   let email = 'innovationcaraudio@gmail.com'
   let phone: string | null = null
-  let name = 'Innovation Car Audio'
+  let name = 'Peredam Mobil Jakarta'
 
   try {
     const s = (await db.siteSetting.upsert({

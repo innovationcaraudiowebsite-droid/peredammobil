@@ -73,7 +73,7 @@ export default async function AdminLoginPage() {
           </p>
 
           <p className="mt-4 text-center text-[11px] text-amber-100/50">
-            © {new Date().getFullYear()} Peredam Mobil Jakarta · Innovation Car Audio
+            © {new Date().getFullYear()} Peredam Mobil Jakarta
           </p>
         </div>
       </div>
