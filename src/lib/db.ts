@@ -38,6 +38,7 @@ interface FindOptions {
 interface FindUniqueOptions {
   where: WhereClause
   select?: Record<string, unknown>
+  include?: Record<string, unknown>
 }
 
 interface CreateOptions {
@@ -303,6 +304,36 @@ function makeModel<T = any>(table: string) {
           }
         }
 
+        // Manual include: versions (article_versions child of articles, 1-n)
+        // Used by GET /api/admin/articles/[id] which passes
+        // `include: { versions: { orderBy: { versionNumber: 'desc' } } }`.
+        const needsVersions = includeKeys.includes('versions')
+        if (needsVersions && rows.length > 0 && table === 'articles') {
+          const aIds = rows.map((r: any) => r.id)
+          let verQuery = getSupabaseAdmin().from('article_versions').select('*').in('articleId', aIds)
+          // Honor nested orderBy if provided as { versions: { orderBy: { versionNumber: 'desc' } } }
+          const verInclude = opts.include?.versions as any
+          if (verInclude && typeof verInclude === 'object' && verInclude.orderBy) {
+            const ob = verInclude.orderBy
+            const entries = Array.isArray(ob) ? ob : [ob]
+            for (const o of entries) {
+              for (const [k, dir] of Object.entries(o)) {
+                verQuery = verQuery.order(k, { ascending: (dir as string) === 'asc' })
+              }
+            }
+          } else {
+            verQuery = verQuery.order('versionNumber', { ascending: false })
+          }
+          const { data: vers } = await verQuery
+          const versByArticle = new Map<string, any[]>()
+          for (const v of (vers || [])) {
+            const arr = versByArticle.get(v.articleId) || []
+            arr.push(convertDates(v))
+            versByArticle.set(v.articleId, arr)
+          }
+          rows = rows.map((r: any) => ({ ...r, versions: versByArticle.get(r.id) || [] }))
+        }
+
         // Manual include: editedByUser (article_versions)
         if (needsEditedByUser && rows.length > 0 && table === 'article_versions') {
           const uIds = [...new Set(rows.map((r: any) => r.editedByUserId).filter(Boolean))]
@@ -404,6 +435,28 @@ function makeModel<T = any>(table: string) {
     },
 
     async findUnique(opts: FindUniqueOptions): Promise<T | null> {
+      // Defensive: prefer exact single() only when no relations are requested.
+      // When `include` is present, delegate to findMany — which has full
+      // manual m-n / 1-n include support (category, tags, versions, etc.).
+      // Without this, callers like the preview page that pass
+      // `include: { category: true, tags: true }` would get back a row
+      // with `article.category === undefined` (NOT null), causing crashes
+      // like `article.category.name` → TypeError → HTTP 500.
+      if (opts.include && Object.keys(opts.include).length > 0) {
+        try {
+          const rows = await (this as any).findMany({
+            where: opts.where as WhereClause,
+            select: opts.select as Record<string, unknown> | undefined,
+            include: opts.include as Record<string, unknown>,
+            take: 1,
+          })
+          return rows[0] || null
+        } catch (err) {
+          console.error(`[db.${table}.findUnique] include-delegate catch:`, err)
+          return null
+        }
+      }
+
       try {
         let q = getSupabaseAdmin().from(table)
         const selectStr = buildSelectString(opts.select, undefined)

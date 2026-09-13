@@ -34,6 +34,14 @@ export default async function PreviewPage({
   })
   if (!article) notFound()
 
+  // Defensive: category bisa null/undefined jika categoryId orphan (category
+  // dihapus tapi artikel masih merujuk). Tanpa guard ini, akses
+  // `article.category.name` akan throw TypeError → HTTP 500 dan preview
+  // page tidak bisa direview.
+  const categoryName = article.category?.name ?? 'Tanpa Kategori'
+  const categorySlug = article.category?.slug ?? 'tanpa-kategori'
+  const tagsList = article.tags ?? []
+
   const publishedAtStr = article.publishedAt
     ? format(article.publishedAt, 'd MMMM yyyy HH:mm', { locale: localeId })
     : format(article.createdAt, 'd MMMM yyyy HH:mm', { locale: localeId })
@@ -86,7 +94,7 @@ export default async function PreviewPage({
                 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-700'
               }
             >
-              {article.category.name}
+              {categoryName}
             </Badge>
             {article.isFeatured && (
               <Badge
@@ -143,13 +151,13 @@ export default async function PreviewPage({
           />
 
           {/* Tags */}
-          {article.tags.length > 0 && (
+          {tagsList.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 border-t pt-4">
               <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground">
                 <Tag className="h-4 w-4" />
                 Tag:
               </span>
-              {article.tags.map((t) => (
+              {tagsList.map((t) => (
                 <Badge key={t.id} variant="secondary" className="gap-1">
                   #{t.name}
                 </Badge>
@@ -177,7 +185,7 @@ export default async function PreviewPage({
               </div>
               <div>
                 <dt className="font-semibold">Slug:</dt>
-                <dd className="text-muted-foreground">/berita/{article.category.slug}/{article.slug}</dd>
+                <dd className="text-muted-foreground">/berita/{categorySlug}/{article.slug}</dd>
               </div>
               <div>
                 <dt className="font-semibold">Word count:</dt>
