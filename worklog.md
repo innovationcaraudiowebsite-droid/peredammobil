@@ -1290,3 +1290,46 @@ Stage Summary:
 - Title artikel pakai min-h-[2.6rem] supaya semua 2 baris konsisten.
 - Production verified via agent-browser: semua card uniform, heightDiff 0.
 - Task COMPLETE.
+
+---
+Task ID: LANDING-PROPORSI-GAMBAR-MOBILE
+Agent: main
+Task: Hapus features list di Section 4 (Paket Layanan) + proporsi card konsisten dengan tinggi gambar di mobile.
+
+Work Log:
+- User request: hapus features checklist (Butyl 2mm, Foam absorber, Pengerjaan 2-3 jam, Garansi 1 thn) di Section 4 Paket Layanan supaya card proporsi dengan tinggi gambar di mode mobile. Berlaku juga untuk semua section.
+
+- Wireframe dibuat dulu:
+  Desktop: gambar 120×120 + konten kanan (tagline + title 1 baris + desc 2 baris) → card ~144px
+  Mobile: gambar 100×100 + konten kanan → card ~124px
+
+- Sebelum fix (mobile 375px):
+  - Section 3 (Jenis Bahan): card 201px (desc 3 baris, no line-clamp)
+  - Section 4 (Paket): card 128-152px (4 features checklist tambahan)
+  - Section 5 (Artikel): card 165px (title min-h 2 baris + desc 2 baris)
+
+- Fix 1: HAPUS features checklist di packages.tsx (4 li per card). Juga hapus import Check icon dan min-h-[160px].
+- Fix 2: HAPUS min-h-[160px] di education.tsx dan latest-articles.tsx supaya card natural height (gambar + padding).
+- Fix 3: Tambah line-clamp-2 di Section 3 desc (sebelumnya tidak ada line-clamp, desc tampil penuh 3 baris).
+- Fix 4: Tambah line-clamp-1 di Section 4 title (supaya "Paket Wheel Housing" 19 char tidak pecah 2 baris di mobile).
+
+- File changed: 3 (packages.tsx, education.tsx, latest-articles.tsx)
+- Lint: 0 errors.
+- Push: 0d72e5a..4f927e3..bae2207..fae7f87 (3 commit, main -> main)
+- Vercel deploy sukses ~3 menit (CSS line-clamp-1 butuh tunggu extra).
+
+Verification (via agent-browser, mobile 375px):
+- Section 3 (Jenis Bahan): 4 cards, ALL 132px, ratio 1.35× image, uniform: true (diff 0px)
+- Section 4 (Paket Layanan): 4 cards, ALL 128px, ratio 1.31× image, uniform: true (diff 0px) — PALING dekat dengan tinggi gambar
+- Section 5 (Artikel Terbaru): 3 cards, ALL 165px, ratio 1.68× image, uniform: true (diff 0px) — sedikit lebih tinggi karena title artikel panjang butuh 2 baris untuk readability
+
+Section 4 (Paket Layanan) sekarang PALING proporsional dengan gambar (128px vs image 98px, ratio 1.31). Features checklist sudah dihapus, card hanya: gambar + tagline + title (1 baris) + desc (2 baris).
+
+Stage Summary:
+- Features list di Section 4 dihapus total (4 checklist per card).
+- Card height sekarang natural = tinggi gambar + padding (128px mobile, 144px desktop).
+- Semua 3 section uniform internal (diff 0px antar card dalam section yang sama).
+- Section 3 (132px) dan Section 4 (128px) sangat dekat dengan tinggi gambar.
+- Section 5 (165px) sedikit lebih tinggi karena title artikel butuh 2 baris (min-h-[2.6rem]) untuk readability.
+- Production verified via agent-browser mobile 375px: semua card uniform.
+- Task COMPLETE.
