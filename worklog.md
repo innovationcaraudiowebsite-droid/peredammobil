@@ -995,3 +995,56 @@ Stage Summary:
 - Production verified via agent-browser: editor & preview page keduanya render blockquote dengan styling yang sama persis (amber border-left 4px, bg amber-50/50, italic, padding 12px 16px).
 - Enter key berfungsi untuk paragraf baru. Blockquote bisa di-insert lewat Block type dropdown (pilih "Quote").
 - Task COMPLETE.
+
+---
+Task ID: LANDING-REDESIGN-4SECTION
+Agent: main
+Task: Redesign landing page sesuai brief user — 4 section + divider line sederhana.
+
+Work Log:
+- Brief user:
+  1. Hero: ganti dengan gambar banner user (tidak ada counter, hanya gambar).
+  2. Section 2: hanya "About me" + lorem ipsum 100 karakter.
+  3. Divider: hanya line sederhana antar section.
+  4. Section 3: "Jenis Bahan Peredam & Fungsinya" — 4 jenis: Butyl, Absorber, Spant, Nex.
+  5. Section 4: "Paket Layanan" — 4 kotak relevan.
+  6. Semua text "Innovation Car Audio" ganti jadi "Peredam Mobil Jakarta".
+- Analisa gambar hero yang diupload (peredam mobil hero ok.png, 1717×916) via VLM skill:
+  Banner lengkap berisi judul "Peredam Mobil Jakarta" + subtitle "Panduan Lengkap Material dan Cara Pasang yang Benar" + 3 icon fitur (Material Berkualitas, Cara Pasang yang Benar, Hasil Maksimal Redam Suara & Getaran) + foto door mobil dengan deadening.
+- Copy gambar ke public/hero-peredam-mobil-jakarta.png (1.9MB).
+- Rewrite 7 file:
+  1. src/components/landing/hero.tsx — gambar saja (Next/Image dengan width 1717, height 916, sizes 100vw). Hapus counter, text overlay, CTA button, motion animation.
+  2. src/components/landing/about.tsx — hanya h2 "About me" + p lorem ipsum 100 char (dipotong tepat 100). Layout minimalis center.
+  3. src/components/landing/education.tsx — judul "Jenis Bahan Peredam & Fungsinya" + grid 2x2 dengan 4 jenis bahan (Butyl, Absorber, Spant, Nex). Tiap card: nomor besar amber di lingkaran + nama + deskripsi fungsi 1 paragraf.
+  4. src/components/landing/packages.tsx — judul "Paket Layanan" + grid 4 (Paket 4 Pintu populer, Paket Full Kabin, Paket Kap Mesin, Paket Wheel Housing). Tiap card: tagline amber, nama, desc, 4 features checklist, CTA WhatsApp. Badge "Populer" untuk paket pertama.
+  5. src/app/page.tsx — 4 section + 3 SectionDivider variant="line". Hapus LatestArticles section (4 section saja sesuai brief).
+  6. src/components/landing/landing-header.tsx — logo text "Innovation Car Audio" → "Peredam Mobil Jakarta", monogram "ICA" → "PMJ", nav label "Edukasi" → "Jenis Bahan", hapus "Artikel" (tidak ada section lg).
+  7. Footer (di page.tsx) — brand text "Innovation Car Audio" → "Peredam Mobil Jakarta".
+- Bonus cleanup: ganti sisa "Innovation Car Audio" di metadata:
+  - src/app/layout.tsx: DESCRIPTION meta, authors, creator, publisher
+  - src/components/seo/json-ld.tsx: LocalBusinessSchema default name
+  - src/app/admin/login/page.tsx: footer copyright line
+- Restore src/app/api/admin/upload/route.ts yang accidentally hilang dari working tree (gitignore match issue).
+
+Verification (via agent-browser):
+- Push 1: 734ef93 → Vercel deploy sukses, hero image ter-load, semua section terdeteksi.
+- Push 2: aa22e86 → brand cleanup deploy, "Innovation Car Audio" tidak ada lagi di visible UI.
+- Hero: image src /hero-peredam-mobil-jakarta.png, natural 1144×610, display 1280×683 (rasio 1.87:1 dipertahankan). Background putih, no overlay. ✓
+- About: "About me" heading + lorem ipsum 100 char (dipotong tepat di "magn"). ✓
+- Jenis Bahan: heading "Jenis Bahan Peredam & Fungsinya", 4 items (Butyl, Absorber, Spant, Nex) dengan nomor besar amber. ✓
+- Paket Layanan: heading "Paket Layanan", 4 card (Paket 4 Pintu "Hemat & paling diminta" popular, Paket Full Kabin "Komplit & senyap maksimal", Paket Kap Mesin "Redam panas & suara mesin", Paket Wheel Housing "Anti derau ban & suspensi"). Tiap card punya 4 features checklist + WA button. ✓
+- Header brand: "Peredam Mobil Jakarta" ✓
+- Footer brand: "Peredam Mobil Jakarta" ✓
+- Nav links: Beranda, About, Jenis Bahan, Paket, Portal Berita ✓
+- Divider: 3 line divider antar 4 section ✓
+- Visible "Innovation Car Audio" text di UI: 0 instance ✓
+
+Stage Summary:
+- Landing page dire-design sesuai brief user — 4 section sederhana + divider line.
+- Hero: gambar banner user (1717×916) sebagai hero full-bleed, no overlay.
+- About: minimalis "About me" + lorem 100 char.
+- Jenis Bahan: 4 card grid 2x2 (Butyl, Absorber, Spant, Nex).
+- Paket Layanan: 4 card grid (4 Pintu, Full Kabin, Kap Mesin, Wheel Housing).
+- Brand "Innovation Car Audio" → "Peredam Mobil Jakarta" di semua visible UI + metadata.
+- Production verified via agent-browser: semua element render dengan benar.
+- Task COMPLETE.
