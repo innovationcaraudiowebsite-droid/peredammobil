@@ -1189,3 +1189,56 @@ Stage Summary:
 - Brand color match dengan hero gambar (sudah di-verify exact: #c48e55 = #c48e55).
 - Production verified via agent-browser: semua perubahan live.
 - Task COMPLETE.
+
+---
+Task ID: LANDING-THUMBNAIL-ASPECT-SQUARE
+Agent: main
+Task: Perbaiki proporsi thumbnail di Section 3 (Paket Layanan) & Section 5 (Artikel Terbaru) supaya konsisten dengan Section 4. Section artikel 3 (bukan 4).
+
+Work Log:
+- User upload Screenshot_4.png + request: gambar thumbnail tinggi & proporsional sama dengan artikel, agar secara estetika terlihat persis (konsisten). Section Artikel Terbaru seharusnya 3 artikel, bukan 4.
+- Analisa Screenshot_4.png via VLM:
+  1. Thumbnail rasio tidak seragam (Butyl 4:3, Absorber & Spant 3:4 vertikal) — ada whitespace & jagged edge.
+  2. Visual hierarchy bagus tapi badge nomor kurang menonjol.
+  3. Padding kiri-kanan tidak simetris.
+  4. Density imbalance — text padat vs gambar longgar.
+- Root cause: container pakai fixed w-[140px] h-[94px] (ratio 1.49:1 landscape), tapi gambar source semua 1024×1024 (square 1:1). Dengan object-fit:cover, gambar di-crop tidak natural.
+
+- Fix 1: Ganti container dari fixed height ke aspect-square (1:1):
+  - W: w-[100px] sm:w-[120px] (lebih compact, dari 140px ke 120px desktop)
+  - H: hapus h-[94px], ganti aspect-square (auto height = width)
+  - Hasil: container 120×120 px desktop, 100×100 mobile (ratio 1:1)
+  - Gambar source 1024×1024 sekarang tampil penuh tanpa crop.
+
+- Fix 2: Section Artikel Terbaru 4 → 3 artikel:
+  - getLatestFourArticles → getLatestThreeArticles
+  - take: 4 → take: 3
+
+- Fix 3: Konten kanan pakai pt-0.5 supaya title h3 sejajar dengan top gambar (alignment improvement per VLM suggestion).
+
+- Fix 4: Badge nomor 01-04 di section 3 dibuat lebih menonjol:
+  - px-1.5 py-0.5 text-[10px] → px-2 py-0.5 text-xs (lebih besar)
+  - Hapus line-clamp-3 di deskripsi supaya tampil penuh.
+
+- Fix 5: Hapus sisa hover:border-amber-500/40 di education.tsx → hover:border-brand/40.
+
+- File changed: 3 (education.tsx, packages.tsx, latest-articles.tsx).
+- Lint: 0 errors.
+- Push: 4d6fce4..abe9861 main -> main ✓
+- Vercel deploy: 2 tahap (deployment pertama HTML, kedua CSS hash update). Total ~3 menit.
+
+Verification (via agent-browser):
+- Section 3 (edukasi): 4 cards, thumbnail 120×120 px ratio 1:1, allConsistent=true.
+- Section 4 (paket): 4 cards, thumbnail 120×120 px ratio 1:1, allConsistent=true.
+- Section 5 (artikel): 3 cards (BUKAN 4), thumbnail 120×120 px ratio 1:1, allConsistent=true.
+- Container aspectRatio computed: '1 / 1' (square), objectFit cover.
+- Image inside: objectFit cover, naturalWidth 119×119 (Next/Image optimized).
+- Section 5 articles: 3 artikel terbaru (Peredam Lantai Kabin, BR-V, Calya).
+
+Stage Summary:
+- Thumbnail 3 section konsisten: 120×120 px square, ratio 1:1, no crop issue.
+- Section Artikel Terbaru: 3 artikel (bukan 4), layout card sama dengan section 3 & 4.
+- Visual hierarchy diperbaiki: badge nomor lebih menonjol (text-xs), title sejajar top gambar (pt-0.5).
+- Padding konsisten p-3 sm:p-4 di semua card.
+- Production verified via agent-browser: semua perubahan live.
+- Task COMPLETE.
