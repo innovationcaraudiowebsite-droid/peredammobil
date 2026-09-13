@@ -1123,3 +1123,69 @@ Stage Summary:
 - Mobile-friendly: gambar 120×80 di mobile, 140×94 di desktop.
 - Production verified via agent-browser: semua element render dengan benar, layout konsisten.
 - Task COMPLETE.
+
+---
+Task ID: LANDING-BRAND-COLOR-FLOATING-ADMIN
+Agent: main
+Task: Ganti accent color amber-500 ke brand color sesuai hero gambar (#c48e55) + hapus CTA WA per card di section Paket, ganti dengan 1 floating button 'Hubungi Admin'.
+
+Work Log:
+- User feedback: warna kuning sekarang (amber-500 orange) tidak match dengan hero gambar. Ganti ke kuning yang sama dengan hero section. Hapus CTA WA per card paket, ganti dengan 1 floating button 'Hubungi Admin'.
+- Analisa warna hero gambar (peredam mobil hero ok.png) via sharp:
+  - Sample 9 titik di area judul & icon.
+  - Dapat warna golden-brown average: rgb(196, 142, 85) = #c48e55
+  - Top dominant: #c09050 (golden-brown khas)
+  - Icon-1 center: #c18b4f (sangat dekat dengan average)
+  - Kesimpulan: warna hero = "caramel/tan/dark goldenrod" #c48e55, BUKAN amber-500 #f59e0b (orange).
+
+- Diskusi warna (ditampilkan ke user sebelum implement):
+  - amber-500 (sekarang): #f59e0b (orange terang)
+  - Hero gambar (target): #c48e55 (caramel/tan)
+  - yellow-600 (alternatif): #ca8a04 (pure yellow-gold)
+  - amber-700 (alternatif): #b45309 (brown-orange)
+
+- Implement pilihan: pakai exact hero color #c48e55 + variant light (#d4ae86) & dark (#a16d3a).
+
+- File changed (8 file):
+  1. src/app/globals.css: tambah @theme custom color:
+     --color-brand: #c48e55
+     --color-brand-light: #d4ae86
+     --color-brand-dark: #a16d3a
+  2. src/components/landing/landing-header.tsx: 4 tempat amber-500/orange-600 → brand/brand-dark (logo gradient mobile + desktop, nav hover text, Masuk Admin link).
+  3. src/components/landing/section-divider.tsx: via-amber-500/30 → via-brand/30.
+  4. src/components/landing/education.tsx: badge nomor 01-04 bg-amber-500 → bg-brand, label text-amber-700 → text-brand.
+  5. src/components/landing/packages.tsx: HAPUS CTA WhatsApp per card (4 button). Badge populer bg-amber-500 → bg-brand. Tagline bg-amber-500/15 → bg-brand/15. Check icon text-amber-500 → text-brand. Border popular border-amber-500 → border-brand. Note ditambah info 'Hubungi Admin' float button dengan icon Phone.
+  6. src/components/landing/latest-articles.tsx: 4 tempat amber accent → brand (Lihat Semua Artikel link, hover border, fallback image gradient, title hover).
+  7. src/app/page.tsx: footer brand text-amber-500 → text-brand-light. Tambah render <FloatingAdminButton />.
+  8. src/components/landing/floating-admin-button.tsx: NEW.
+     - Fixed bottom-right, z-50.
+     - Muncul setelah scroll > 100px (supaya tidak overlap hero).
+     - Button: lingkaran brand gradient #c48e55 → #a16d3a, icon Phone, label 'Hubungi Admin' (hidden di mobile, show di sm+).
+     - Expand panel: 256×208 px dengan 3 opsi kontak:
+       - WhatsApp (emerald color, link wa.me/6282111222989)
+       - Telepon (brand color, link tel:082211122989)
+       - Email (neutral color, link mailto:innovationcaraudio@gmail.com)
+     - Auto-close saat klik luar atau saat scroll.
+     - Hover effect: shadow-xl + scale-105.
+
+- Lint: 0 errors.
+- Push: 61b6fb5..4d6fce4 main -> main ✓
+- Vercel deploy sukses ~1.5 menit.
+
+Verification (via agent-browser):
+- Header logo gradient: rgb(196, 142, 85) → rgb(161, 109, 58) ✓ (exact #c48e55 → #a16d3a)
+- Edukasi badge nomor background: rgb(196, 142, 85) = #c48e55 ✓
+- Floating button gradient: rgb(196, 142, 85) → rgb(161, 109, 58) ✓
+- Footer brand color: rgb(212, 174, 134) = #d4ae86 (brand-light) ✓
+- Floating button position: bottom-right, 16px dari bawah, size 182×44 ✓
+- Floating button expand panel: 256×208 px, 3 opsi kontak (WA, Telepon, Email) ✓
+- Paket WA button count per card: 0 (sebelumnya 4) ✓
+- Semua 4 card paket: hasWaButton=false, hasAnyCTA=false ✓
+- Section 3, 4, 5 layout konsisten (horizontal card, gambar kiri 140×94).
+
+Stage Summary:
+- Accent color landing page: amber-500 (orange) → brand #c48e55 (caramel/dark goldenrod sesuai hero gambar). Konsisten di header, divider, edukasi badge, paket accent, latest-articles accent, footer.
+- Section 4 Paket Layanan: 4 CTA WhatsApp per card dihapus. Diganti 1 floating button 'Hubungi Admin' (fixed bottom-right, expand panel 3 opsi: WA/Telp/Email).
+- Brand color match dengan hero gambar (sudah di-verify exact: #c48e55 = #c48e55).
+- Production verified via agent-browser: semua perubahan live.
+- Task COMPLETE.
