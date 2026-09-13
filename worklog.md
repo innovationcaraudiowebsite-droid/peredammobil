@@ -1048,3 +1048,32 @@ Stage Summary:
 - Brand "Innovation Car Audio" → "Peredam Mobil Jakarta" di semua visible UI + metadata.
 - Production verified via agent-browser: semua element render dengan benar.
 - Task COMPLETE.
+
+---
+Task ID: LANDING-RESTORE-ARTIKEL
+Agent: main
+Task: Sesuai feedback user "kurang seksen artikel seperti yang lama", kembalikan section artikel ke landing page.
+
+Work Log:
+- User feedback: landing page kurang section artikel seperti versi lama.
+- LatestArticles component (src/components/landing/latest-articles.tsx) masih ada di repo, hanya tidak dipakai di page.tsx setelah redesign sebelumnya.
+- Tambah kembali import & render LatestArticles sebagai section 5 di src/app/page.tsx, dengan SectionDivider variant="line" sebelumnya.
+- Kembalikan nav link 'Artikel' (#artikel anchor) di landing-header.tsx supaya user bisa scroll ke section artikel dari nav.
+- Lint: 0 errors.
+- Push: aa22e86..c91f46c main -> main ✓
+- Vercel deploy sukses (~2.5 menit).
+
+Verification (via agent-browser):
+- 5 section terurut: hero (no heading, gambar) → about (About me) → edukasi (Jenis Bahan Peredam & Fungsinya) → paket (Paket Layanan) → artikel (Artikel Terbaru).
+- Section artikel menampilkan 4 artikel terbaru dari DB:
+  1. "Peredam Lantai Kabin Jadi Kunci Mengurangi Resonansi Panel Mobil" (TIPS & BIAYA · 13 Sep 2026 · 4 mnt)
+  2. "Peredam Mobil BR-V: SUV Senyap untuk Harian dan Travel" (PEREDAM MOBIL · 8 Sep 2026 · 2 mnt)
+  3. "Peredam Mobil Calya: Paket Entry-Level yang Terasa" (PEREDAM MOBIL · 8 Sep 2026 · 2 mnt)
+  4. "Peredam Mobil Terios: Solusi Redam Kebisingan untuk SUV" (PEREDAM MOBIL · 8 Sep 2026 · 3 mnt)
+- Layout: vertical list dengan gambar kiri 120×80 + konten kanan (badge kategori, tanggal, read time, title, excerpt 100 char) — sama persis dengan versi lama.
+- Nav link "Artikel" aktif, scroll ke #artikel section.
+- Background berganti putih ↔ muted/30 (abu-abu lembut) — visual rhythm enak dilihat.
+
+Stage Summary:
+- Landing page sekarang punya 5 section lengkap sesuai brief user + section artikel versi lama.
+- Task COMPLETE.
