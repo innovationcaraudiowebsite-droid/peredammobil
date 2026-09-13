@@ -22,6 +22,7 @@ type LatestArticle = {
   title: string
   slug: string
   excerpt: string | null
+  contentMarkdown: string | null
   featuredImageUrl: string | null
   featuredImageAlt: string | null
   authorName: string
@@ -56,6 +57,7 @@ async function getLatestThreeArticles(): Promise<LatestArticle[]> {
         title: true,
         slug: true,
         excerpt: true,
+        contentMarkdown: true,
         featuredImageUrl: true,
         featuredImageAlt: true,
         authorName: true,
@@ -128,7 +130,7 @@ export async function LatestArticles() {
               return (
                 <li
                   key={a.id}
-                  className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-brand/40"
+                  className="rounded-xl border border-border bg-card p-3 sm:p-4 min-h-[160px] transition-all duration-200 hover:shadow-md hover:border-brand/40"
                 >
                   <Link href={href} className="group flex gap-3 sm:gap-4 items-start">
                     {/* Gambar kecil kiri — aspect-square (1:1) supaya rasio konsisten */}
@@ -169,17 +171,21 @@ export async function LatestArticles() {
                         </span>
                       </div>
 
-                      {/* Title (2-line clamp) */}
-                      <h3 className="mt-1.5 font-semibold leading-snug line-clamp-2 group-hover:text-brand dark:group-hover:text-brand-light transition-colors">
+                      {/* Title (2-line clamp + min-h supaya konsisten tinggi) */}
+                      <h3 className="mt-1.5 font-semibold leading-snug line-clamp-2 min-h-[2.6rem] group-hover:text-brand dark:group-hover:text-brand-light transition-colors">
                         {a.title}
                       </h3>
 
-                      {/* Excerpt 100 char */}
-                      {a.excerpt && (
-                        <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
-                          {truncate(a.excerpt, 100)}
-                        </p>
-                      )}
+                      {/* Excerpt 100 char — fallback ke strip HTML contentMarkdown bila excerpt kosong */}
+                      {(() => {
+                        const excerpt = a.excerpt
+                          || (a.contentMarkdown ? a.contentMarkdown.replace(/[#*_>`]/g, '').replace(/\s+/g, ' ').trim().slice(0, 100) + '…' : '')
+                        return excerpt ? (
+                          <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
+                            {truncate(excerpt, 100)}
+                          </p>
+                        ) : null
+                      })()}
                     </div>
                   </Link>
                 </li>

@@ -107,7 +107,7 @@ export function Packages() {
           {PACKAGES.map((p) => (
             <li
               key={p.name}
-              className={`rounded-xl border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md ${
+              className={`rounded-xl border bg-card p-3 sm:p-4 min-h-[160px] transition-all duration-200 hover:shadow-md ${
                 p.popular
                   ? 'border-brand shadow-sm'
                   : 'border-border hover:border-brand/40'

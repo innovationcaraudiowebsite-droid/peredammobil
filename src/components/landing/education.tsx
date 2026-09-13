@@ -20,29 +20,25 @@ const BAHAN_LIST: BahanItem[] = [
   {
     no: '01',
     name: 'Butyl',
-    fungsi:
-      'Peredam getaran utama yang dipasang langsung ke pelat logam (pintu, lantai, kap mesin). Butyl rubber tebal 2–4mm menyerap getaran mesin & jalan, menambah massa pelat sehingga mengurangi resonansi. Tahan panas dan tidak meleleh di suhu Jakarta.',
+    fungsi: 'Peredam getaran utama untuk pelat logam (pintu, lantai, kap mesin). Butyl rubber 2–4mm menyerap getaran mesin & jalan.',
     image: '/landing-img/bahan-butyl.png',
   },
   {
     no: '02',
     name: 'Absorber',
-    fungsi:
-      'Material busa / foam berdaya serap tinggi yang menyerap suara udara di dalam kabin. Dipasang di atas lapisan butyl untuk menangkap frekuensi menengah-tinggi. Cocok untuk plafon, door trim, dan bawah kursi.',
+    fungsi: 'Material busa/foam berdaya serap tinggi untuk suara udara. Dipasang di atas butyl, cocok untuk plafon & door trim.',
     image: '/landing-img/bahan-absorber.png',
   },
   {
     no: '03',
     name: 'Spant',
-    fungsi:
-      'Lapisan barrier (biasanya Mass Loaded Vinyl / MLV) yang menahan suara lolos dari luar ke kabin. Berat 1–4 kg/m², dipasang di lantai dan firewall. Efektif untuk frekuensi rendah mesin diesel & knalpot.',
+    fungsi: 'Lapisan barrier MLV yang menahan suara lolos ke kabin. Berat 1–4 kg/m², efektif untuk frekuensi mesin diesel.',
     image: '/landing-img/bahan-spant.png',
   },
   {
     no: '04',
     name: 'Nex',
-    fungsi:
-      'Lapisan akustik komposit (kombinasi foam + barrier + foil) all-in-one. Praktis untuk area sempit, dipasang di pintu setelah butyl, atau di plafon. Memberikan damping + absorpsi + barrier dalam satu lapisan.',
+    fungsi: 'Komposit all-in-one (foam + barrier + foil). Praktis untuk area sempit, dipasang di pintu atau plafon.',
     image: '/landing-img/bahan-nex.png',
   },
 ]
@@ -66,7 +62,7 @@ export function Education() {
           {BAHAN_LIST.map((b) => (
             <li
               key={b.no}
-              className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-brand/40"
+              className="rounded-xl border border-border bg-card p-3 sm:p-4 min-h-[160px] transition-all duration-200 hover:shadow-md hover:border-brand/40"
             >
               <div className="flex gap-3 sm:gap-4 items-start">
                 {/* Gambar kecil kiri — aspect-square (1:1) supaya rasio konsisten */}
