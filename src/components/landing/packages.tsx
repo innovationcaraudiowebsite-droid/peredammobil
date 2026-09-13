@@ -1,11 +1,15 @@
 import Link from 'next/link'
-import { MessageCircle, ArrowRight, Check } from 'lucide-react'
+import Image from 'next/image'
+import { MessageCircle, ArrowRight, Check, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /**
  * Paket Layanan section — section id="paket".
- * Sesuai permintaan user: 4 kotak paket layanan relevan untuk workshop peredam mobil.
- * Bukan list produk material, tapi paket jasa pengerjaan berdasarkan area & kebutuhan.
+ *
+ * Layout konsisten dengan section 5 (Artikel Terbaru) & section 3 (Jenis Bahan):
+ * horizontal card — gambar kiri 140×94 + konten kanan (badge + nama + desc + features + CTA).
+ *
+ * 4 paket jasa relevan: 4 Pintu (populer), Full Kabin, Kap Mesin, Wheel Housing.
  */
 
 const WA_NUMBER = '6282111222989'
@@ -15,6 +19,7 @@ type Pkg = {
   tagline: string
   desc: string
   features: string[]
+  image: string
   popular?: boolean
 }
 
@@ -29,6 +34,7 @@ const PACKAGES: Pkg[] = [
       'Pengerjaan 2–3 jam',
       'Garansi 1 tahun',
     ],
+    image: '/landing-img/paket-4-pintu.png',
     popular: true,
   },
   {
@@ -41,6 +47,7 @@ const PACKAGES: Pkg[] = [
       'Plafon: foam absorber tebal',
       'Pengerjaan 6–8 jam',
     ],
+    image: '/landing-img/paket-full-kabin.png',
   },
   {
     name: 'Paket Kap Mesin',
@@ -52,6 +59,7 @@ const PACKAGES: Pkg[] = [
       'Firewall: MLV + foam',
       'Tahan panas sampai 120°C',
     ],
+    image: '/landing-img/paket-kap-mesin.png',
   },
   {
     name: 'Paket Wheel Housing',
@@ -63,6 +71,7 @@ const PACKAGES: Pkg[] = [
       'Anti air & tahan lembab',
       'Pengerjaan 3–4 jam',
     ],
+    image: '/landing-img/paket-wheel-housing.png',
   },
 ]
 
@@ -76,86 +85,116 @@ export function Packages() {
     <section id="paket" className="border-t border-border bg-background">
       <div className="container mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
         {/* Section header */}
-        <div className="max-w-2xl">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-            Paket Layanan
-          </h2>
-          <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-            Pilih paket pengerjaan sesuai kebutuhan & budget mobil Anda.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div className="max-w-2xl">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+              Paket Layanan
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-muted-foreground">
+              Pilih paket pengerjaan sesuai kebutuhan &amp; budget mobil Anda.
+            </p>
+          </div>
+          <Link
+            href="/berita"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:gap-2.5 transition-all"
+          >
+            Lihat Panduan Lengkap
+            <ArrowRight className="size-4" />
+          </Link>
         </div>
 
-        {/* 4 kotak — grid 2×2 (mobile: 1 kolom, lg: 4 kolom) */}
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Vertical list — horizontal cards (gambar kiri 140×94 + konten kanan) */}
+        <ul className="mt-8 space-y-4">
           {PACKAGES.map((p) => (
             <li
               key={p.name}
-              className={`relative flex flex-col rounded-xl border bg-card p-4 sm:p-5 transition-all duration-200 hover:shadow-lg ${
+              className={`rounded-xl border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md ${
                 p.popular
-                  ? 'border-amber-500 shadow-md'
+                  ? 'border-amber-500 shadow-sm'
                   : 'border-border hover:border-amber-500/40'
               }`}
             >
-              {/* Badge popular */}
-              {p.popular && (
-                <span className="absolute -top-2.5 left-4 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow">
-                  Populer
-                </span>
-              )}
+              <div className="flex gap-3 sm:gap-4 items-start">
+                {/* Gambar kecil kiri 120×80 / 140×94 */}
+                <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[120px] h-[80px] sm:w-[140px] sm:h-[94px]">
+                  <Image
+                    src={p.image}
+                    alt={`Paket layanan ${p.name} — workshop Peredam Mobil Jakarta`}
+                    fill
+                    sizes="(min-width: 640px) 140px, 120px"
+                    className="object-cover transition-transform duration-300 hover:scale-105"
+                  />
+                  {/* Badge popular di pojok gambar */}
+                  {p.popular && (
+                    <span className="absolute top-1 left-1 inline-flex items-center gap-0.5 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow">
+                      <Star className="size-2.5 fill-current" />
+                      Populer
+                    </span>
+                  )}
+                </div>
 
-              {/* Tagline */}
-              <span className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                {p.tagline}
-              </span>
+                {/* Konten kanan */}
+                <div className="min-w-0 flex-1">
+                  {/* Meta: tagline */}
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-block rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                      {p.tagline}
+                    </span>
+                  </div>
 
-              {/* Title */}
-              <h3 className="mt-1 text-lg sm:text-xl font-bold leading-tight">
-                {p.name}
-              </h3>
+                  {/* Title */}
+                  <h3 className="mt-1.5 text-lg sm:text-xl font-bold leading-snug">
+                    {p.name}
+                  </h3>
 
-              {/* Description */}
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                {p.desc}
-              </p>
+                  {/* Deskripsi */}
+                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                    {p.desc}
+                  </p>
 
-              {/* Features */}
-              <ul className="mt-4 space-y-1.5 flex-1">
-                {p.features.map((f) => (
-                  <li
-                    key={f}
-                    className="flex items-start gap-2 text-xs sm:text-sm text-foreground/90"
-                  >
-                    <Check
-                      className="mt-0.5 size-3.5 shrink-0 text-amber-500"
-                      aria-hidden
-                    />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
+                  {/* Features + CTA — 2 kolom di desktop, stack di mobile */}
+                  <div className="mt-3 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+                    {/* Features checklist */}
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 sm:max-w-md">
+                      {p.features.map((f) => (
+                        <li
+                          key={f}
+                          className="flex items-start gap-1.5 text-xs text-foreground/90"
+                        >
+                          <Check
+                            className="mt-0.5 size-3.5 shrink-0 text-amber-500"
+                            aria-hidden
+                          />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
 
-              {/* CTA */}
-              <Button
-                asChild
-                size="sm"
-                className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white"
-              >
-                <a
-                  href={waLinkFor(p.name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <MessageCircle className="size-3.5" />
-                  Pesan via WA
-                </a>
-              </Button>
+                    {/* CTA WhatsApp */}
+                    <Button
+                      asChild
+                      size="sm"
+                      className="shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white"
+                    >
+                      <a
+                        href={waLinkFor(p.name)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MessageCircle className="size-3.5" />
+                        Pesan via WA
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </li>
           ))}
         </ul>
 
         {/* Note */}
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          * Harga bisa berubah, hubungi admin untuk harga terbaru & estimasi
+          * Harga bisa berubah, hubungi admin untuk harga terbaru &amp; estimasi
           khusus mobil Anda.
         </p>
 
