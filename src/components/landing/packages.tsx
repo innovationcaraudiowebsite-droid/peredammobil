@@ -141,8 +141,8 @@ export function Packages() {
                     </span>
                   </div>
 
-                  {/* Title */}
-                  <h3 className="mt-1.5 text-lg sm:text-xl font-bold leading-snug">
+                  {/* Title — single line (truncate) supaya card konsisten dengan tinggi gambar */}
+                  <h3 className="mt-1.5 text-lg sm:text-xl font-bold leading-snug line-clamp-1">
                     {p.name}
                   </h3>
 
