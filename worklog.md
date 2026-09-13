@@ -903,3 +903,26 @@ Stage Summary:
   - `cacheControl: 'public,max-age=31536000,immutable'` di semua upload Supabase — cache 1 tahun di Cloudflare CDN. Aman karena filename pakai timestamp+random jadi tidak akan collide. Re-upload = filename baru = cache otomatis fresh.
   - `upsert: false` di semua upload — kalau ada collision filename (sangat jarang karena random), Supabase akan return error dan route handler return 500. Tidak overwrite file existing.
   - Tidak ada perubahan: prisma schema, auth, front-end components (image-upload, article-editor, settings-form, tab-konten, tab-seo), next.config.ts (sudah punya Supabase remotePatterns dari Task M5).
+
+---
+Task ID: PREVIEW-500-FIX
+Agent: main
+Task: Analisa & fix kenapa halaman preview artikel (https://peredammobil.vercel.app/admin/articles/cmtso9o0h000wmox4ryfy2elj/preview) tidak bisa direview setelah bikin artikel.
+
+Work Log:
+- Login admin & fetch article via API GET /api/admin/articles/[id] — response TIDAK punya field `category`, `tags`, `versions` (padahal route-nya jelas pakai `include: { category, tags, versions }`).
+- Curl halaman preview → HTTP 500 (server runtime error). Body HTML menunjukkan `__next_error__` wrapper (Next.js SSR crash).
+- Inspeksi src/lib/db.ts: fungsi `findUnique()` (line 406-426) TIDAK menghonor parameter `include` — hanya `select`. Berbeda dengan `findMany()` (line 198+) yang sudah handle `include` manual (category, tags, author, articles, article, editedByUser).
+- Inspeksi src/app/admin/(dashboard)/articles/[id]/preview/page.tsx: line 89 akses `article.category.name` & line 180 akses `article.category.slug` TANPA null-check. Karena `article.category === undefined` (bukan null), akses `.name` throw TypeError → HTTP 500 → preview crash.
+- Bandingkan dengan edit page (src/app/admin/(dashboard)/articles/[id]/edit/page.tsx): sudah defensive — pakai try/catch, fetch categories/tags/versions terpisah via `findMany`, dan pakai `article.tags || []`. Itu sebabnya edit page tidak crash padahal pakai pola `findUnique + include` yang sama.
+- Fix 1 (root cause): refactor `findUnique()` di src/lib/db.ts — bila `include` ada, delegasikan ke `findMany({ where, select, include, take: 1 })`. Tambah interface `include?: Record<string, unknown>` ke `FindUniqueOptions`. Tambah handler baru di `findMany` untuk `versions` include (article_versions child, dengan nested orderBy) supaya API GET /api/admin/articles/[id] juga dapat response lengkap.
+- Fix 2 (defensif / belt-and-suspenders): preview page pakai optional chaining `article.category?.name` (fallback 'Tanpa Kategori'), `article.category?.slug` (fallback 'tanpa-kategori'), dan `article.tags ?? []`. Sehingga halaman tidak pernah crash meskipun category orphan.
+- Lint: 0 errors (3 warning lama, unrelated).
+- Commit local: 4ee45f5 "fix(admin): preview artikel 500 — findUnique adapter tidak honor include".
+- Patch file: /home/z/my-project/fix-preview-500.patch (siap apply manual).
+
+Stage Summary:
+- Root cause: bug adapter Supabase di src/lib/db.ts — `findUnique()` mengabaikan parameter `include`, sehingga `article.category` & `article.tags` selalu `undefined`. Preview page yang langsung akses `article.category.name` tanpa null-check → TypeError → HTTP 500.
+- Scope fix: 2 file (src/lib/db.ts, src/app/admin/(dashboard)/articles/[id]/preview/page.tsx), 65 insertions, 4 deletions.
+- Bonus: setelah fix, GET /api/admin/articles/[id] juga akan mengembalikan `category`, `tags`, dan `versions` (sebelumnya response tidak lengkap). Tidak ada consumer yang akan crash — hanya data lebih lengkap.
+- Belum di-push ke GitHub (sandbox tidak punya GitHub credentials). User perlu push manual: `cd /home/z/my-project && git push origin main`. Setelah Vercel auto-deploy (2-3 menit), halaman preview akan 200 OK.

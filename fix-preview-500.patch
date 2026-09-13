@@ -1,0 +1,174 @@
+From 4ee45f5d8a0b3cbd1a4630eb845109cfffe5781d Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Sun, 13 Sep 2026 06:07:23 +0000
+Subject: [PATCH] =?UTF-8?q?fix(admin):=20preview=20artikel=20500=20?=
+ =?UTF-8?q?=E2=80=94=20findUnique=20adapter=20tidak=20honor=20include?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Root cause:
+- src/lib/db.ts: findUnique() hanya menghonor , parameter
+  sepenuhnya diabaikan. Akibatnya, pemanggil seperti halaman preview yang
+  memakai
+  menerima row dengan  (bukan null).
+- src/app/admin/(dashboard)/articles/[id]/preview/page.tsx: langsung
+  mengakses  (line 89) &
+  (line 180). Karena category undefined → TypeError: Cannot read
+  properties of undefined (reading 'name') → HTTP 500 → preview tidak
+  bisa direview setelah bikin artikel.
+
+Fix:
+1. db.ts findUnique: bila  ada, delegasikan ke findMany yang
+   sudah punya manual include handler (category, tags, author, articles,
+   article, editedByUser). Tambah handler baru untuk
+   (article_versions child) supaya GET /api/admin/articles/[id] juga
+   dapat response lengkap.
+2. preview page: pakai optional chaining  dengan
+   fallback 'Tanpa Kategori' &  sebagai defensive
+   layer (belt-and-suspenders) supaya tidak pernah crash lagi meskipun
+   category orphan.
+
+Verification:
+- bun run lint: 0 errors (3 warning lama, unrelated)
+- Local dev compile OK (Supabase env vars tidak ada di sandbox, tapi
+  kode TypeScript compile sukses)
+---
+ .../articles/[id]/preview/page.tsx            | 16 ++++--
+ src/lib/db.ts                                 | 53 +++++++++++++++++++
+ 2 files changed, 65 insertions(+), 4 deletions(-)
+
+diff --git a/src/app/admin/(dashboard)/articles/[id]/preview/page.tsx b/src/app/admin/(dashboard)/articles/[id]/preview/page.tsx
+index 90679aa..9f9130f 100755
+--- a/src/app/admin/(dashboard)/articles/[id]/preview/page.tsx
++++ b/src/app/admin/(dashboard)/articles/[id]/preview/page.tsx
+@@ -34,6 +34,14 @@ export default async function PreviewPage({
+   })
+   if (!article) notFound()
+ 
++  // Defensive: category bisa null/undefined jika categoryId orphan (category
++  // dihapus tapi artikel masih merujuk). Tanpa guard ini, akses
++  // `article.category.name` akan throw TypeError → HTTP 500 dan preview
++  // page tidak bisa direview.
++  const categoryName = article.category?.name ?? 'Tanpa Kategori'
++  const categorySlug = article.category?.slug ?? 'tanpa-kategori'
++  const tagsList = article.tags ?? []
++
+   const publishedAtStr = article.publishedAt
+     ? format(article.publishedAt, 'd MMMM yyyy HH:mm', { locale: localeId })
+     : format(article.createdAt, 'd MMMM yyyy HH:mm', { locale: localeId })
+@@ -86,7 +94,7 @@ export default async function PreviewPage({
+                 'border-amber-300 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-700'
+               }
+             >
+-              {article.category.name}
++              {categoryName}
+             </Badge>
+             {article.isFeatured && (
+               <Badge
+@@ -143,13 +151,13 @@ export default async function PreviewPage({
+           />
+ 
+           {/* Tags */}
+-          {article.tags.length > 0 && (
++          {tagsList.length > 0 && (
+             <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+               <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                 <Tag className="h-4 w-4" />
+                 Tag:
+               </span>
+-              {article.tags.map((t) => (
++              {tagsList.map((t) => (
+                 <Badge key={t.id} variant="secondary" className="gap-1">
+                   #{t.name}
+                 </Badge>
+@@ -177,7 +185,7 @@ export default async function PreviewPage({
+               </div>
+               <div>
+                 <dt className="font-semibold">Slug:</dt>
+-                <dd className="text-muted-foreground">/berita/{article.category.slug}/{article.slug}</dd>
++                <dd className="text-muted-foreground">/berita/{categorySlug}/{article.slug}</dd>
+               </div>
+               <div>
+                 <dt className="font-semibold">Word count:</dt>
+diff --git a/src/lib/db.ts b/src/lib/db.ts
+index 126b85f..058ae53 100755
+--- a/src/lib/db.ts
++++ b/src/lib/db.ts
+@@ -38,6 +38,7 @@ interface FindOptions {
+ interface FindUniqueOptions {
+   where: WhereClause
+   select?: Record<string, unknown>
++  include?: Record<string, unknown>
+ }
+ 
+ interface CreateOptions {
+@@ -303,6 +304,36 @@ function makeModel<T = any>(table: string) {
+           }
+         }
+ 
++        // Manual include: versions (article_versions child of articles, 1-n)
++        // Used by GET /api/admin/articles/[id] which passes
++        // `include: { versions: { orderBy: { versionNumber: 'desc' } } }`.
++        const needsVersions = includeKeys.includes('versions')
++        if (needsVersions && rows.length > 0 && table === 'articles') {
++          const aIds = rows.map((r: any) => r.id)
++          let verQuery = getSupabaseAdmin().from('article_versions').select('*').in('articleId', aIds)
++          // Honor nested orderBy if provided as { versions: { orderBy: { versionNumber: 'desc' } } }
++          const verInclude = opts.include?.versions as any
++          if (verInclude && typeof verInclude === 'object' && verInclude.orderBy) {
++            const ob = verInclude.orderBy
++            const entries = Array.isArray(ob) ? ob : [ob]
++            for (const o of entries) {
++              for (const [k, dir] of Object.entries(o)) {
++                verQuery = verQuery.order(k, { ascending: (dir as string) === 'asc' })
++              }
++            }
++          } else {
++            verQuery = verQuery.order('versionNumber', { ascending: false })
++          }
++          const { data: vers } = await verQuery
++          const versByArticle = new Map<string, any[]>()
++          for (const v of (vers || [])) {
++            const arr = versByArticle.get(v.articleId) || []
++            arr.push(convertDates(v))
++            versByArticle.set(v.articleId, arr)
++          }
++          rows = rows.map((r: any) => ({ ...r, versions: versByArticle.get(r.id) || [] }))
++        }
++
+         // Manual include: editedByUser (article_versions)
+         if (needsEditedByUser && rows.length > 0 && table === 'article_versions') {
+           const uIds = [...new Set(rows.map((r: any) => r.editedByUserId).filter(Boolean))]
+@@ -404,6 +435,28 @@ function makeModel<T = any>(table: string) {
+     },
+ 
+     async findUnique(opts: FindUniqueOptions): Promise<T | null> {
++      // Defensive: prefer exact single() only when no relations are requested.
++      // When `include` is present, delegate to findMany — which has full
++      // manual m-n / 1-n include support (category, tags, versions, etc.).
++      // Without this, callers like the preview page that pass
++      // `include: { category: true, tags: true }` would get back a row
++      // with `article.category === undefined` (NOT null), causing crashes
++      // like `article.category.name` → TypeError → HTTP 500.
++      if (opts.include && Object.keys(opts.include).length > 0) {
++        try {
++          const rows = await (this as any).findMany({
++            where: opts.where as WhereClause,
++            select: opts.select as Record<string, unknown> | undefined,
++            include: opts.include as Record<string, unknown>,
++            take: 1,
++          })
++          return rows[0] || null
++        } catch (err) {
++          console.error(`[db.${table}.findUnique] include-delegate catch:`, err)
++          return null
++        }
++      }
++
+       try {
+         let q = getSupabaseAdmin().from(table)
+         const selectStr = buildSelectString(opts.select, undefined)
+-- 
+2.47.3
+
