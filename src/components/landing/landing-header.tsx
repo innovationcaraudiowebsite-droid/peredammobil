@@ -30,6 +30,7 @@ const NAV_LINKS: NavLink[] = [
   { href: '#about', label: 'About', isAnchor: true },
   { href: '#edukasi', label: 'Jenis Bahan', isAnchor: true },
   { href: '#paket', label: 'Paket', isAnchor: true },
+  { href: '#artikel', label: 'Artikel', isAnchor: true },
   { href: '/berita', label: 'Portal Berita' },
 ]
 

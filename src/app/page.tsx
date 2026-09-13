@@ -3,6 +3,7 @@ import { Hero } from '@/components/landing/hero'
 import { About } from '@/components/landing/about'
 import { Education } from '@/components/landing/education'
 import { Packages } from '@/components/landing/packages'
+import { LatestArticles } from '@/components/landing/latest-articles'
 import { SectionDivider } from '@/components/landing/section-divider'
 
 // Always render at request time (runtime) — Vercel injects env vars at
@@ -16,11 +17,12 @@ export const revalidate = 0
 /**
  * Landing page "Peredam Mobil Jakarta" — root route `/`.
  *
- * 4 section + divider line sederhana antar section:
+ * 5 section + divider line sederhana antar section:
  *  1. Hero             — banner gambar lengkap (sudah berisi judul, subtitle, icon)
  *  2. About            — "About me" + lorem ipsum 100 karakter
  *  3. Jenis Bahan      — 4 jenis material peredam (Butyl, Absorber, Spant, Nex)
  *  4. Paket Layanan    — 4 paket jasa (4 Pintu, Full Kabin, Kap Mesin, Wheel Housing)
+ *  5. Artikel Terbaru  — 4 artikel terbaru dari DB (vertical list seperti versi lama)
  *
  * Footer simpel 1 baris (kontak + alamat + copyright).
  */
@@ -50,6 +52,12 @@ export default async function LandingPage() {
 
         {/* Section 4: Paket Layanan */}
         <Packages />
+
+        {/* Divider: Paket → Artikel */}
+        <SectionDivider variant="line" />
+
+        {/* Section 5: Artikel Terbaru (vertical list seperti versi lama) */}
+        <LatestArticles />
       </main>
 
       {/* Footer simpel 1 baris */}
@@ -79,3 +87,4 @@ export default async function LandingPage() {
     </div>
   )
 }
+
