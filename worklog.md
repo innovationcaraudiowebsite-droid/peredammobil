@@ -1077,3 +1077,49 @@ Verification (via agent-browser):
 Stage Summary:
 - Landing page sekarang punya 5 section lengkap sesuai brief user + section artikel versi lama.
 - Task COMPLETE.
+
+---
+Task ID: LANDING-LAYOUT-KONSISTEN
+Agent: main
+Task: Redesign section 3 (Jenis Bahan) & section 4 (Paket Layanan) dengan layout konsisten seperti section 5 (Artikel Terbaru) — gambar kiri 140×94 + konten kanan.
+
+Work Log:
+- Wireframe dibuat dulu (ASCII) untuk visualisasi layout horizontal card — gambar 140×94 kiri + konten kanan dengan badge meta, title, deskripsi, CTA.
+- Generate 8 gambar baru via Image Generation skill (z-ai CLI, ukuran 1024x1024):
+  - 4 jenis bahan: butyl, absorber, spant, nex (close-up material product photo, white background)
+  - 4 paket layanan: 4-pintu, full-kabin, kap-mesin, wheel-housing (workshop scene installation)
+  - Rate limit handling: 4 paralel pertama (2 sukses, 2 retry sequential), 4 paket sequential.
+- File disimpan di public/landing-img/.
+- Rewrite src/components/landing/education.tsx:
+  - Ubah dari grid 2x2 (vertical card dengan nomor besar di lingkaran) → vertical list horizontal card.
+  - Layout: <li class="rounded-xl border bg-card p-3 sm:p-4"> dengan <div class="flex gap-3 sm:gap-4 items-start"> — gambar kiri 120×80 mobile / 140×94 desktop + konten kanan.
+  - Badge nomor "01"-"04" + label "JENIS BAHAN" di atas title.
+  - Image: src /landing-img/bahan-{name}.png, fill, sizes responsive.
+- Rewrite src/components/landing/packages.tsx:
+  - Ubah dari grid 4 (vertical card dengan tagline + features) → vertical list horizontal card (sama dengan section 3 & 5).
+  - Badge 'Populer' dengan icon Star di pojok kiri atas gambar untuk paket populer (Paket 4 Pintu).
+  - Tagline di badge meta amber (style sama dengan badge kategori section 5).
+  - Features jadi grid 2 kolom (di dalam konten kanan) + CTA WhatsApp button di kanan bawah — 2 kolom di desktop, stack di mobile.
+- Lint: 0 errors.
+- Push: c91f46c..61b6fb5 main -> main ✓
+- Vercel deploy sukses ~3 menit.
+
+Verification (via agent-browser):
+- 3 section (edukasi, paket, artikel) semua pakai layout yang sama:
+  - display: flex (horizontal card)
+  - imageLeft: true (gambar di kiri konten)
+  - Image size: 138×92 (resolusi 140×94 pada desktop) — konsisten di 3 section.
+- Semua 8 gambar baru ter-load dengan benar:
+  - 4 bahan: butyl, absorber, spant, nex — natural 140×140, loaded=true.
+  - 4 paket: 4-pintu, full-kabin, kap-mesin, wheel-housing — loaded=true.
+- 4 card Jenis Bahan: Butyl, Absorber, Spant, Nex dengan nomor 01-04.
+- 4 card Paket Layanan: Paket 4 Pintu (Populer), Paket Full Kabin, Paket Kap Mesin, Paket Wheel Housing — masing-masing dengan features checklist + WA button.
+- 4 card Artikel Terbaru: dari DB (vertical list sama seperti versi lama).
+- Background berganti: hero (putih) → about (putih) → edukasi (muted/30) → paket (putih) → artikel (muted/30) → footer (slate-950).
+
+Stage Summary:
+- Layout 3 section (3, 4, 5) sekarang konsisten — horizontal card dengan gambar kiri 140×94 + konten kanan.
+- 8 gambar AI-generated untuk 4 jenis bahan & 4 paket layanan (relevant content, professional product photography style).
+- Mobile-friendly: gambar 120×80 di mobile, 140×94 di desktop.
+- Production verified via agent-browser: semua element render dengan benar, layout konsisten.
+- Task COMPLETE.
