@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Check, Star, Phone } from 'lucide-react'
+import { ArrowRight, Star, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /**
@@ -107,7 +107,7 @@ export function Packages() {
           {PACKAGES.map((p) => (
             <li
               key={p.name}
-              className={`rounded-xl border bg-card p-3 sm:p-4 min-h-[160px] transition-all duration-200 hover:shadow-md ${
+              className={`rounded-xl border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md ${
                 p.popular
                   ? 'border-brand shadow-sm'
                   : 'border-border hover:border-brand/40'
@@ -150,22 +150,6 @@ export function Packages() {
                   <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
                     {p.desc}
                   </p>
-
-                  {/* Features checklist */}
-                  <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 sm:max-w-md">
-                    {p.features.map((f) => (
-                      <li
-                        key={f}
-                        className="flex items-start gap-1.5 text-xs text-foreground/90"
-                      >
-                        <Check
-                          className="mt-0.5 size-3.5 shrink-0 text-brand"
-                          aria-hidden
-                        />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               </div>
             </li>

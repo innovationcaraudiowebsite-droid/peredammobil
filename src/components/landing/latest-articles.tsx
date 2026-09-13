@@ -130,7 +130,7 @@ export async function LatestArticles() {
               return (
                 <li
                   key={a.id}
-                  className="rounded-xl border border-border bg-card p-3 sm:p-4 min-h-[160px] transition-all duration-200 hover:shadow-md hover:border-brand/40"
+                  className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-brand/40"
                 >
                   <Link href={href} className="group flex gap-3 sm:gap-4 items-start">
                     {/* Gambar kecil kiri — aspect-square (1:1) supaya rasio konsisten */}
