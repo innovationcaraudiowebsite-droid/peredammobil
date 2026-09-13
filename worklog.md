@@ -1242,3 +1242,51 @@ Stage Summary:
 - Padding konsisten p-3 sm:p-4 di semua card.
 - Production verified via agent-browser: semua perubahan live.
 - Task COMPLETE.
+
+---
+Task ID: LANDING-CARD-PROPORTIONAL
+Agent: main
+Task: Perbaiki proporsi card di semua section — gambar & text tingginya tidak sama, kurangi text agar proporsional.
+
+Work Log:
+- Analisa data actual production (via agent-browser):
+  - Section 3 (Jenis Bahan): desc 200-243 char (4-5 baris), card 154px. Title "Butyl" (5 char) kecil, text besar → imbalance.
+  - Section 4 (Paket Layanan): desc 94-102 char, card 164px (lebih tinggi 10px karena ada features 4 checklist).
+  - Section 5 (Artikel Terbaru): artikel 1 (Peredam Lantai Kabin) TIDAK PUNYA excerpt (0 char) → ruang kosong di bawah title.
+
+- Fix 1 — Section 3 (Jenis Bahan): pendekkan deskripsi dari ~220 → ~110 char:
+  - Butyl: 243 → 118 char
+  - Absorber: 205 → 114 char
+  - Spant: 200 → 109 char
+  - Nex: 206 → 102 char
+  Title "Butyl" (5 char) sekarang lebih balance dengan text deskripsi 2 baris.
+
+- Fix 2 — Section 5 (Artikel Terbaru): fix artikel tanpa excerpt:
+  - Tambah contentMarkdown ke select query supaya bisa fallback.
+  - Title h3 pakai min-h-[2.6rem] supaya konsisten 2 baris (artikel 1 yang title 64 char & artikel 3 yang title 50 char sama tinggi 2 baris).
+  - Excerpt fallback: jika excerpt null, generate dari contentMarkdown (strip markdown → first 100 char + ellipsis).
+  - Artikel 1 (Peredam Lantai Kabin) sekarang tampilkan 96 char excerpt dari contentMarkdown (sebelumnya 0).
+
+- Fix 3 — Uniform min-height card 160px di 3 section:
+  - Section 3: min-h-[160px] (sebelumnya 154px)
+  - Section 4: min-h-[160px] (sebelumnya 164px karena features)
+  - Section 5: min-h-[160px] (sebelumnya 154px)
+  - Sekarang semua card minimum 160px, visual lebih uniform antar section.
+
+- File changed: 3 (education.tsx, latest-articles.tsx, packages.tsx).
+- Lint: 0 errors.
+- Push: 7d765c9..f336ac5 main -> main ✓
+- Vercel deploy sukses ~3 menit.
+
+Verification (via agent-browser):
+- Section 3 (Jenis Bahan): 4 cards, ALL 160px (heightDiff: 0, uniform: true). Desc 102-118 char (dari 200-243).
+- Section 4 (Paket Layanan): 4 cards, ALL 164px (heightDiff: 0, uniform: true).
+- Section 5 (Artikel Terbaru): 3 cards, ALL 160px (heightDiff: 0, uniform: true). Artikel 1 sekarang punya excerpt 96 char (fallback dari contentMarkdown).
+
+Stage Summary:
+- Text deskripsi Section 3 dipendekkan dari ~220 → ~110 char (lebih proporsional dengan title pendek).
+- Card height uniform 160px+ di semua 3 section (sebelumnya 154px/164px beda).
+- Artikel 1 yang tidak punya excerpt sekarang tampilkan 96 char fallback dari contentMarkdown.
+- Title artikel pakai min-h-[2.6rem] supaya semua 2 baris konsisten.
+- Production verified via agent-browser: semua card uniform, heightDiff 0.
+- Task COMPLETE.
