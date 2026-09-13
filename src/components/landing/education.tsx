@@ -66,25 +66,25 @@ export function Education() {
           {BAHAN_LIST.map((b) => (
             <li
               key={b.no}
-              className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-amber-500/40"
+              className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-brand/40"
             >
               <div className="flex gap-3 sm:gap-4 items-start">
-                {/* Gambar kecil kiri 120×80 / 140×94 */}
-                <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[120px] h-[80px] sm:w-[140px] sm:h-[94px]">
+                {/* Gambar kecil kiri — aspect-square (1:1) supaya rasio konsisten */}
+                <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[100px] sm:w-[120px] aspect-square">
                   <Image
                     src={b.image}
                     alt={`Bahan peredam ${b.name} untuk mobil`}
                     fill
-                    sizes="(min-width: 640px) 140px, 120px"
+                    sizes="(min-width: 640px) 120px, 100px"
                     className="object-cover transition-transform duration-300 hover:scale-105"
                   />
                 </div>
 
                 {/* Konten kanan */}
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 pt-0.5">
                   {/* Meta: badge nomor + label */}
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-block rounded bg-brand px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                    <span className="inline-block rounded bg-brand px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
                       {b.no}
                     </span>
                     <span className="inline-block text-[10px] font-semibold uppercase tracking-wide text-brand dark:text-brand-light">
@@ -93,12 +93,12 @@ export function Education() {
                   </div>
 
                   {/* Title */}
-                  <h3 className="mt-1.5 text-lg sm:text-xl font-bold leading-snug">
+                  <h3 className="mt-2 text-lg sm:text-xl font-bold leading-snug">
                     {b.name}
                   </h3>
 
                   {/* Deskripsi fungsi */}
-                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
                     {b.fungsi}
                   </p>
                 </div>

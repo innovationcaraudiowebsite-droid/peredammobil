@@ -45,12 +45,12 @@ function truncate(s: string, max = 100): string {
   return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trim() + '…'
 }
 
-async function getLatestFourArticles(): Promise<LatestArticle[]> {
+async function getLatestThreeArticles(): Promise<LatestArticle[]> {
   try {
     const items = (await db.article.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-      take: 4,
+      take: 3,
       select: {
         id: true,
         title: true,
@@ -85,7 +85,7 @@ async function getLatestFourArticles(): Promise<LatestArticle[]> {
 }
 
 export async function LatestArticles() {
-  const articles = await getLatestFourArticles()
+  const articles = await getLatestThreeArticles()
 
   return (
     <section
@@ -131,14 +131,14 @@ export async function LatestArticles() {
                   className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-brand/40"
                 >
                   <Link href={href} className="group flex gap-3 sm:gap-4 items-start">
-                    {/* Gambar kecil kiri 120×80 */}
-                    <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[120px] h-[80px] sm:w-[140px] sm:h-[94px]">
+                    {/* Gambar kecil kiri — aspect-square (1:1) supaya rasio konsisten */}
+                    <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[100px] sm:w-[120px] aspect-square">
                       {hasImage ? (
                         <Image
                           src={a.featuredImageUrl!}
                           alt={alt}
                           fill
-                          sizes="(min-width: 640px) 140px, 120px"
+                          sizes="(min-width: 640px) 120px, 100px"
                           className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
@@ -151,7 +151,7 @@ export async function LatestArticles() {
                     </div>
 
                     {/* Konten kanan */}
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 pt-0.5">
                       {/* Meta: badge kategori + tanggal + read time */}
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span
