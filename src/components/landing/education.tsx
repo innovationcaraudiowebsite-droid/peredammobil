@@ -93,8 +93,8 @@ export function Education() {
                     {b.name}
                   </h3>
 
-                  {/* Deskripsi fungsi */}
-                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+                  {/* Deskripsi fungsi — max 2 baris supaya card proporsi dengan gambar */}
+                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
                     {b.fungsi}
                   </p>
                 </div>
