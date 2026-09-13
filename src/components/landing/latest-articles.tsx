@@ -105,7 +105,7 @@ export async function LatestArticles() {
           </div>
           <Link
             href="/berita"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:gap-2.5 transition-all"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand dark:text-brand-light hover:gap-2.5 transition-all"
           >
             Lihat Semua Artikel
             <ArrowRight className="size-4" />
@@ -128,7 +128,7 @@ export async function LatestArticles() {
               return (
                 <li
                   key={a.id}
-                  className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-amber-500/40"
+                  className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-brand/40"
                 >
                   <Link href={href} className="group flex gap-3 sm:gap-4 items-start">
                     {/* Gambar kecil kiri 120×80 */}
@@ -142,7 +142,7 @@ export async function LatestArticles() {
                           className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
-                        <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-amber-500/30 to-orange-700/40">
+                        <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-brand/30 to-brand-dark/40">
                           <span className="text-[10px] font-semibold uppercase tracking-wider text-white/80">
                             Peredam Mobil
                           </span>
@@ -170,7 +170,7 @@ export async function LatestArticles() {
                       </div>
 
                       {/* Title (2-line clamp) */}
-                      <h3 className="mt-1.5 font-semibold leading-snug line-clamp-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                      <h3 className="mt-1.5 font-semibold leading-snug line-clamp-2 group-hover:text-brand dark:group-hover:text-brand-light transition-colors">
                         {a.title}
                       </h3>
 

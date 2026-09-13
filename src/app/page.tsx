@@ -5,6 +5,7 @@ import { Education } from '@/components/landing/education'
 import { Packages } from '@/components/landing/packages'
 import { LatestArticles } from '@/components/landing/latest-articles'
 import { SectionDivider } from '@/components/landing/section-divider'
+import { FloatingAdminButton } from '@/components/landing/floating-admin-button'
 
 // Always render at request time (runtime) — Vercel injects env vars at
 // runtime, not build time. force-dynamic prevents build-time DB queries
@@ -21,8 +22,10 @@ export const revalidate = 0
  *  1. Hero             — banner gambar lengkap (sudah berisi judul, subtitle, icon)
  *  2. About            — "About me" + lorem ipsum 100 karakter
  *  3. Jenis Bahan      — 4 jenis material peredam (Butyl, Absorber, Spant, Nex)
- *  4. Paket Layanan    — 4 paket jasa (4 Pintu, Full Kabin, Kap Mesin, Wheel Housing)
- *  5. Artikel Terbaru  — 4 artikel terbaru dari DB (vertical list seperti versi lama)
+ *  4. Paket Layanan    — 4 paket jasa (tanpa CTA WA per card)
+ *  5. Artikel Terbaru  — 4 artikel terbaru dari DB
+ *
+ * Floating button "Hubungi Admin" fixed di pojok kanan bawah (selalu visible).
  *
  * Footer simpel 1 baris (kontak + alamat + copyright).
  */
@@ -60,23 +63,26 @@ export default async function LandingPage() {
         <LatestArticles />
       </main>
 
+      {/* Floating button "Hubungi Admin" — selalu visible di pojok kanan bawah */}
+      <FloatingAdminButton />
+
       {/* Footer simpel 1 baris */}
       <footer className="bg-slate-950 text-slate-300 py-6 mt-auto">
         <div className="container mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-2 text-center sm:text-left">
-            <span className="font-bold text-amber-500">Peredam Mobil Jakarta</span>
+            <span className="font-bold text-brand-light">Peredam Mobil Jakarta</span>
             <span className="hidden sm:inline text-slate-500">·</span>
             <span className="text-slate-400 text-xs sm:text-sm">
               Jl. Taman Surya Blvd 3 Blok H1 No.9, Kalideres, Jakarta Barat 11830
             </span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm">
-            <a href="tel:082211122989" className="hover:text-amber-400 transition-colors">
+            <a href="tel:082211122989" className="hover:text-brand-light transition-colors">
               0822-1122-2989
             </a>
             <a
               href="mailto:innovationcaraudio@gmail.com"
-              className="hover:text-amber-400 transition-colors"
+              className="hover:text-brand-light transition-colors"
             >
               innovationcaraudio@gmail.com
             </a>
@@ -87,4 +93,3 @@ export default async function LandingPage() {
     </div>
   )
 }
-

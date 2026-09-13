@@ -84,10 +84,10 @@ export function Education() {
                 <div className="min-w-0 flex-1">
                   {/* Meta: badge nomor + label */}
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-block rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                    <span className="inline-block rounded bg-brand px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                       {b.no}
                     </span>
-                    <span className="inline-block text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                    <span className="inline-block text-[10px] font-semibold uppercase tracking-wide text-brand dark:text-brand-light">
                       Jenis Bahan
                     </span>
                   </div>

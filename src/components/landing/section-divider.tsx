@@ -24,7 +24,7 @@ export function SectionDivider({ variant, className = "" }: SectionDividerProps)
         className={`relative h-px w-full ${className}`}
         aria-hidden
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand/30 to-transparent" />
       </div>
     )
   }

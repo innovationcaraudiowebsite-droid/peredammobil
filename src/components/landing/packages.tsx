@@ -1,18 +1,22 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { MessageCircle, ArrowRight, Check, Star } from 'lucide-react'
+import { ArrowRight, Check, Star, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /**
  * Paket Layanan section — section id="paket".
  *
  * Layout konsisten dengan section 5 (Artikel Terbaru) & section 3 (Jenis Bahan):
- * horizontal card — gambar kiri 140×94 + konten kanan (badge + nama + desc + features + CTA).
+ * horizontal card — gambar kiri 140×94 + konten kanan (badge + nama + desc + features).
+ *
+ * Sesuai brief user revisi:
+ *  - CTA WhatsApp per card DIHAPUS. Diganti dengan 1 floating button
+ *    "Hubungi Admin" yang fixed di pojok kanan bawah (selalu visible saat scroll).
+ *  - Warna accent diubah dari amber-500 (orange) ke brand color (#c48e55 caramel,
+ *    sesuai warna golden-brown di hero gambar).
  *
  * 4 paket jasa relevan: 4 Pintu (populer), Full Kabin, Kap Mesin, Wheel Housing.
  */
-
-const WA_NUMBER = '6282111222989'
 
 type Pkg = {
   name: string
@@ -75,11 +79,6 @@ const PACKAGES: Pkg[] = [
   },
 ]
 
-function waLinkFor(name: string): string {
-  const text = `Halo, saya tertarik ${name}. Mohon info harga & detail.`
-  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`
-}
-
 export function Packages() {
   return (
     <section id="paket" className="border-t border-border bg-background">
@@ -96,7 +95,7 @@ export function Packages() {
           </div>
           <Link
             href="/berita"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 dark:text-amber-400 hover:gap-2.5 transition-all"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand dark:text-brand-light hover:gap-2.5 transition-all"
           >
             Lihat Panduan Lengkap
             <ArrowRight className="size-4" />
@@ -110,8 +109,8 @@ export function Packages() {
               key={p.name}
               className={`rounded-xl border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md ${
                 p.popular
-                  ? 'border-amber-500 shadow-sm'
-                  : 'border-border hover:border-amber-500/40'
+                  ? 'border-brand shadow-sm'
+                  : 'border-border hover:border-brand/40'
               }`}
             >
               <div className="flex gap-3 sm:gap-4 items-start">
@@ -126,7 +125,7 @@ export function Packages() {
                   />
                   {/* Badge popular di pojok gambar */}
                   {p.popular && (
-                    <span className="absolute top-1 left-1 inline-flex items-center gap-0.5 rounded bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow">
+                    <span className="absolute top-1 left-1 inline-flex items-center gap-0.5 rounded bg-brand px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow">
                       <Star className="size-2.5 fill-current" />
                       Populer
                     </span>
@@ -137,7 +136,7 @@ export function Packages() {
                 <div className="min-w-0 flex-1">
                   {/* Meta: tagline */}
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="inline-block rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                    <span className="inline-block rounded bg-brand/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand dark:text-brand-light">
                       {p.tagline}
                     </span>
                   </div>
@@ -152,40 +151,21 @@ export function Packages() {
                     {p.desc}
                   </p>
 
-                  {/* Features + CTA — 2 kolom di desktop, stack di mobile */}
-                  <div className="mt-3 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-                    {/* Features checklist */}
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 sm:max-w-md">
-                      {p.features.map((f) => (
-                        <li
-                          key={f}
-                          className="flex items-start gap-1.5 text-xs text-foreground/90"
-                        >
-                          <Check
-                            className="mt-0.5 size-3.5 shrink-0 text-amber-500"
-                            aria-hidden
-                          />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {/* CTA WhatsApp */}
-                    <Button
-                      asChild
-                      size="sm"
-                      className="shrink-0 bg-emerald-500 hover:bg-emerald-600 text-white"
-                    >
-                      <a
-                        href={waLinkFor(p.name)}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                  {/* Features checklist */}
+                  <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 sm:max-w-md">
+                    {p.features.map((f) => (
+                      <li
+                        key={f}
+                        className="flex items-start gap-1.5 text-xs text-foreground/90"
                       >
-                        <MessageCircle className="size-3.5" />
-                        Pesan via WA
-                      </a>
-                    </Button>
-                  </div>
+                        <Check
+                          className="mt-0.5 size-3.5 shrink-0 text-brand"
+                          aria-hidden
+                        />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </li>
@@ -194,8 +174,12 @@ export function Packages() {
 
         {/* Note */}
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          * Harga bisa berubah, hubungi admin untuk harga terbaru &amp; estimasi
-          khusus mobil Anda.
+          * Harga hubungi admin untuk estimasi khusus mobil Anda. Klik tombol
+          <span className="mx-1 inline-flex items-center gap-0.5 font-semibold text-brand dark:text-brand-light">
+            <Phone className="size-3" />
+            Hubungi Admin
+          </span>
+          di pojok kanan bawah.
         </p>
 
         {/* CTA secondary */}

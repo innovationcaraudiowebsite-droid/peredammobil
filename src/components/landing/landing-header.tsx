@@ -74,10 +74,10 @@ export function LandingHeader() {
                 Menu utama landing page Peredam Mobil Jakarta.
               </SheetDescription>
               <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                <span className="inline-grid place-items-center size-9 rounded-md bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold text-sm">
+                <span className="inline-grid place-items-center size-9 rounded-md bg-gradient-to-br from-brand to-brand-dark text-white font-bold text-sm">
                   PMJ
                 </span>
-                <span className="font-bold text-base bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent">
+                <span className="font-bold text-base bg-gradient-to-r from-brand to-brand-dark bg-clip-text text-transparent">
                   Peredam Mobil Jakarta
                 </span>
               </div>
@@ -119,7 +119,7 @@ export function LandingHeader() {
                 </Button>
                 <Link
                   href="/admin/login"
-                  className="block rounded-md px-3 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 text-center"
+                  className="block rounded-md px-3 py-2 text-sm font-medium text-brand dark:text-brand-light hover:bg-brand/10 text-center"
                 >
                   Masuk Admin
                 </Link>
@@ -141,10 +141,10 @@ export function LandingHeader() {
             className="flex items-center gap-2 shrink-0"
             aria-label="Peredam Mobil Jakarta — Beranda"
           >
-            <span className="inline-grid place-items-center size-9 rounded-md bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold text-sm">
+            <span className="inline-grid place-items-center size-9 rounded-md bg-gradient-to-br from-brand to-brand-dark text-white font-bold text-sm">
               PMJ
             </span>
-            <span className="font-bold text-base sm:text-lg leading-none tracking-tight bg-gradient-to-r from-amber-500 to-orange-600 bg-clip-text text-transparent">
+            <span className="font-bold text-base sm:text-lg leading-none tracking-tight bg-gradient-to-r from-brand to-brand-dark bg-clip-text text-transparent">
               Peredam Mobil Jakarta
             </span>
           </Link>
@@ -156,7 +156,7 @@ export function LandingHeader() {
                 key={l.href}
                 href={l.href}
                 className={cn(
-                  'relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors hover:bg-muted hover:text-amber-600 dark:hover:text-amber-400 text-foreground/80',
+                  'relative px-3 py-1.5 text-sm font-medium rounded-md transition-colors hover:bg-muted hover:text-brand text-foreground/80',
                 )}
               >
                 {l.label}

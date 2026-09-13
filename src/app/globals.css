@@ -4,6 +4,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Brand color — sesuai warna golden-brown di hero gambar (#c48e55).
+   Dipakai untuk accent di seluruh landing page supaya konsisten
+   dengan visual hero banner (bukan amber-500 yang orange). */
+@theme {
+  --color-brand: #c48e55;
+  --color-brand-light: #d4ae86;
+  --color-brand-dark: #a16d3a;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
