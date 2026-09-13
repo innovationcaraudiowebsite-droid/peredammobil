@@ -960,3 +960,38 @@ Stage Summary:
 - Root cause terkonfirmasi: bug adapter findUnique di src/lib/db.ts — TIDAK menghonor `include` parameter
 - Fix 100% berfungsi: preview page 200 OK, API GET response lengkap
 - Task COMPLETE.
+
+---
+Task ID: EDITOR-PROSE-FIX
+Agent: main
+Task: Fix editor artikel dashboard — tidak ada spasi antar paragraf, tidak ada quote styling, tidak bisa buat paragraf baru dengan Enter.
+
+Work Log:
+- Analisa 3 komponen: (1) MDXEditor di article-editor.tsx, (2) renderMarkdownToHtml di src/lib/article.ts, (3) CSS prose di preview page & front-end.
+- HTML yang dirender oleh renderMarkdownToHtml BENAR — ada <p>, <blockquote>, <h2> semua. Bug bukan di markdown renderer.
+- Front-end (artikel published) pakai arbitrary variants [&_blockquote]:border-l-4 dst → styling OK.
+- Preview page (admin) pakai class prose prose-lg → styling TIDAK ada karena plugin @tailwindcss/typography BELUM ter-install.
+- Editor MDXEditor contentEditableClassName pakai "prose prose-sm" → sama, styling TIDAK ada.
+- Fix 1: Install @tailwindcss/typography (^0.5.20) via bun add.
+- Fix 2: Tambah @plugin "@tailwindcss/typography" di src/app/globals.css (cara Tailwind v4 aktifkan plugin).
+- Fix 3: Tambah custom CSS di globals.css untuk .prose :where(blockquote/h2/h3/p) dengan brand amber (blockquote border-amber-500 + bg-amber-50/50, paragraf my-4 line-height-1.75, h2/h3 bold tracked).
+- Fix 4: Preview page tambah prose-blockquote:* modifiers supaya blockquote tampil konsisten dengan editor.
+- Fix 5: Editor MDXEditor contentEditableClassName tambah prose-blockquote:* modifiers → editor jadi WYSIWYG (apa yang user lihat = preview = front-end).
+- Fix 6: Toolbar tambah Separator untuk grouping visual (Undo | Block type | Bold | List | Insert).
+- Fix 7: JSDoc behavior Enter di editor untuk dokumentasi internal.
+
+Verification (via agent-browser):
+- Push: SUKSES (88f07b9..67d6805 main).
+- Vercel auto-deploy: CSS bundle hash berubah dari 57f9f53a23fb2694.css → 711a6fd14704c1c7.css → typography plugin aktif.
+- CSS bundle baru berisi: .prose, .prose-lg, .prose-sm, .prose :where(blockquote) dengan warna amber, .prose-blockquote:border-amber-500 modifier, dst.
+- Preview page (https://peredammobil.vercel.app/admin/articles/cmtso9o0h000wmox4ryfy2elj/preview): HTTP 200, computed style blockquote = borderLeftColor rgb(245,158,11), borderLeftWidth 4px, bg rgba(254,252,232,0.5), padding 12px 16px, font-style italic. ✓
+- Editor (https://peredammobil.vercel.app/admin/articles/new): contentEditable class "prose prose-sm prose-blockquote:*" aktif. Toolbar 12 tombol. Block type dropdown punya opsi: Paragraph, Quote, Heading 1-6.
+- Test Enter key: ketik paragraf 1, Enter 2x, paragraf 2 → editorHTML menghasilkan <p>...</p><p><br></p><p>...</p> (3 paragraf terpisah). Enter key berfungsi.
+- Test Blockquote: pilih "Quote" dari Block type dropdown → paragraf langsung jadi <blockquote>. Computed style editor = preview (border amber 4px, bg amber-50, italic, padding 12px 16px).
+
+Stage Summary:
+- Root cause: plugin @tailwindcss/typography TIDAK ter-install → class .prose tidak menghasilkan styling apapun.
+- Fix: install plugin + @plugin di globals.css (cara Tailwind v4) + custom CSS untuk brand amber blockquote + prose-blockquote:* modifier di editor & preview supaya WYSIWYG.
+- Production verified via agent-browser: editor & preview page keduanya render blockquote dengan styling yang sama persis (amber border-left 4px, bg amber-50/50, italic, padding 12px 16px).
+- Enter key berfungsi untuk paragraf baru. Blockquote bisa di-insert lewat Block type dropdown (pilih "Quote").
+- Task COMPLETE.
