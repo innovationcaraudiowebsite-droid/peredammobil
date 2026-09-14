@@ -459,8 +459,43 @@ export function ArticleForm({
         </Badge>
       </div>
 
-      {/* Title input — VISIBLE dengan border & label */}
-      <div className="mb-4 space-y-2">
+      {/* SECTION 1: Tabs navigasi — DIPINDAH ke ATAS (sebelum title input).
+          Active tab pakai brand color (#c48e55), inactive pakai muted.
+          Full width, 4 kolom di desktop, 2x2 di mobile. */}
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex-1"
+      >
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto gap-1 rounded-lg border bg-card p-1.5">
+          <TabsTrigger
+            value="konten"
+            className="data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-md dark:data-[state=active]:bg-brand data-[state=active]:font-semibold py-2.5 transition-all"
+          >
+            Konten
+          </TabsTrigger>
+          <TabsTrigger
+            value="klasifikasi"
+            className="data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-md dark:data-[state=active]:bg-brand data-[state=active]:font-semibold py-2.5 transition-all"
+          >
+            Klasifikasi
+          </TabsTrigger>
+          <TabsTrigger
+            value="seo"
+            className="data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-md dark:data-[state=active]:bg-brand data-[state=active]:font-semibold py-2.5 transition-all"
+          >
+            SEO
+          </TabsTrigger>
+          <TabsTrigger
+            value="publikasi"
+            className="data-[state=active]:bg-brand data-[state=active]:text-white data-[state=active]:shadow-md dark:data-[state=active]:bg-brand data-[state=active]:font-semibold py-2.5 transition-all"
+          >
+            Publikasi
+          </TabsTrigger>
+        </TabsList>
+
+      {/* Title input — ditempatkan setelah tabs supaya tabs jadi section 1 */}
+      <div className="mt-4 mb-4 space-y-2">
         <Label htmlFor="title" className="text-sm font-semibold text-foreground">
           Judul Artikel *
         </Label>
@@ -514,19 +549,6 @@ export function ArticleForm({
           </Button>
         </div>
       </div>
-
-      {/* Tabs */}
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="flex-1"
-      >
-        <TabsList className="w-full justify-start rounded-lg border bg-card p-1">
-          <TabsTrigger value="konten">Konten</TabsTrigger>
-          <TabsTrigger value="klasifikasi">Klasifikasi</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
-          <TabsTrigger value="publikasi">Publikasi</TabsTrigger>
-        </TabsList>
 
         <TabsContent value="konten" className="mt-4">
           <TabKonten
