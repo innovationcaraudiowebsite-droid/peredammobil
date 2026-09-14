@@ -84,7 +84,7 @@ export function Education() {
                       {b.no}
                     </span>
                     <span className="inline-block text-[10px] font-semibold uppercase tracking-wide text-brand dark:text-brand-light">
-                      Jenis Bahan
+                      Bahan
                     </span>
                   </div>
 

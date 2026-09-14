@@ -1,19 +1,19 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import { CalendarDays, Clock, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { db } from '@/lib/db'
 import {
-  categoryBadgeClass,
   type PortalCategory,
 } from '@/lib/portal'
-import { formatTanggalPendek } from '@/lib/format-tanggal'
+import { ArticlesList, type ArticleItem } from '@/components/landing/articles-list'
 
 /**
  * LatestArticles section landing — section id="artikel".
- * Query 4 artikel terbaru dari DB, render sebagai vertical list
- * (gambar kecil kiri 120×80 + konten kanan).
  *
- * Server component.
+ * Infinite scroll: initial 3 artikel di-render server-side (SEO friendly),
+ * lalu saat user scroll ke bawah, client component fetch artikel berikutnya
+ * via /api/articles/published?cursor=xxx.
+ *
+ * Server component — ambil 3 artikel pertama untuk initial render.
  */
 export const dynamic = 'force-dynamic'
 
@@ -35,22 +35,16 @@ type LatestArticle = {
   tags: { id: string; name: string; slug: string }[]
 }
 
-/**
- * Truncate excerpt to ~100 chars (tanpa memotong kata di tengah).
- */
-function truncate(s: string, max = 100): string {
-  if (s.length <= max) return s
-  const cut = s.slice(0, max)
-  const lastSpace = cut.lastIndexOf(' ')
-  return (lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trim() + '…'
-}
-
-async function getLatestThreeArticles(): Promise<LatestArticle[]> {
+async function getInitialArticles(): Promise<{
+  articles: LatestArticle[]
+  nextCursor: { publishedAt: string; id: string } | null
+}> {
   try {
+    // Ambil 4 artikel (3 untuk initial + 1 untuk cek hasMore)
     const items = (await db.article.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-      take: 3,
+      take: 4,
       select: {
         id: true,
         title: true,
@@ -77,15 +71,35 @@ async function getLatestThreeArticles(): Promise<LatestArticle[]> {
         tags: { select: { id: true, name: true, slug: true } },
       },
     } as never)) as LatestArticle[]
-    return items ?? []
+
+    if (items.length === 0) {
+      return { articles: [], nextCursor: null }
+    }
+
+    const hasMore = items.length > 3
+    const initialArticles = hasMore ? items.slice(0, 3) : items
+
+    // Compute nextCursor dari artikel terakhir initial (artikel ke-3)
+    let nextCursor: { publishedAt: string; id: string } | null = null
+    if (hasMore && initialArticles.length > 0) {
+      const last = initialArticles[initialArticles.length - 1]
+      nextCursor = {
+        publishedAt: last.publishedAt instanceof Date
+          ? last.publishedAt.toISOString()
+          : (last.publishedAt || new Date().toISOString()),
+        id: last.id,
+      }
+    }
+
+    return { articles: initialArticles, nextCursor }
   } catch (err) {
     console.error('[latest-articles] DB error:', err)
-    return []
+    return { articles: [], nextCursor: null }
   }
 }
 
 export async function LatestArticles() {
-  const articles = await getLatestThreeArticles()
+  const { articles, nextCursor } = await getInitialArticles()
 
   return (
     <section
@@ -100,7 +114,7 @@ export async function LatestArticles() {
               Artikel Terbaru
             </h2>
             <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-              Tips &amp; panduan seputar peredam mobil.
+              Tips &amp; panduan seputar peredam mobil. Scroll untuk lihat artikel lainnya.
             </p>
           </div>
           <Link
@@ -112,77 +126,15 @@ export async function LatestArticles() {
           </Link>
         </div>
 
-        {/* Vertical list */}
-        {articles.length === 0 ? (
-          <div className="mt-10 rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-            Belum ada artikel.
-          </div>
-        ) : (
-          <ul className="mt-8 space-y-4">
-            {articles.map((a) => {
-              const href = `/berita/${a.category.slug}/${a.slug}`
-              const badge = categoryBadgeClass(a.category.color)
-              const alt = a.featuredImageAlt || a.title
-              const hasImage = Boolean(a.featuredImageUrl)
-              const dateLabel = formatTanggalPendek(a.publishedAt) || '—'
-              return (
-                <li
-                  key={a.id}
-                  className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-brand/40"
-                >
-                  <Link href={href} className="group flex gap-3 sm:gap-4 items-start">
-                    {/* Gambar kecil kiri — aspect-square (1:1) supaya rasio konsisten */}
-                    <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[100px] sm:w-[120px] aspect-square">
-                      {hasImage ? (
-                        <Image
-                          src={a.featuredImageUrl!}
-                          alt={alt}
-                          fill
-                          sizes="(min-width: 640px) 120px, 100px"
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-brand/30 to-brand-dark/40">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-white/80">
-                            Peredam Mobil
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Konten kanan */}
-                    <div className="min-w-0 flex-1 pt-0.5">
-                      {/* Meta: badge kategori + tanggal + read time */}
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <span
-                          className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${badge}`}
-                        >
-                          {a.category.name}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <CalendarDays className="size-3" />
-                          {dateLabel}
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Clock className="size-3" />
-                          {a.readingTimeMinutes} mnt
-                        </span>
-                      </div>
-
-                      {/* Title (2-line clamp + min-h supaya konsisten tinggi).
-                          Excerpt/cuplikan DIHAPUS sesuai brief — hanya title
-                          yang tampil supaya card proporsi dengan gambar. */}
-                      <h3 className="mt-1.5 font-semibold leading-snug line-clamp-2 min-h-[2.6rem] group-hover:text-brand dark:group-hover:text-brand-light transition-colors">
-                        {a.title}
-                      </h3>
-                    </div>
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        )}
+        {/* Articles list dengan infinite scroll */}
+        <ArticlesList
+          initialArticles={articles as ArticleItem[]}
+          initialCursor={nextCursor}
+        />
       </div>
     </section>
   )
 }
+
+// Re-export untuk konsistensi API
+export type { ArticleItem } from '@/components/landing/articles-list'

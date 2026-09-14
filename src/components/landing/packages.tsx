@@ -83,23 +83,14 @@ export function Packages() {
   return (
     <section id="paket" className="border-t border-border bg-background">
       <div className="container mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
-        {/* Section header */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Paket Layanan
-            </h2>
-            <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-              Pilih paket pengerjaan sesuai kebutuhan &amp; budget mobil Anda.
-            </p>
-          </div>
-          <Link
-            href="/berita"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand dark:text-brand-light hover:gap-2.5 transition-all"
-          >
-            Lihat Panduan Lengkap
-            <ArrowRight className="size-4" />
-          </Link>
+        {/* Section header — tanpa link 'Lihat Panduan Lengkap' (dihapus sesuai brief) */}
+        <div className="max-w-2xl">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+            Paket Layanan
+          </h2>
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground">
+            Pilih paket pengerjaan sesuai kebutuhan &amp; budget mobil Anda.
+          </p>
         </div>
 
         {/* Vertical list — horizontal cards (gambar kiri 140×94 + konten kanan) */}
