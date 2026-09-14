@@ -4,10 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CalendarDays, Clock, Loader2 } from 'lucide-react'
-import {
-  categoryBadgeClass,
-  type PortalCategory,
-} from '@/lib/portal'
+import { categoryBadgeClass } from '@/lib/category-badge'
 import { formatTanggalPendek } from '@/lib/format-tanggal'
 
 /**
@@ -25,6 +22,9 @@ import { formatTanggalPendek } from '@/lib/format-tanggal'
  *  - Loading: skeleton card placeholder saat fetch.
  *  - End state: "✓ Semua artikel sudah dimuat" kalau hasMore=false.
  *  - Error: "Gagal memuat artikel lainnya. Coba lagi." dengan retry.
+ *
+ * NOTE: Jangan import dari @/lib/portal (server-only). Pakai
+ * @/lib/category-badge (client-safe) untuk badge class.
  */
 
 export type ArticleItem = {
@@ -41,7 +41,13 @@ export type ArticleItem = {
   isFeatured: boolean
   isBreaking: boolean
   categoryId: string
-  category: PortalCategory
+  category: {
+    id: string
+    name: string
+    slug: string
+    description: string | null
+    color: string | null
+  }
   tags: { id: string; name: string; slug: string }[]
 }
 

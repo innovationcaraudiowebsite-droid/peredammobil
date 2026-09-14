@@ -1,9 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { db } from '@/lib/db'
-import {
-  type PortalCategory,
-} from '@/lib/portal'
 import { ArticlesList, type ArticleItem } from '@/components/landing/articles-list'
 
 /**
@@ -17,23 +14,7 @@ import { ArticlesList, type ArticleItem } from '@/components/landing/articles-li
  */
 export const dynamic = 'force-dynamic'
 
-type LatestArticle = {
-  id: string
-  title: string
-  slug: string
-  excerpt: string | null
-  featuredImageUrl: string | null
-  featuredImageAlt: string | null
-  authorName: string
-  readingTimeMinutes: number
-  viewCount: number
-  publishedAt: Date | null
-  isFeatured: boolean
-  isBreaking: boolean
-  categoryId: string
-  category: PortalCategory
-  tags: { id: string; name: string; slug: string }[]
-}
+type LatestArticle = ArticleItem
 
 async function getInitialArticles(): Promise<{
   articles: LatestArticle[]
