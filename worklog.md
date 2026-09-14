@@ -1333,3 +1333,71 @@ Stage Summary:
 - Section 5 (165px) sedikit lebih tinggi karena title artikel butuh 2 baris (min-h-[2.6rem]) untuk readability.
 - Production verified via agent-browser mobile 375px: semua card uniform.
 - Task COMPLETE.
+
+---
+Task ID: FLOATING-2-WA-SALES
+Agent: main
+Task: Ganti floating button — logo WA (bukan Phone coklat), support 2 WA Sales.
+
+Work Log:
+- User berikan 2 nomor WA Sales:
+  - Sales 1: +62 822-1122-2989 (6282111222989)
+  - Sales 2: +62 812-9595-2279 (6281295952279)
+
+- Perubahan:
+  1. src/components/landing/floating-admin-button.tsx:
+     - Konstanta WA_SALES: array berisi 2 sales dengan label, number
+       (format internasional untuk wa.me), dan display (format lokal).
+     - Klik button → expand panel kecil (240px) berisi 2 opsi:
+       [Sales 1 | 0822-1122-2989] dan [Sales 2 | 0812-9595-2279].
+     - Tiap opsi langsung buka wa.me/<nomor> di tab baru dengan pre-fill
+       message 'Halo, saya tertarik paket layanan peredam mobil. Mohon
+       info lengkap.'
+     - Warna: emerald gradient (hijau khas WA), bukan brand coklat.
+     - Icon: MessageCircle (logo WA dari lucide-react).
+     - Behavior muncul setelah scroll > 100px (tidak overlap hero).
+     - Auto-close saat klik luar panel (dengan setTimeout 100ms supaya
+       click yang trigger open tidak langsung close).
+
+  2. src/components/landing/packages.tsx:
+     - Update note: 'Chat WA Sales' + tampilkan kedua nomor — 'Sales 1
+       (0822-1122-2989) / Sales 2 (0812-9595-2279)'.
+
+  3. src/components/landing/landing-header.tsx:
+     - WA_NUMBER kembali ke Sales 1 (6282111222989) — button header
+       default ke Sales 1 (utama).
+
+- Bug fix (commit 3d95bbd): panel expand langsung close setelah click
+  karena useEffect scroll listener pakai [open] dep + set open(false)
+  saat scroll. Klik button trigger micro-scroll event yang immediately
+  close panel yang baru saja dibuka. Fix:
+  - Hapus auto-close on scroll (tidak perlu, panel akan close saat user
+    klik luar atau pilih sales).
+  - useEffect scroll jadi hanya setVisible (no [open] dependency).
+  - Close-on-outside-click: pakai setTimeout 100ms supaya click yang
+    baru saja trigger open tidak langsung close.
+  - Tambah guard: jangan close jika klik masih di dalam [data-floating-wa].
+
+- File changed: 3 (floating-admin-button.tsx, packages.tsx, landing-header.tsx).
+- Lint: 0 errors.
+- Push: 93b75e1..5a4aec7..3d95bbd (2 commit, main -> main) ✓
+- Vercel deploy sukses ~3 menit.
+
+Verification (via agent-browser):
+- Floating button muncul setelah scroll > 100px:
+  - text: 'Chat WA Sales'
+  - background: emerald gradient (lab(66.97 -58.27 19.54) → lab(55.04 -49.92 15.93)) = emerald-500 → emerald-600
+  - position: bottom-right (left=1090, bottom=16)
+- Klik button → panel expand 240×148 px dengan 2 WA Sales:
+  - Sales 1: https://wa.me/6282111222989?text=Halo%2C%20saya%20tertarik%20paket%20layanan%20peredam%20mobil.%20Mohon%20info%20lengkap. (display: 0822-1122-2989)
+  - Sales 2: https://wa.me/6281295952279?text=Halo%2C%20saya%20tertarik%20paket%20layanan%20peredam%20mobil.%20Mohon%20info%20lengkap. (display: 0812-9595-2279)
+- Panel tidak langsung close (bug auto-close-on-scroll sudah di-fix).
+
+Stage Summary:
+- Floating button sekarang pakai logo WA (MessageCircle icon) dengan warna emerald gradient (bukan Phone coklat brand).
+- Support 2 WA Sales: Sales 1 (+62 822-1122-2989) & Sales 2 (+62 812-9595-2279).
+- Klik button → panel expand dengan 2 opsi sales, user pilih mau chat yang mana.
+- Header button WA default ke Sales 1 (utama).
+- Note di section Paket Layanan tampilkan kedua nomor sales.
+- Production verified via agent-browser: panel expand bekerja dengan 2 wa.me links yang benar.
+- Task COMPLETE.
