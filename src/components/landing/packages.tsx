@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, Star, Phone } from 'lucide-react'
+import { ArrowRight, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 /**
@@ -159,11 +159,10 @@ export function Packages() {
         {/* Note */}
         <p className="mt-6 text-center text-xs text-muted-foreground">
           * Harga hubungi admin untuk estimasi khusus mobil Anda. Klik tombol
-          <span className="mx-1 inline-flex items-center gap-0.5 font-semibold text-brand dark:text-brand-light">
-            <Phone className="size-3" />
-            Hubungi Admin
+          <span className="mx-1 inline-flex items-center gap-0.5 font-semibold text-emerald-600 dark:text-emerald-400">
+            Chat WA Sales
           </span>
-          di pojok kanan bawah.
+          di pojok kanan bawah (62 812-9595-2279).
         </p>
 
         {/* CTA secondary */}

@@ -20,7 +20,7 @@ import { cn } from '@/lib/utils'
  *
  * Catatan: link "Beranda" scroll ke #hero (landing), bukan root path.
  */
-const WA_NUMBER = '6282111222989'
+const WA_NUMBER = '6281295952279' // WA Sales: 62 812-9595-2279
 const WA_LINK = `https://wa.me/${WA_NUMBER}`
 
 type NavLink = { href: string; label: string; isAnchor?: boolean }
