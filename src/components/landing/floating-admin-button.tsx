@@ -44,23 +44,29 @@ export function FloatingAdminButton() {
   useEffect(() => {
     const onScroll = () => {
       setVisible(window.scrollY > 100)
-      // Auto-close saat scroll (biar tidak ketahan)
-      if (open) setOpen(false)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     onScroll()
     return () => window.removeEventListener('scroll', onScroll)
-  }, [open])
+  }, [])
 
-  // Close saat klik luar
+  // Close saat klik luar panel
   useEffect(() => {
     if (!open) return
     const onClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      if (!target.closest('[data-floating-wa]')) setOpen(false)
+      // Jangan close jika klik di dalam panel atau button itu sendiri
+      if (target.closest('[data-floating-wa]')) return
+      setOpen(false)
     }
-    document.addEventListener('click', onClick)
-    return () => document.removeEventListener('click', onClick)
+    // Delay supaya click yang baru saja trigger open tidak langsung close
+    const timer = setTimeout(() => {
+      document.addEventListener('click', onClick)
+    }, 100)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('click', onClick)
+    }
   }, [open])
 
   const waLinkFor = (number: string) =>
