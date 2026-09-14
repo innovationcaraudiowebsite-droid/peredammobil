@@ -162,7 +162,7 @@ export function Packages() {
           <span className="mx-1 inline-flex items-center gap-0.5 font-semibold text-emerald-600 dark:text-emerald-400">
             Chat WA Sales
           </span>
-          di pojok kanan bawah (62 812-9595-2279).
+          di pojok kanan bawah — Sales 1 (0822-1122-2989) / Sales 2 (0812-9595-2279).
         </p>
 
         {/* CTA secondary */}
