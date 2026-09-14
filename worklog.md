@@ -1401,3 +1401,75 @@ Stage Summary:
 - Note di section Paket Layanan tampilkan kedua nomor sales.
 - Production verified via agent-browser: panel expand bekerja dengan 2 wa.me links yang benar.
 - Task COMPLETE.
+
+---
+Task ID: ADMIN-TABS-SECTION-1
+Agent: main
+Task: Pindah tab navigasi (Konten, Klasifikasi, SEO, Publikasi) ke section 1 (atas) sebelum title input, dengan button aktif berwarna brand.
+
+Work Log:
+- User request: tab navigasi seharusnya ditempatkan di section 1, sebelum form input judul berita, dengan button yang aktif dan berwarna.
+
+- Analisa struktur form saat ini (src/components/admin/articles/article-form.tsx):
+  1. Back link + status badge
+  2. Title input (Judul Artikel + slug + Regenerate)
+  3. Tabs (Konten/Klasifikasi/SEO/Publikasi) — DI BAWAH title
+  4. TabsContent (panel)
+
+  Masalah: tab di bawah title, button netral (active state default shadcn
+  pakai bg-background/putih, tidak berwarna brand).
+
+- Wireframe target:
+  ┌────────────────────────────────────┐
+  │ Artikel Baru                       │
+  │ ← Kembali ke Daftar Artikel         │
+  ├────────────────────────────────────┤
+  │ ┌────────┬────────────┬───┬───────┐ │ ← SECTION 1 (TABS BERWARNA)
+  │ │ Konten │Klasifikasi │SEO│Publik│ │   Active = bg-brand (coklat)
+  │ └────────┴────────────┴───┴───────┘ │   Inactive = muted
+  ├────────────────────────────────────┤
+  │ Judul Artikel *                     │ ← Title di bawah tabs
+  │ [input judul]                       │
+  │ slug: [auto] [Regenerate]           │
+  ├────────────────────────────────────┤
+  │ Tabpanel (Konten default)           │
+  └────────────────────────────────────┘
+
+- Implement:
+  - Pindahkan <Tabs> dari bawah title input ke atas (section 1).
+  - Title input sekarang ditempatkan setelah TabsList, di dalam <Tabs>
+    parent tapi di luar <TabsContent> (title tetap visible di semua tab).
+  - Styling TabsList: grid 4 kolom (sm:grid-cols-4) atau 2x2 (grid-cols-2
+    di mobile), full width, h-auto, gap-1, p-1.5.
+  - Styling TabsTrigger: active state pakai bg-brand (coklat #c48e55) +
+    text-white + shadow-md + font-semibold. Inactive tetap muted.
+  - py-2.5 supaya button lebih tinggi (lebih mudah klik).
+  - transition-all untuk animasi smooth saat switch tab.
+
+- File changed: src/components/admin/articles/article-form.tsx (1 file).
+- Lint: 0 errors.
+- Push: 3d95bbd..a4ca44b main -> main ✓
+- Vercel deploy sukses ~3 menit.
+
+Verification (via agent-browser):
+- Struktur form sekarang: tabs (y=190) → title (y=270) → panel.
+  tabsBeforeTitle: true ✓
+- Tab "Konten" (default active): bg rgb(196, 142, 85) = #c48e55 (brand),
+  text putih, font-weight 600, ada shadow.
+- Tab inactive (Klasifikasi, SEO, Publikasi): transparent bg, foreground
+  text, font-weight 500.
+- Klik tab "Klasifikasi" → active state pindah dengan warna brand.
+  Switching bekerja dengan benar.
+- Layout: grid 4 kolom di desktop, 2x2 di mobile (responsive).
+
+Stage Summary:
+- Tab navigasi (Konten, Klasifikasi, SEO, Publikasi) sekarang di section 1
+  (atas), sebelum title input.
+- Button aktif berwarna brand #c48e55 (coklat sesuai hero gambar) dengan
+  text putih + shadow + font-semibold.
+- Button inactive transparent dengan foreground text.
+- Layout responsive: 4 kolom desktop, 2x2 mobile.
+- Tab switching bekerja (verify: Konten → Klasifikasi, active state
+  pindah dengan warna brand).
+- Production verified via agent-browser.
+- Task COMPLETE.
