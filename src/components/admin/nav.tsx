@@ -18,6 +18,7 @@ import {
   Users,
   UserCircle,
   ChevronDown,
+  Package,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -76,6 +77,16 @@ export const navSections: NavSection[] = [
       { label: 'Kategori', href: '/admin/categories', icon: FolderTree, roles: ['admin'] },
       { label: 'Tag', href: '/admin/tags', icon: Tags, roles: ['admin'] },
       { label: 'FAQ', href: '/admin/faq', icon: HelpCircle, roles: ['admin'] },
+      {
+        label: 'Produk',
+        href: '/admin/products',
+        icon: Package,
+        roles: ['admin'],
+        children: [
+          { label: 'Semua Produk', href: '/admin/products', icon: List },
+          { label: 'Tambah Baru', href: '/admin/products/new', icon: Plus, exact: true },
+        ],
+      },
     ],
   },
   {

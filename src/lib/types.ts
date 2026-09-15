@@ -151,3 +151,22 @@ export type ArticleVersionWithUser = ArticleVersion & {
 export type ProfileWithCounts = Profile & {
   _count?: { articles: number }
 }
+
+/**
+ * Product — untuk Section 4 (Paket Layanan) landing page.
+ * Di-manage via admin dashboard /admin/products.
+ */
+export type Product = {
+  id: string
+  name: string
+  description: string | null
+  price: string | null
+  category: string // contoh: "Paket Layanan", "Material", "Aksesori"
+  imageUrl: string | null
+  imageAlt: string | null
+  waNumber: string // nomor WA admin untuk CTA produk ini (format: 628xxx)
+  order: number
+  isActive: boolean
+  createdAt: string | Date
+  updatedAt: string | Date
+}

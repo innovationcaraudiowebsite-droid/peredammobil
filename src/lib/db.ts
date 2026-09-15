@@ -648,6 +648,7 @@ export const db = {
   siteSetting: makeModel<SiteSetting>('site_settings'),
   profile: makeModel<Profile>('profiles'),
   articleVersion: makeModel<ArticleVersion>('article_versions'),
+  product: makeModel<Product>('products'),
   // Junction table for Article <-> Tag (m-n). Columns: A (articleId), B (tagId).
   _articleTags: makeModel('_ArticleTags'),
 }
