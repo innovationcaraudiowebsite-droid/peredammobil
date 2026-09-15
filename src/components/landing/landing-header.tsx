@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { Menu, X, MessageCircle, Home as HomeIcon } from 'lucide-react'
+import { Menu, X, Home as HomeIcon } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -19,9 +19,9 @@ import { cn } from '@/lib/utils'
  * Mobile: hamburger menu (Sheet).
  *
  * Catatan: link "Beranda" scroll ke #hero (landing), bukan root path.
+ * Button WhatsApp dihapus dari navbar & mobile menu karena sudah ada
+ * floating WA button di pojok kanan bawah (mencegah dobel CTA).
  */
-const WA_NUMBER = '6282111222989' // Sales 1: +62 822-1122-2989
-const WA_LINK = `https://wa.me/${WA_NUMBER}`
 
 type NavLink = { href: string; label: string; isAnchor?: boolean }
 
@@ -107,16 +107,8 @@ export function LandingHeader() {
                 })}
               </nav>
               <div className="mt-auto px-4 py-3 border-t border-border space-y-2">
-                <Button
-                  asChild
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
-                  size="sm"
-                >
-                  <a href={WA_LINK} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle className="size-4" />
-                    Chat WhatsApp
-                  </a>
-                </Button>
+                {/* Button WhatsApp dihapus dari mobile menu karena sudah ada
+                    floating WA button di pojok kanan bawah (mencegah dobel CTA). */}
                 <Link
                   href="/admin/login"
                   className="block rounded-md px-3 py-2 text-sm font-medium text-brand dark:text-brand-light hover:bg-brand/10 text-center"
@@ -164,20 +156,12 @@ export function LandingHeader() {
             ))}
           </nav>
 
-          {/* Right side */}
+          {/* Right side — hanya ThemeToggle.
+              Button WhatsApp dihapus dari navbar karena sudah ada
+              floating WA button di pojok kanan bawah (mencegah dobel CTA
+              yang bikin customer ambigu). */}
           <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
-            <Button
-              asChild
-              size="sm"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white"
-            >
-              <a href={WA_LINK} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="size-4" />
-                <span className="hidden sm:inline">Chat WhatsApp</span>
-                <span className="sm:hidden">WA</span>
-              </a>
-            </Button>
           </div>
         </div>
       </div>
