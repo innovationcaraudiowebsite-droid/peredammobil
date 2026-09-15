@@ -78,20 +78,15 @@ export function Education() {
 
                 {/* Konten kanan */}
                 <div className="min-w-0 flex-1 pt-0.5">
-                  {/* Meta: badge nomor + label */}
+                  {/* Meta: badge nomor + nama bahan (sesuai brief — hapus title redundant) */}
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="inline-block rounded bg-brand px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
                       {b.no}
                     </span>
-                    <span className="inline-block text-[10px] font-semibold uppercase tracking-wide text-brand dark:text-brand-light">
-                      Bahan
+                    <span className="inline-block text-base sm:text-lg font-bold uppercase tracking-wide text-brand dark:text-brand-light">
+                      {b.name}
                     </span>
                   </div>
-
-                  {/* Title */}
-                  <h3 className="mt-2 text-lg sm:text-xl font-bold leading-snug">
-                    {b.name}
-                  </h3>
 
                   {/* Deskripsi fungsi — max 2 baris supaya card proporsi dengan gambar */}
                   <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">

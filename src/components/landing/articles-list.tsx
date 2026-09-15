@@ -3,25 +3,28 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CalendarDays, Clock, Loader2 } from 'lucide-react'
+import { CalendarDays, Clock, Loader2, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { categoryBadgeClass } from '@/lib/category-badge'
 import { formatTanggalPendek } from '@/lib/format-tanggal'
 
 /**
- * ArticlesList — client component untuk render list artikel dengan
- * infinite scroll.
+ * ArticlesList — client component untuk render 3 card artikel dengan
+ * batch-based scroll (sticky 3 card, konten berganti saat navigate).
  *
- * Initial 3 artikel di-render server-side (passed via initialArticles),
- * lalu saat user scroll ke card terakhir, fetch artikel berikutnya via
- * /api/articles/published?cursor=xxx&cursorId=xxx.
+ * Sesuai brief user revisi:
+ *  - Prinsip sticky: hanya 3 card yang tampil.
+ *  - Jika di-scroll, artikel berganti (replace) dengan artikel lain
+ *    dari database.
+ *  - Navigation indicator: "Artikel X-Y dari N" + progress bar.
  *
  * Behavior:
- *  - Initial render: 3 card artikel (SSR).
- *  - IntersectionObserver watch card terakhir. Saat visible, fetch
- *    artikel berikutnya (limit 3).
- *  - Loading: skeleton card placeholder saat fetch.
- *  - End state: "✓ Semua artikel sudah dimuat" kalau hasMore=false.
- *  - Error: "Gagal memuat artikel lainnya. Coba lagi." dengan retry.
+ *  - Initial render: 3 card (SSR dari server component).
+ *  - Tombol "← Sebelumnya" / "Berikutnya →" untuk manual navigate.
+ *  - IntersectionObserver sentinel bawah → auto-advance ke batch
+ *    berikutnya (replace 3 card).
+ *  - Saat ganti batch: card fade out → fetch → card fade in.
+ *  - End state: "✓ Sampai artikel terakhir" kalau batch terakhir.
+ *  - Error: "Gagal memuat artikel. Coba lagi." dengan retry.
  *
  * NOTE: Jangan import dari @/lib/portal (server-only). Pakai
  * @/lib/category-badge (client-safe) untuk badge class.
@@ -53,8 +56,10 @@ export type ArticleItem = {
 
 interface ArticlesListProps {
   initialArticles: ArticleItem[]
-  initialCursor: { publishedAt: string; id: string } | null
+  initialTotal: number
 }
+
+const BATCH_SIZE = 3
 
 function ArticleCard({ a }: { a: ArticleItem }) {
   const href = `/berita/${a.category.slug}/${a.slug}`
@@ -137,35 +142,38 @@ function SkeletonCard() {
   )
 }
 
-export function ArticlesList({ initialArticles, initialCursor }: ArticlesListProps) {
-  const [articles, setArticles] = useState<ArticleItem[]>(initialArticles)
-  const [cursor, setCursor] = useState<{ publishedAt: string; id: string } | null>(initialCursor)
+export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProps) {
+  const [currentArticles, setCurrentArticles] = useState<ArticleItem[]>(initialArticles)
+  const [offset, setOffset] = useState(0)
+  const [total] = useState(initialTotal)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [hasMore, setHasMore] = useState(!!initialCursor)
+  const [fadeKey, setFadeKey] = useState(0) // untuk trigger fade animation
 
   const sentinelRef = useRef<HTMLDivElement>(null)
-  const loadingRef = useRef(false) // guard supaya tidak double-fetch
+  const loadingRef = useRef(false)
 
-  const fetchMore = useCallback(async () => {
-    if (loadingRef.current || !cursor || !hasMore) return
+  const hasMore = offset + BATCH_SIZE < total
+  const hasPrev = offset > 0
+  const currentBatch = Math.floor(offset / BATCH_SIZE) + 1
+  const totalBatches = Math.ceil(total / BATCH_SIZE)
+
+  const fetchBatch = useCallback(async (newOffset: number) => {
+    if (loadingRef.current) return
     loadingRef.current = true
     setLoading(true)
     setError(null)
 
     try {
-      const url = `/api/articles/published?cursor=${encodeURIComponent(cursor.publishedAt)}&cursorId=${cursor.id}&limit=3`
+      const url = `/api/articles/published?offset=${newOffset}&limit=${BATCH_SIZE}`
       const res = await fetch(url)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
 
       if (data.articles && data.articles.length > 0) {
-        setArticles((prev) => [...prev, ...data.articles])
-        setCursor(data.nextCursor)
-        setHasMore(data.hasMore)
-      } else {
-        setHasMore(false)
-        setCursor(null)
+        setCurrentArticles(data.articles)
+        setOffset(newOffset)
+        setFadeKey((k) => k + 1) // trigger fade animation
       }
     } catch (err) {
       console.error('[articles-list] fetch error:', err)
@@ -174,9 +182,19 @@ export function ArticlesList({ initialArticles, initialCursor }: ArticlesListPro
       setLoading(false)
       loadingRef.current = false
     }
-  }, [cursor, hasMore])
+  }, [])
 
-  // IntersectionObserver untuk trigger fetch saat sentinel visible
+  const nextBatch = useCallback(() => {
+    if (!hasMore) return
+    fetchBatch(offset + BATCH_SIZE)
+  }, [hasMore, offset, fetchBatch])
+
+  const prevBatch = useCallback(() => {
+    if (!hasPrev) return
+    fetchBatch(offset - BATCH_SIZE)
+  }, [hasPrev, offset, fetchBatch])
+
+  // IntersectionObserver untuk auto-advance ke batch berikutnya
   useEffect(() => {
     if (!hasMore) return
     const sentinel = sentinelRef.current
@@ -185,16 +203,16 @@ export function ArticlesList({ initialArticles, initialCursor }: ArticlesListPro
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
-          fetchMore()
+          nextBatch()
         }
       },
-      { rootMargin: '200px' } // trigger 200px sebelum sentinel terlihat
+      { rootMargin: '100px' }
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [fetchMore, hasMore])
+  }, [nextBatch, hasMore])
 
-  if (articles.length === 0) {
+  if (currentArticles.length === 0) {
     return (
       <div className="mt-10 rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
         Belum ada artikel.
@@ -204,22 +222,64 @@ export function ArticlesList({ initialArticles, initialCursor }: ArticlesListPro
 
   return (
     <>
-      <ul className="mt-8 space-y-4">
-        {articles.map((a) => (
-          <ArticleCard key={a.id} a={a} />
-        ))}
+      {/* Navigation indicator + tombol prev/next */}
+      <div className="mt-6 flex items-center justify-between gap-4">
+        {/* Tombol Sebelumnya */}
+        <button
+          type="button"
+          onClick={prevBatch}
+          disabled={!hasPrev || loading}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
+        >
+          <ChevronLeft className="size-3.5" />
+          Sebelumnya
+        </button>
 
-        {/* Skeleton saat loading */}
-        {loading && (
+        {/* Indicator: "Artikel 1-3 dari 9" + progress bar */}
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-xs font-medium text-muted-foreground">
+            Artikel {offset + 1}-{Math.min(offset + BATCH_SIZE, total)} dari {total}
+          </span>
+          {/* Progress bar */}
+          <div className="h-1 w-32 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full bg-brand transition-all duration-300"
+              style={{ width: `${((offset + BATCH_SIZE) / total) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Tombol Berikutnya */}
+        <button
+          type="button"
+          onClick={nextBatch}
+          disabled={!hasMore || loading}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
+        >
+          Berikutnya
+          <ChevronRight className="size-3.5" />
+        </button>
+      </div>
+
+      {/* 3 card artikel (replace, bukan append) — fade animation saat ganti batch */}
+      <ul
+        key={fadeKey}
+        className="mt-6 space-y-4 animate-in fade-in duration-300"
+      >
+        {loading ? (
           <>
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
           </>
+        ) : (
+          currentArticles.map((a) => (
+            <ArticleCard key={a.id} a={a} />
+          ))
         )}
       </ul>
 
-      {/* Sentinel untuk IntersectionObserver */}
+      {/* Sentinel untuk IntersectionObserver (auto-advance) */}
       {hasMore && (
         <div ref={sentinelRef} className="h-1 w-full" aria-hidden />
       )}
@@ -238,7 +298,7 @@ export function ArticlesList({ initialArticles, initialCursor }: ArticlesListPro
           <p>{error}</p>
           <button
             type="button"
-            onClick={() => fetchMore()}
+            onClick={() => fetchBatch(offset)}
             className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors"
           >
             Coba lagi
@@ -246,10 +306,11 @@ export function ArticlesList({ initialArticles, initialCursor }: ArticlesListPro
         </div>
       )}
 
-      {/* End state — semua artikel sudah dimuat */}
-      {!hasMore && !loading && !error && articles.length > 0 && (
-        <div className="mt-6 text-center text-xs text-muted-foreground">
-          ✓ Semua artikel sudah dimuat ({articles.length} artikel)
+      {/* End state — sudah sampai artikel terakhir */}
+      {!hasMore && !loading && !error && (
+        <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <CheckCircle2 className="size-3.5 text-emerald-500" />
+          Sampai artikel terakhir (batch {currentBatch} dari {totalBatches})
         </div>
       )}
     </>

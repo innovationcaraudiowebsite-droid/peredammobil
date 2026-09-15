@@ -1,16 +1,20 @@
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
 import { db } from '@/lib/db'
 import { ArticlesList, type ArticleItem } from '@/components/landing/articles-list'
 
 /**
  * LatestArticles section landing — section id="artikel".
  *
- * Infinite scroll: initial 3 artikel di-render server-side (SEO friendly),
- * lalu saat user scroll ke bawah, client component fetch artikel berikutnya
- * via /api/articles/published?cursor=xxx.
+ * Batch-based scroll: 3 artikel di-render server-side (SEO friendly),
+ * lalu saat user scroll/navigate, client component fetch batch berikutnya
+ * via /api/articles/published?offset=xxx&limit=3. 3 card tetap (replace,
+ * bukan append).
  *
- * Server component — ambil 3 artikel pertama untuk initial render.
+ * Server component — ambil 3 artikel pertama + total count untuk initial render.
+ *
+ * Sesuai brief user revisi:
+ *  - Hapus link "Lihat Semua Artikel" di header section.
+ *  - Prinsip sticky: hanya 3 card yang tampil. Jika di-scroll, artikel
+ *    berganti (replace) dengan artikel lain dari database.
  */
 export const dynamic = 'force-dynamic'
 
@@ -18,14 +22,17 @@ type LatestArticle = ArticleItem
 
 async function getInitialArticles(): Promise<{
   articles: LatestArticle[]
-  nextCursor: { publishedAt: string; id: string } | null
+  total: number
 }> {
   try {
-    // Ambil 4 artikel (3 untuk initial + 1 untuk cek hasMore)
+    // Ambil total count untuk navigation indicator
+    const total = await db.article.count({ where: { status: 'PUBLISHED' } })
+
+    // Ambil 3 artikel pertama (batch 0)
     const items = (await db.article.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-      take: 4,
+      take: 3,
       select: {
         id: true,
         title: true,
@@ -53,34 +60,15 @@ async function getInitialArticles(): Promise<{
       },
     } as never)) as LatestArticle[]
 
-    if (items.length === 0) {
-      return { articles: [], nextCursor: null }
-    }
-
-    const hasMore = items.length > 3
-    const initialArticles = hasMore ? items.slice(0, 3) : items
-
-    // Compute nextCursor dari artikel terakhir initial (artikel ke-3)
-    let nextCursor: { publishedAt: string; id: string } | null = null
-    if (hasMore && initialArticles.length > 0) {
-      const last = initialArticles[initialArticles.length - 1]
-      nextCursor = {
-        publishedAt: last.publishedAt instanceof Date
-          ? last.publishedAt.toISOString()
-          : (last.publishedAt || new Date().toISOString()),
-        id: last.id,
-      }
-    }
-
-    return { articles: initialArticles, nextCursor }
+    return { articles: items, total }
   } catch (err) {
     console.error('[latest-articles] DB error:', err)
-    return { articles: [], nextCursor: null }
+    return { articles: [], total: 0 }
   }
 }
 
 export async function LatestArticles() {
-  const { articles, nextCursor } = await getInitialArticles()
+  const { articles, total } = await getInitialArticles()
 
   return (
     <section
@@ -88,29 +76,20 @@ export async function LatestArticles() {
       className="border-t border-border bg-muted/30"
     >
       <div className="container mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
-        {/* Section header */}
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-              Artikel Terbaru
-            </h2>
-            <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-              Tips &amp; panduan seputar peredam mobil. Scroll untuk lihat artikel lainnya.
-            </p>
-          </div>
-          <Link
-            href="/berita"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand dark:text-brand-light hover:gap-2.5 transition-all"
-          >
-            Lihat Semua Artikel
-            <ArrowRight className="size-4" />
-          </Link>
+        {/* Section header — tanpa link "Lihat Semua Artikel" (dihapus sesuai brief) */}
+        <div className="max-w-2xl">
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+            Artikel Terbaru
+          </h2>
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground">
+            Tips &amp; panduan seputar peredam mobil. Scroll untuk lihat artikel lainnya.
+          </p>
         </div>
 
-        {/* Articles list dengan infinite scroll */}
+        {/* Articles list dengan batch-based scroll (3 card tetap, berganti saat scroll) */}
         <ArticlesList
           initialArticles={articles as ArticleItem[]}
-          initialCursor={nextCursor}
+          initialTotal={total}
         />
       </div>
     </section>
