@@ -194,41 +194,73 @@ export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProp
     fetchBatch(offset - BATCH_SIZE)
   }, [hasPrev, offset, fetchBatch])
 
-  // Auto-advance via wheel/scroll dengan throttle 800ms.
-  // PRINSIP: setiap scroll down yang significant → ganti ke batch berikutnya
+  // Auto-advance via wheel (desktop) + touch (Android/iOS) dengan throttle 800ms.
+  // PRINSIP: setiap scroll/swipe down yang significant → ganti ke batch berikutnya
   // (REPLACE 3 card, bukan append). 3 card tetap, konten berganti.
   //
-  // Bug sebelumnya: IntersectionObserver dengan rootMargin 100px terus
-  // trigger nextBatch selama sentinel visible → batch langsung lompat ke
-  // terakhir (artikel 40-40 dari 40) dalam 1 scroll.
+  // Bug sebelumnya:
+  //  1. IntersectionObserver dengan rootMargin 100px terus trigger nextBatch
+  //     → batch langsung lompat ke terakhir dalam 1 scroll.
+  //  2. Hanya pakai 'wheel' event → TIDAK work di Android/iOS (mobile browser
+  //     pakai touch events, bukan wheel). User mobile harus klik tombol manual.
   //
-  // Fix: pakai wheel event dengan throttle + cooldown 800ms supaya 1 scroll
-  // = 1 batch advance (tidak rapid-fire).
+  // Fix:
+  //  - Desktop: wheel event dengan cooldown 800ms.
+  //  - Mobile (Android/iOS): touchstart + touchend, hitung deltaY swipe.
+  //    Swipe UP (jari naik) = scroll down = nextBatch.
+  //    Swipe DOWN (jari turun) = scroll up = prevBatch.
+  //    Threshold 50px supaya tidak trigger accidental (tap kecil).
+  //  - Cooldown 800ms shared antara wheel & touch supaya tidak rapid-fire.
   useEffect(() => {
-    if (!hasMore) return
     const section = document.getElementById('artikel')
     if (!section) return
 
     let lastTrigger = 0
     const COOLDOWN = 800 // ms — minimal jarak antar trigger
+    const TOUCH_THRESHOLD = 50 // px — minimal swipe distance
 
-    const onWheel = (e: WheelEvent) => {
-      // Hanya trigger kalau scroll DOWN (deltaY > 0)
-      if (e.deltaY <= 0) return
+    const isSectionVisible = () => {
+      const rect = section.getBoundingClientRect()
+      return rect.top < window.innerHeight * 0.5 && rect.bottom > window.innerHeight * 0.5
+    }
+
+    const tryAdvance = (direction: 'next' | 'prev') => {
       const now = Date.now()
       if (now - lastTrigger < COOLDOWN) return
-      // Hanya trigger kalau section artikel terlihat di viewport
-      const rect = section.getBoundingClientRect()
-      const sectionVisible = rect.top < window.innerHeight * 0.5 && rect.bottom > window.innerHeight * 0.5
-      if (!sectionVisible) return
-      // Trigger next batch
+      if (!isSectionVisible()) return
       lastTrigger = now
-      nextBatch()
+      if (direction === 'next') nextBatch()
+      else prevBatch()
+    }
+
+    // Desktop: mouse wheel
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY > 0) tryAdvance('next')
+      else if (e.deltaY < 0) tryAdvance('prev')
+    }
+
+    // Mobile (Android/iOS): touch swipe
+    let touchStartY = 0
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0]?.clientY ?? 0
+    }
+    const onTouchEnd = (e: TouchEvent) => {
+      const endY = e.changedTouches[0]?.clientY ?? 0
+      const deltaY = touchStartY - endY // positive = swipe up = scroll down
+      if (Math.abs(deltaY) < TOUCH_THRESHOLD) return // too small, ignore
+      if (deltaY > 0) tryAdvance('next') // swipe up → next batch
+      else tryAdvance('prev') // swipe down → prev batch
     }
 
     window.addEventListener('wheel', onWheel, { passive: true })
-    return () => window.removeEventListener('wheel', onWheel)
-  }, [nextBatch, hasMore])
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchend', onTouchEnd, { passive: true })
+    return () => {
+      window.removeEventListener('wheel', onWheel)
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [nextBatch, prevBatch])
 
   if (currentArticles.length === 0) {
     return (
