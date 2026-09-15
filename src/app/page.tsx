@@ -22,10 +22,8 @@ export const revalidate = 0
  *  1. Hero             — banner gambar lengkap (sudah berisi judul, subtitle, icon)
  *  2. About            — "About me" + lorem ipsum 100 karakter
  *  3. Jenis Bahan      — 4 jenis material peredam (Butyl, Absorber, Spant, Nex)
- *  4. Paket Layanan    — 4 paket jasa (tanpa CTA WA per card)
- *  5. Artikel Terbaru  — 4 artikel terbaru dari DB
- *
- * Floating button "Hubungi Admin" fixed di pojok kanan bawah (selalu visible).
+ *  4. Paket Layanan    — 4 paket jasa (4 Pintu, Full Kabin, Kap Mesin, Wheel Housing)
+ *  5. Artikel Terbaru  — carousel semua artikel (pre-load 30, slide animation)
  *
  * Footer simpel 1 baris (kontak + alamat + copyright).
  */
@@ -59,11 +57,11 @@ export default async function LandingPage() {
         {/* Divider: Paket → Artikel */}
         <SectionDivider variant="line" />
 
-        {/* Section 5: Artikel Terbaru (vertical list seperti versi lama) */}
+        {/* Section 5: Artikel Terbaru (carousel — pre-load all, slide animation) */}
         <LatestArticles />
       </main>
 
-      {/* Floating button "Hubungi Admin" — sekarang di layout.tsx global (muncul di semua halaman) */}
+      {/* Floating button "Chat WA Sales" — di layout.tsx global */}
 
       {/* Footer simpel 1 baris (komponen shared supaya konsisten di semua halaman) */}
       <LandingFooter />

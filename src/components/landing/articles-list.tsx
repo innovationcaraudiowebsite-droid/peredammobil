@@ -3,28 +3,35 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { CalendarDays, Clock, Loader2, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react'
+import { CalendarDays, Clock, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { categoryBadgeClass } from '@/lib/category-badge'
 import { formatTanggalPendek } from '@/lib/format-tanggal'
 
 /**
- * ArticlesList — client component untuk render 3 card artikel dengan
- * batch-based scroll (sticky 3 card, konten berganti saat navigate).
+ * ArticlesList — client component untuk render CAROUSEL artikel.
  *
- * Sesuai brief user revisi:
- *  - Prinsip sticky: hanya 3 card yang tampil.
- *  - Jika di-scroll, artikel berganti (replace) dengan artikel lain
- *    dari database.
- *  - Navigation indicator: "Artikel X-Y dari N" + progress bar.
+ * PRINSIP (sesuai brief user):
+ *  - Tampil artikel maksimal 3.
+ *  - Saat scroll/swipe = MENGGESER artikel selanjutnya (slide animation),
+ *    BUKAN reload/fetch API.
+ *  - Aslinya banyak (all articles pre-loaded), tapi terlihat hanya 3.
+ *  - Posisi sticky/fixed — container tetap, konten slide di dalamnya.
+ *
+ * Implementasi:
+ *  - Semua artikel di-render di DOM (dari server, no API fetch).
+ *  - Container `overflow: hidden`, fixed height untuk 3 card.
+ *  - Inner track di-translate dengan CSS `transform: translateY(-N * cardHeight)`.
+ *  - Scroll/swipe/wheel → increment/decrement `startIndex` → track slide.
+ *  - CSS transition `duration-500 ease-out` untuk smooth animation.
+ *  - NO network request — pure CSS, instant.
  *
  * Behavior:
- *  - Initial render: 3 card (SSR dari server component).
- *  - Tombol "← Sebelumnya" / "Berikutnya →" untuk manual navigate.
- *  - IntersectionObserver sentinel bawah → auto-advance ke batch
- *    berikutnya (replace 3 card).
- *  - Saat ganti batch: card fade out → fetch → card fade in.
- *  - End state: "✓ Sampai artikel terakhir" kalau batch terakhir.
- *  - Error: "Gagal memuat artikel. Coba lagi." dengan retry.
+ *  - Desktop: mouse wheel down → next 3, wheel up → prev 3.
+ *  - Mobile (Android/iOS): touch swipe up → next 3, swipe down → prev 3.
+ *  - Tombol Sebelumnya/Berikutnya untuk manual control.
+ *  - Cooldown 500ms supaya 1 gesture = 1 slide (tidak rapid-fire).
+ *  - Indicator: "Artikel 1-3 dari N" + progress bar.
+ *  - End state: tombol Berikutnya disabled, "✓ Sampai artikel terakhir".
  *
  * NOTE: Jangan import dari @/lib/portal (server-only). Pakai
  * @/lib/category-badge (client-safe) untuk badge class.
@@ -55,11 +62,13 @@ export type ArticleItem = {
 }
 
 interface ArticlesListProps {
-  initialArticles: ArticleItem[]
-  initialTotal: number
+  articles: ArticleItem[]
 }
 
-const BATCH_SIZE = 3
+const VISIBLE_COUNT = 3
+const CARD_HEIGHT = 132 // px — tinggi per card (sesuai measure production)
+const CARD_GAP = 16 // px — space-y-4 = 1rem = 16px
+const SLIDE_DISTANCE = CARD_HEIGHT + CARD_GAP // 148px per slide step
 
 function ArticleCard({ a }: { a: ArticleItem }) {
   const href = `/berita/${a.category.slug}/${a.slug}`
@@ -71,10 +80,10 @@ function ArticleCard({ a }: { a: ArticleItem }) {
 
   return (
     <li
-      key={a.id}
       className="rounded-xl border border-border bg-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md hover:border-brand/40"
+      style={{ height: `${CARD_HEIGHT}px` }}
     >
-      <Link href={href} className="group flex gap-3 sm:gap-4 items-start">
+      <Link href={href} className="group flex gap-3 sm:gap-4 items-start h-full">
         {/* Gambar kecil kiri — aspect-square */}
         <div className="shrink-0 relative overflow-hidden rounded-md bg-muted border border-border w-[100px] sm:w-[120px] aspect-square">
           {hasImage ? (
@@ -123,100 +132,38 @@ function ArticleCard({ a }: { a: ArticleItem }) {
   )
 }
 
-function SkeletonCard() {
-  return (
-    <li className="rounded-xl border border-border bg-card p-3 sm:p-4 animate-pulse">
-      <div className="flex gap-3 sm:gap-4 items-start">
-        <div className="shrink-0 w-[100px] sm:w-[120px] aspect-square rounded-md bg-muted" />
-        <div className="flex-1 space-y-2 pt-0.5">
-          <div className="flex gap-2">
-            <div className="h-4 w-20 rounded bg-muted" />
-            <div className="h-4 w-16 rounded bg-muted" />
-            <div className="h-4 w-10 rounded bg-muted" />
-          </div>
-          <div className="h-5 w-3/4 rounded bg-muted" />
-          <div className="h-5 w-1/2 rounded bg-muted" />
-        </div>
-      </div>
-    </li>
-  )
-}
+export function ArticlesList({ articles }: ArticlesListProps) {
+  const [startIndex, setStartIndex] = useState(0) // index artikel pertama yang visible
 
-export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProps) {
-  const [currentArticles, setCurrentArticles] = useState<ArticleItem[]>(initialArticles)
-  const [offset, setOffset] = useState(0)
-  const [total] = useState(initialTotal)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [fadeKey, setFadeKey] = useState(0) // untuk trigger fade animation
+  const total = articles.length
+  const maxStartIndex = Math.max(0, total - VISIBLE_COUNT)
 
-  const sentinelRef = useRef<HTMLDivElement>(null) // kept for backward compat (unused)
-  const loadingRef = useRef(false)
-
-  const hasMore = offset + BATCH_SIZE < total
-  const hasPrev = offset > 0
-  const currentBatch = Math.floor(offset / BATCH_SIZE) + 1
-  const totalBatches = Math.ceil(total / BATCH_SIZE)
-
-  const fetchBatch = useCallback(async (newOffset: number) => {
-    if (loadingRef.current) return
-    loadingRef.current = true
-    setLoading(true)
-    setError(null)
-
-    try {
-      const url = `/api/articles/published?offset=${newOffset}&limit=${BATCH_SIZE}`
-      const res = await fetch(url)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
-
-      if (data.articles && data.articles.length > 0) {
-        setCurrentArticles(data.articles)
-        setOffset(newOffset)
-        setFadeKey((k) => k + 1) // trigger fade animation
-      }
-    } catch (err) {
-      console.error('[articles-list] fetch error:', err)
-      setError('Gagal memuat artikel lainnya.')
-    } finally {
-      setLoading(false)
-      loadingRef.current = false
-    }
-  }, [])
+  const canNext = startIndex < maxStartIndex
+  const canPrev = startIndex > 0
 
   const nextBatch = useCallback(() => {
-    if (!hasMore) return
-    fetchBatch(offset + BATCH_SIZE)
-  }, [hasMore, offset, fetchBatch])
+    setStartIndex((prev) => {
+      const next = prev + VISIBLE_COUNT
+      return next > maxStartIndex ? prev : next
+    })
+  }, [maxStartIndex])
 
   const prevBatch = useCallback(() => {
-    if (!hasPrev) return
-    fetchBatch(offset - BATCH_SIZE)
-  }, [hasPrev, offset, fetchBatch])
+    setStartIndex((prev) => {
+      const next = prev - VISIBLE_COUNT
+      return next < 0 ? 0 : next
+    })
+  }, [])
 
-  // Auto-advance via wheel (desktop) + touch (Android/iOS) dengan throttle 800ms.
-  // PRINSIP: setiap scroll/swipe down yang significant → ganti ke batch berikutnya
-  // (REPLACE 3 card, bukan append). 3 card tetap, konten berganti.
-  //
-  // Bug sebelumnya:
-  //  1. IntersectionObserver dengan rootMargin 100px terus trigger nextBatch
-  //     → batch langsung lompat ke terakhir dalam 1 scroll.
-  //  2. Hanya pakai 'wheel' event → TIDAK work di Android/iOS (mobile browser
-  //     pakai touch events, bukan wheel). User mobile harus klik tombol manual.
-  //
-  // Fix:
-  //  - Desktop: wheel event dengan cooldown 800ms.
-  //  - Mobile (Android/iOS): touchstart + touchend, hitung deltaY swipe.
-  //    Swipe UP (jari naik) = scroll down = nextBatch.
-  //    Swipe DOWN (jari turun) = scroll up = prevBatch.
-  //    Threshold 50px supaya tidak trigger accidental (tap kecil).
-  //  - Cooldown 800ms shared antara wheel & touch supaya tidak rapid-fire.
+  // Auto-advance via wheel (desktop) + touch (Android/iOS) dengan throttle 500ms.
+  // PRINSIP: scroll/swipe = SLIDE ke 3 card berikutnya (CSS transform),
+  // BUKAN reload/fetch API. Pure animation, instant.
   useEffect(() => {
     const section = document.getElementById('artikel')
     if (!section) return
 
     let lastTrigger = 0
-    const COOLDOWN = 800 // ms — minimal jarak antar trigger
+    const COOLDOWN = 500 // ms — minimal jarak antar slide
     const TOUCH_THRESHOLD = 50 // px — minimal swipe distance
 
     const isSectionVisible = () => {
@@ -262,7 +209,7 @@ export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProp
     }
   }, [nextBatch, prevBatch])
 
-  if (currentArticles.length === 0) {
+  if (articles.length === 0) {
     return (
       <div className="mt-10 rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
         Belum ada artikel.
@@ -270,52 +217,51 @@ export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProp
     )
   }
 
+  // Current visible range untuk indicator
+  const visibleEnd = Math.min(startIndex + VISIBLE_COUNT, total)
+  const isLastBatch = !canNext
+
   return (
     <>
-      {/* 3 card artikel (replace, bukan append) — fade animation saat ganti batch.
-          Navigation (Sebelumnya/Indicator/Berikutnya) ditempatkan SETELAH card ke-3
-          supaya user lihat konten dulu, baru lihat navigation untuk ganti batch. */}
-      <ul
-        key={fadeKey}
-        className="mt-6 space-y-4 animate-in fade-in duration-300"
+      {/* Carousel container — overflow:hidden, fixed height untuk 3 card.
+          Inner track di-translate dengan CSS transform (NO reload). */}
+      <div
+        className="mt-6 overflow-hidden"
+        style={{ height: `${VISIBLE_COUNT * CARD_HEIGHT + (VISIBLE_COUNT - 1) * CARD_GAP}px` }}
       >
-        {loading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : (
-          currentArticles.map((a) => (
+        <ul
+          className="space-y-4 transition-transform duration-500 ease-out"
+          style={{ transform: `translateY(-${startIndex * SLIDE_DISTANCE}px)` }}
+        >
+          {articles.map((a) => (
             <ArticleCard key={a.id} a={a} />
-          ))
-        )}
-      </ul>
+          ))}
+        </ul>
+      </div>
 
-      {/* Navigation indicator + tombol prev/next — SETELAH card ke-3.
-          Logis: user lihat 3 card dulu, baru klik navigation untuk ganti batch. */}
+      {/* Navigation indicator + tombol prev/next — SETELAH carousel. */}
       <div className="mt-6 flex items-center justify-between gap-4">
         {/* Tombol Sebelumnya */}
         <button
           type="button"
           onClick={prevBatch}
-          disabled={!hasPrev || loading}
+          disabled={!canPrev}
           className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
         >
           <ChevronLeft className="size-3.5" />
           Sebelumnya
         </button>
 
-        {/* Indicator: "Artikel 1-3 dari 9" + progress bar */}
+        {/* Indicator: "Artikel 1-3 dari N" + progress bar */}
         <div className="flex flex-col items-center gap-1">
           <span className="text-xs font-medium text-muted-foreground">
-            Artikel {offset + 1}-{Math.min(offset + BATCH_SIZE, total)} dari {total}
+            Artikel {startIndex + 1}-{visibleEnd} dari {total}
           </span>
           {/* Progress bar */}
           <div className="h-1 w-32 rounded-full bg-muted overflow-hidden">
             <div
               className="h-full bg-brand transition-all duration-300"
-              style={{ width: `${((offset + BATCH_SIZE) / total) * 100}%` }}
+              style={{ width: `${(visibleEnd / total) * 100}%` }}
             />
           </div>
         </div>
@@ -324,7 +270,7 @@ export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProp
         <button
           type="button"
           onClick={nextBatch}
-          disabled={!hasMore || loading}
+          disabled={!canNext}
           className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-40 disabled:pointer-events-none"
         >
           Berikutnya
@@ -332,38 +278,11 @@ export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProp
         </button>
       </div>
 
-      {/* Sentinel (unused, kept for backward compat) */}
-      {hasMore && (
-        <div ref={sentinelRef} className="h-1 w-full" aria-hidden />
-      )}
-
-      {/* Loading indicator */}
-      {loading && (
-        <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="size-4 animate-spin" />
-          Memuat artikel lainnya...
-        </div>
-      )}
-
-      {/* Error state dengan retry */}
-      {error && !loading && (
-        <div className="mt-4 flex flex-col items-center gap-2 text-sm text-muted-foreground">
-          <p>{error}</p>
-          <button
-            type="button"
-            onClick={() => fetchBatch(offset)}
-            className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-muted transition-colors"
-          >
-            Coba lagi
-          </button>
-        </div>
-      )}
-
       {/* End state — sudah sampai artikel terakhir */}
-      {!hasMore && !loading && !error && (
-        <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+      {isLastBatch && (
+        <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
           <CheckCircle2 className="size-3.5 text-emerald-500" />
-          Sampai artikel terakhir (batch {currentBatch} dari {totalBatches})
+          Sampai artikel terakhir
         </div>
       )}
     </>

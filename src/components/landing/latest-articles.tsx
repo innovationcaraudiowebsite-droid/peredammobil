@@ -4,35 +4,30 @@ import { ArticlesList, type ArticleItem } from '@/components/landing/articles-li
 /**
  * LatestArticles section landing — section id="artikel".
  *
- * Batch-based scroll: 3 artikel di-render server-side (SEO friendly),
- * lalu saat user scroll/navigate, client component fetch batch berikutnya
- * via /api/articles/published?offset=xxx&limit=3. 3 card tetap (replace,
- * bukan append).
- *
- * Server component — ambil 3 artikel pertama + total count untuk initial render.
+ * CAROUSEL MODE (bukan pagination):
+ *  - Server fetch ALL artikel PUBLISHED (limit 30) sekali saja di SSR.
+ *  - Pass ke ArticlesList client component yang render semua artikel di DOM.
+ *  - Container overflow:hidden, hanya 3 card visible.
+ *  - Scroll/swipe → CSS transform translateY → slide ke 3 card berikutnya.
+ *  - NO API reload — pure CSS animation, instant.
  *
  * Sesuai brief user revisi:
- *  - Hapus link "Lihat Semua Artikel" di header section.
- *  - Prinsip sticky: hanya 3 card yang tampil. Jika di-scroll, artikel
- *    berganti (replace) dengan artikel lain dari database.
+ *  - Tampil artikel maksimal 3.
+ *  - Saat scroll = menggeser artikel selanjutnya (slide), BUKAN reload.
+ *  - Aslinya banyak, tapi terlihat hanya 3 dan posisi sticky/fixed.
  */
 export const dynamic = 'force-dynamic'
 
+const MAX_ARTICLES = 30 // limit supaya tidak berat (kalau DB punya ratusan)
+
 type LatestArticle = ArticleItem
 
-async function getInitialArticles(): Promise<{
-  articles: LatestArticle[]
-  total: number
-}> {
+async function getAllArticles(): Promise<LatestArticle[]> {
   try {
-    // Ambil total count untuk navigation indicator
-    const total = await db.article.count({ where: { status: 'PUBLISHED' } })
-
-    // Ambil 3 artikel pertama (batch 0)
     const items = (await db.article.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-      take: 3,
+      take: MAX_ARTICLES,
       select: {
         id: true,
         title: true,
@@ -60,15 +55,15 @@ async function getInitialArticles(): Promise<{
       },
     } as never)) as LatestArticle[]
 
-    return { articles: items, total }
+    return items
   } catch (err) {
     console.error('[latest-articles] DB error:', err)
-    return { articles: [], total: 0 }
+    return []
   }
 }
 
 export async function LatestArticles() {
-  const { articles, total } = await getInitialArticles()
+  const articles = await getAllArticles()
 
   return (
     <section
@@ -76,21 +71,18 @@ export async function LatestArticles() {
       className="border-t border-border bg-muted/30"
     >
       <div className="container mx-auto max-w-7xl px-4 py-12 sm:py-16 lg:py-20">
-        {/* Section header — tanpa link "Lihat Semua Artikel" (dihapus sesuai brief) */}
+        {/* Section header */}
         <div className="max-w-2xl">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
             Artikel Terbaru
           </h2>
           <p className="mt-2 text-sm sm:text-base text-muted-foreground">
-            Tips &amp; panduan seputar peredam mobil. Scroll untuk lihat artikel lainnya.
+            Tips &amp; panduan seputar peredam mobil. Scroll untuk menggeser artikel.
           </p>
         </div>
 
-        {/* Articles list dengan batch-based scroll (3 card tetap, berganti saat scroll) */}
-        <ArticlesList
-          initialArticles={articles as ArticleItem[]}
-          initialTotal={total}
-        />
+        {/* Articles carousel — pre-load all, slide animation (no reload) */}
+        <ArticlesList articles={articles as ArticleItem[]} />
       </div>
     </section>
   )
