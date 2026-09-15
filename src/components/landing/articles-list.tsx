@@ -240,7 +240,28 @@ export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProp
 
   return (
     <>
-      {/* Navigation indicator + tombol prev/next */}
+      {/* 3 card artikel (replace, bukan append) — fade animation saat ganti batch.
+          Navigation (Sebelumnya/Indicator/Berikutnya) ditempatkan SETELAH card ke-3
+          supaya user lihat konten dulu, baru lihat navigation untuk ganti batch. */}
+      <ul
+        key={fadeKey}
+        className="mt-6 space-y-4 animate-in fade-in duration-300"
+      >
+        {loading ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : (
+          currentArticles.map((a) => (
+            <ArticleCard key={a.id} a={a} />
+          ))
+        )}
+      </ul>
+
+      {/* Navigation indicator + tombol prev/next — SETELAH card ke-3.
+          Logis: user lihat 3 card dulu, baru klik navigation untuk ganti batch. */}
       <div className="mt-6 flex items-center justify-between gap-4">
         {/* Tombol Sebelumnya */}
         <button
@@ -279,25 +300,7 @@ export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProp
         </button>
       </div>
 
-      {/* 3 card artikel (replace, bukan append) — fade animation saat ganti batch */}
-      <ul
-        key={fadeKey}
-        className="mt-6 space-y-4 animate-in fade-in duration-300"
-      >
-        {loading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : (
-          currentArticles.map((a) => (
-            <ArticleCard key={a.id} a={a} />
-          ))
-        )}
-      </ul>
-
-      {/* Sentinel untuk IntersectionObserver (auto-advance) */}
+      {/* Sentinel (unused, kept for backward compat) */}
       {hasMore && (
         <div ref={sentinelRef} className="h-1 w-full" aria-hidden />
       )}
