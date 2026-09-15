@@ -20,7 +20,7 @@ export default async function ProductsPage() {
   let products: any[] = []
   try {
     products = await db.product.findMany({
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
     })
   } catch (err) {
     console.error('[admin/products] fetch error:', err)

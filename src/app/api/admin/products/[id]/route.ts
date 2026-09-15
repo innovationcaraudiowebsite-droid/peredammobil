@@ -13,7 +13,7 @@ interface UpdateBody {
   imageUrl?: unknown
   imageAlt?: unknown
   waNumber?: unknown
-  order?: unknown
+  sortOrder?: unknown
   isActive?: unknown
 }
 
@@ -99,7 +99,7 @@ export async function PUT(
     const wa = asString(body.waNumber, 20)
     if (wa) data.waNumber = wa
   }
-  if (body.order !== undefined) data.order = asInt(body.order, 0)
+  if (body.sortOrder !== undefined) data.sortOrder = asInt(body.sortOrder, 0)
   if (body.isActive !== undefined) data.isActive = body.isActive === true
 
   try {

@@ -39,7 +39,7 @@ export default async function EditProductPage({
     imageUrl: product.imageUrl,
     imageAlt: product.imageAlt ?? '',
     waNumber: product.waNumber ?? '6282111222989',
-    order: product.order ?? 0,
+    sortOrder: product.sortOrder ?? 0,
     isActive: product.isActive ?? true,
   }
 

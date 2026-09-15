@@ -20,7 +20,7 @@ export interface InitialProductData {
   imageUrl: string | null
   imageAlt: string | null
   waNumber: string
-  order: number
+  sortOrder: number
   isActive: boolean
 }
 
@@ -50,7 +50,7 @@ export function ProductForm({ initial }: ProductFormProps) {
       imageUrl: null,
       imageAlt: '',
       waNumber: '6282111222989',
-      order: 0,
+      sortOrder: 0,
       isActive: true,
     },
   )
@@ -304,14 +304,14 @@ export function ProductForm({ initial }: ProductFormProps) {
 
         {/* Order */}
         <div className="space-y-2">
-          <Label htmlFor="order" className="text-sm font-semibold">
+          <Label htmlFor="sortOrder" className="text-sm font-semibold">
             Urutan Tampil
           </Label>
           <Input
-            id="order"
+            id="sortOrder"
             type="number"
-            value={form.order}
-            onChange={(e) => patch({ order: parseInt(e.target.value) || 0 })}
+            value={form.sortOrder}
+            onChange={(e) => patch({ sortOrder: parseInt(e.target.value) || 0 })}
             placeholder="0"
             className="h-11"
           />

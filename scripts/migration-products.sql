@@ -1,8 +1,12 @@
 -- Migration: Create products table for landing page Section 4 (Paket Layanan)
 -- Jalankan di Supabase Dashboard → SQL Editor
 --
--- Tabel ini menyimpan produk yang akan tampil di landing page Section 4.
--- Di-manage via admin dashboard /admin/products.
+-- NOTE: Kolom "order" di-rename jadi "sortOrder" karena "order" adalah
+-- reserved keyword di PostgreSQL (ORDER BY clause).
+--
+-- Kolom di tabel ini pakai camelCase (sortOrder, isActive, imageUrl, dll)
+-- supaya konsisten dengan tabel lain (articles, categories) yang juga
+-- camelCase — adapter db.ts tidak auto-convert snake_case.
 
 CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -10,18 +14,18 @@ CREATE TABLE IF NOT EXISTS products (
   description TEXT,
   price TEXT,
   category TEXT NOT NULL DEFAULT 'Paket Layanan',
-  image_url TEXT,
-  image_alt TEXT,
-  wa_number TEXT NOT NULL DEFAULT '6282111222989',
-  order INTEGER NOT NULL DEFAULT 0,
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  imageUrl TEXT,
+  imageAlt TEXT,
+  waNumber TEXT NOT NULL DEFAULT '6282111222989',
+  sortOrder INTEGER NOT NULL DEFAULT 0,
+  isActive BOOLEAN NOT NULL DEFAULT true,
+  createdAt TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updatedAt TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Index untuk query orderBy order ASC
-CREATE INDEX IF NOT EXISTS idx_products_order ON products(order ASC);
-CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(is_active);
+-- Index untuk query orderBy sortOrder ASC
+CREATE INDEX IF NOT EXISTS idx_products_sort_order ON products(sortOrder ASC);
+CREATE INDEX IF NOT EXISTS idx_products_is_active ON products(isActive);
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
 
 -- Enable RLS (Row Level Security)
@@ -31,13 +35,13 @@ ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 -- Admin (service_role) bypass RLS, jadi tidak perlu policy untuk admin
 CREATE POLICY "Public can read active products"
   ON products FOR SELECT
-  USING (is_active = true);
+  USING (isActive = true);
 
--- Trigger untuk auto-update updated_at
+-- Trigger untuk auto-update updatedAt
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.updated_at = now();
+  NEW.updatedAt = now();
   RETURN NEW;
 END;
 $$ language 'plpgsql';
@@ -52,7 +56,7 @@ CREATE TRIGGER update_products_updated_at
 -- SEED DATA: 4 produk contoh (Paket 4 Pintu, Full Kabin, Kap Mesin, Wheel Housing)
 -- ============================================================
 
-INSERT INTO products (name, description, price, category, image_url, wa_number, order, is_active)
+INSERT INTO products (name, description, price, category, imageUrl, waNumber, sortOrder, isActive)
 VALUES
   (
     'Paket 4 Pintu',

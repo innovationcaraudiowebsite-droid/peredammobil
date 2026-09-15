@@ -29,7 +29,7 @@ interface Product {
   imageUrl: string | null
   imageAlt: string | null
   waNumber: string
-  order: number
+  sortOrder: number
   isActive: boolean
   createdAt: string
 }

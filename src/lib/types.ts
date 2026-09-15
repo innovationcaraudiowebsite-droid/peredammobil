@@ -165,7 +165,7 @@ export type Product = {
   imageUrl: string | null
   imageAlt: string | null
   waNumber: string // nomor WA admin untuk CTA produk ini (format: 628xxx)
-  order: number
+  sortOrder: number // urutan tampil (ASC) — pakai sortOrder karena 'order' reserved keyword di PostgreSQL
   isActive: boolean
   createdAt: string | Date
   updatedAt: string | Date

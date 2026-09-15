@@ -26,14 +26,14 @@ type Product = {
   imageUrl: string | null
   imageAlt: string | null
   waNumber: string
-  order: number
+  sortOrder: number
 }
 
 async function getActiveProducts(): Promise<Product[]> {
   try {
     const products = (await db.product.findMany({
       where: { isActive: true },
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       select: {
         id: true,
         name: true,
@@ -43,7 +43,7 @@ async function getActiveProducts(): Promise<Product[]> {
         imageUrl: true,
         imageAlt: true,
         waNumber: true,
-        order: true,
+        sortOrder: true,
       },
     } as never)) as Product[]
     return products

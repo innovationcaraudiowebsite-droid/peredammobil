@@ -13,7 +13,7 @@ interface CreateBody {
   imageUrl?: unknown
   imageAlt?: unknown
   waNumber?: unknown
-  order?: unknown
+  sortOrder?: unknown
   isActive?: unknown
 }
 
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
   try {
     const products = await db.product.findMany({
       where,
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
     })
     return NextResponse.json({ ok: true, products })
   } catch (err) {
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
         imageUrl: asString(body.imageUrl) ?? null,
         imageAlt: asString(body.imageAlt, 120) ?? null,
         waNumber,
-        order: asInt(body.order, 0),
+        sortOrder: asInt(body.sortOrder, 0),
         isActive: body.isActive !== false, // default true
       },
     })
