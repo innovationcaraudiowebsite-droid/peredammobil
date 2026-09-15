@@ -150,7 +150,7 @@ export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProp
   const [error, setError] = useState<string | null>(null)
   const [fadeKey, setFadeKey] = useState(0) // untuk trigger fade animation
 
-  const sentinelRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null) // kept for backward compat (unused)
   const loadingRef = useRef(false)
 
   const hasMore = offset + BATCH_SIZE < total
@@ -194,22 +194,40 @@ export function ArticlesList({ initialArticles, initialTotal }: ArticlesListProp
     fetchBatch(offset - BATCH_SIZE)
   }, [hasPrev, offset, fetchBatch])
 
-  // IntersectionObserver untuk auto-advance ke batch berikutnya
+  // Auto-advance via wheel/scroll dengan throttle 800ms.
+  // PRINSIP: setiap scroll down yang significant → ganti ke batch berikutnya
+  // (REPLACE 3 card, bukan append). 3 card tetap, konten berganti.
+  //
+  // Bug sebelumnya: IntersectionObserver dengan rootMargin 100px terus
+  // trigger nextBatch selama sentinel visible → batch langsung lompat ke
+  // terakhir (artikel 40-40 dari 40) dalam 1 scroll.
+  //
+  // Fix: pakai wheel event dengan throttle + cooldown 800ms supaya 1 scroll
+  // = 1 batch advance (tidak rapid-fire).
   useEffect(() => {
     if (!hasMore) return
-    const sentinel = sentinelRef.current
-    if (!sentinel) return
+    const section = document.getElementById('artikel')
+    if (!section) return
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          nextBatch()
-        }
-      },
-      { rootMargin: '100px' }
-    )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
+    let lastTrigger = 0
+    const COOLDOWN = 800 // ms — minimal jarak antar trigger
+
+    const onWheel = (e: WheelEvent) => {
+      // Hanya trigger kalau scroll DOWN (deltaY > 0)
+      if (e.deltaY <= 0) return
+      const now = Date.now()
+      if (now - lastTrigger < COOLDOWN) return
+      // Hanya trigger kalau section artikel terlihat di viewport
+      const rect = section.getBoundingClientRect()
+      const sectionVisible = rect.top < window.innerHeight * 0.5 && rect.bottom > window.innerHeight * 0.5
+      if (!sectionVisible) return
+      // Trigger next batch
+      lastTrigger = now
+      nextBatch()
+    }
+
+    window.addEventListener('wheel', onWheel, { passive: true })
+    return () => window.removeEventListener('wheel', onWheel)
   }, [nextBatch, hasMore])
 
   if (currentArticles.length === 0) {
