@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { MessageCircle, X } from 'lucide-react'
 
 /**
@@ -38,17 +39,22 @@ const WA_SALES = [
 ] as const
 
 export function FloatingAdminButton() {
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [visible, setVisible] = useState(false)
 
+  // Sembunyi di halaman admin (tidak perlu CTA WA di dashboard admin)
+  const isAdmin = pathname?.startsWith('/admin') ?? false
+
   useEffect(() => {
+    if (isAdmin) return // skip scroll listener di admin
     const onScroll = () => {
       setVisible(window.scrollY > 100)
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     onScroll()
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [isAdmin])
 
   // Close saat klik luar panel
   useEffect(() => {
@@ -73,6 +79,9 @@ export function FloatingAdminButton() {
     `https://wa.me/${number}?text=${encodeURIComponent(
       'Halo, saya tertarik paket layanan peredam mobil. Mohon info lengkap.',
     )}`
+
+  // Early return di admin — render nothing (setelah semua hooks dipanggil)
+  if (isAdmin) return null
 
   return (
     <div

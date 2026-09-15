@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { FloatingAdminButton } from "@/components/landing/floating-admin-button";
 import { db } from "@/lib/db";
 import {
   JsonLd,
@@ -353,6 +354,7 @@ export default async function RootLayout({
       >
         <ThemeProvider>
           {children}
+          <FloatingAdminButton />
           <Toaster />
           <Sonner position="top-center" richColors closeButton />
         </ThemeProvider>

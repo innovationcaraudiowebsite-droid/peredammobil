@@ -5,7 +5,7 @@ import { Education } from '@/components/landing/education'
 import { Packages } from '@/components/landing/packages'
 import { LatestArticles } from '@/components/landing/latest-articles'
 import { SectionDivider } from '@/components/landing/section-divider'
-import { FloatingAdminButton } from '@/components/landing/floating-admin-button'
+import { LandingFooter } from '@/components/landing/landing-footer'
 
 // Always render at request time (runtime) — Vercel injects env vars at
 // runtime, not build time. force-dynamic prevents build-time DB queries
@@ -63,33 +63,10 @@ export default async function LandingPage() {
         <LatestArticles />
       </main>
 
-      {/* Floating button "Hubungi Admin" — selalu visible di pojok kanan bawah */}
-      <FloatingAdminButton />
+      {/* Floating button "Hubungi Admin" — sekarang di layout.tsx global (muncul di semua halaman) */}
 
-      {/* Footer simpel 1 baris */}
-      <footer className="bg-slate-950 text-slate-300 py-6 mt-auto">
-        <div className="container mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-2 text-center sm:text-left">
-            <span className="font-bold text-brand-light">Peredam Mobil Jakarta</span>
-            <span className="hidden sm:inline text-slate-500">·</span>
-            <span className="text-slate-400 text-xs sm:text-sm">
-              Jl. Taman Surya Blvd 3 Blok H1 No.9, Kalideres, Jakarta Barat 11830
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm">
-            <a href="tel:082211122989" className="hover:text-brand-light transition-colors">
-              0822-1122-2989
-            </a>
-            <a
-              href="mailto:innovationcaraudio@gmail.com"
-              className="hover:text-brand-light transition-colors"
-            >
-              innovationcaraudio@gmail.com
-            </a>
-            <span className="text-slate-500">© 2026</span>
-          </div>
-        </div>
-      </footer>
+      {/* Footer simpel 1 baris (komponen shared supaya konsisten di semua halaman) */}
+      <LandingFooter />
     </div>
   )
 }

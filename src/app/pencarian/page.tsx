@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { Search as SearchIcon, ChevronRight, AlertCircle } from 'lucide-react'
 import { getSiteSetting, searchArticles } from '@/lib/portal'
-import { Header } from '@/components/portal/header'
-import { Footer } from '@/components/portal/footer'
+import { LandingHeader } from '@/components/landing/landing-header'
+import { LandingFooter } from '@/components/landing/landing-footer'
 import { ArticleCard } from '@/components/portal/article-card'
 import { NewsletterForm } from '@/components/portal/newsletter-form'
 import { SearchForm, SearchSkeleton } from '@/components/portal/search-form'
@@ -47,11 +47,7 @@ export default async function SearchPage({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header
-        siteName={settings.siteName}
-        logoUrl={settings.logoUrl}
-        tagline={settings.tagline}
-      />
+      <LandingHeader />
       <main className="flex-1">
         <div className="container mx-auto max-w-7xl px-4 py-6">
           {/* Breadcrumb (visual only — page is noindex). */}
@@ -191,7 +187,7 @@ export default async function SearchPage({
           </div>
         </div>
       </main>
-      <Footer settings={settings} />
+      <LandingFooter />
     </div>
   )
 }

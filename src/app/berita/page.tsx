@@ -8,7 +8,7 @@ import {
   getPopularTags,
   getPublishedFaqs,
 } from '@/lib/portal'
-import { Header } from '@/components/portal/header'
+import { LandingHeader } from '@/components/landing/landing-header'
 import { BreakingTicker } from '@/components/portal/breaking-ticker'
 import { HeroFeatured } from '@/components/portal/hero-featured'
 import { ArticleCard } from '@/components/portal/article-card'
@@ -17,7 +17,7 @@ import { PopularSidebar } from '@/components/portal/popular-sidebar'
 import { TagCloud } from '@/components/portal/tag-cloud'
 import { NewsletterForm } from '@/components/portal/newsletter-form'
 import { FaqAccordion } from '@/components/portal/faq-accordion'
-import { Footer } from '@/components/portal/footer'
+import { LandingFooter } from '@/components/landing/landing-footer'
 import { PortalBreadcrumb } from '@/components/portal/breadcrumb'
 import {
   JsonLd,
@@ -107,11 +107,7 @@ export default async function BeritaPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <Header
-        siteName={settings.siteName}
-        logoUrl={settings.logoUrl}
-        tagline={settings.tagline}
-      />
+      <LandingHeader />
       <BreakingTicker
         tagline={settings.tagline}
         headlines={tickerHeadlines}
@@ -223,7 +219,7 @@ export default async function BeritaPage() {
         </div>
       </main>
 
-      <Footer settings={settings} />
+      <LandingFooter />
 
       {/* JSON-LD structured data: FAQPage + WebPage (speakable). */}
       <JsonLd schema={webPageSchema} />

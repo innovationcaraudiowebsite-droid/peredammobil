@@ -18,8 +18,8 @@ import {
   categoryBadgeClass,
 } from '@/lib/portal'
 import { addInternalLinks, type InternalLinkTarget } from '@/lib/internal-link'
-import { Header } from '@/components/portal/header'
-import { Footer } from '@/components/portal/footer'
+import { LandingHeader } from '@/components/landing/landing-header'
+import { LandingFooter } from '@/components/landing/landing-footer'
 import { ArticleCard } from '@/components/portal/article-card'
 import { NewsletterForm } from '@/components/portal/newsletter-form'
 import { ViewTracker, ShareButtons } from '@/components/portal/view-tracker'
@@ -169,11 +169,7 @@ export default async function ArticleDetailPage({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <ReadingProgress />
-      <Header
-        siteName={settings.siteName}
-        logoUrl={settings.logoUrl}
-        tagline={settings.tagline}
-      />
+      <LandingHeader />
       <main className="flex-1">
         <div className="container mx-auto max-w-7xl px-4 py-6">
           {/* Breadcrumb (visual + JSON-LD inline via component). */}
@@ -325,7 +321,7 @@ export default async function ArticleDetailPage({
           </div>
         </div>
       </main>
-      <Footer settings={settings} />
+      <LandingFooter />
 
       {/* JSON-LD structured data: NewsArticle (BreadcrumbList emitted by ArticleBreadcrumb). */}
       <JsonLd schema={articleJsonLd} />
