@@ -1574,3 +1574,40 @@ Stage Summary:
 - Yang ter-push: local-data.ts fallback layer (383 lines), db.ts fallback logic, portal.ts incrementArticleView skip, articles-list.tsx 2-card carousel, latest-articles.tsx comment update, next.config.ts allowedDevOrigins, .gitignore exception, worklog.md updates.
 - Vercel akan auto-detect push ini dan trigger deployment. Setelah deploy, app akan pakai Supabase jika env vars configured di Vercel, ATAU fall back ke data/backup-sqlite.json (40 artikel) jika tidak.
 - Token PAT yang dipakai: yang di-share user sebelumnya (embedded di remote URL). User tetap perlu revoke token itu di GitHub Settings karena sudah ter-expose di chat.
+
+---
+Task ID: SUPABASE-PRODUCTS
+Agent: main (Z.ai Code)
+Task: User kasih Supabase credentials + minta seed 4 paket default ke backup-sqlite.json supaya Section 4 (Paket Layanan) tampil pakai gambar.
+
+Work Log:
+- Tulis .env dengan Supabase credentials (SUPABASE_URL, SUPABASE_SECRET_KEY, NEXT_PUBLIC_*, ADMIN_*, SUPABASE_ANON_KEY). .env gitignored — tidak akan ter-commit.
+- Restart dev server. App sekarang pakai Supabase (bukan local fallback). Landing page 326KB (articles load dari Supabase, 41 articles).
+- Issue: products table di Supabase punya lowercase columns (imageurl, wanumber, isactive, ...) karena migration SQL create tanpa quoted identifiers → Postgres lowercased. PostgREST case-sensitive → query camelCase (imageUrl) gagal: "column products.imageUrl does not exist".
+- Analisa: articles table punya camelCase columns (quoted, preserved), products punya lowercase (unquoted, lowercased).
+- Fix src/lib/db.ts: tambah LOWERCASE_TABLES map + helper (colToDb, colFromDb, normalizeRow, normalizeWhere, normalizeOrderBy). Apply di findMany (convert select keys ke lowercase, normalize where/orderBy, map response ke camelCase), findUnique (sama), dan semua applyWhere calls (count/update/delete/upsert).
+- Cek existing products di Supabase: sudah ada 4 produk (Paket 4 Pintu, Full Kabin, Kap Mesin, Wheel Housing) — semua active, sortorder 1-4, WA 6282111222989. TAPI image URLs point ke .png files yang TIDAK ADA di Storage (HTTP 404 NoSuchKey). Bucket site-assets/landing/ punya file material lain (paket-gran-turismo.webp, paket-rainbow.webp, dll).
+- Generate 4 product images via z-ai-web-dev-sdk (image-generation skill), size 1024x1024:
+    1. Paket 4 Pintu — door panel with butyl sound deadening
+    2. Full Kabin — cabin floor/roof with soundproofing
+    3. Kap Mesin — hood underside with heat barrier
+    4. Wheel Housing — wheel well with sound deadening
+- Upload 4 images ke Supabase Storage site-assets/landing/{slug}.png (upsert). Semua HTTP 200 accessible.
+- Update product imageUrls di Supabase DB (db.products.update) — 4 produk sekarang punya image URL yang valid.
+- Update data/backup-sqlite.json: add products key dengan 4 produk (camelCase keys, imageUrl pointing ke Supabase Storage URLs).
+- Restart dev, verify via agent-browser:
+    - Landing HTTP 200, 381KB.
+    - Section 4 snapshot: 4 product cards — "Paket 4 Pintu", "Paket Full Kabin", "Paket Kap Mesin", "Paket Wheel Housing" (heading H3).
+    - 4 "Pesan via WA" CTA links (wa.me/6282111222989).
+    - Images: "4 images, 4 loaded OK" (naturalWidth > 0 untuk semua).
+    - Screenshot: /tmp/paket-final.png.
+- Commit & push ke GitHub: ef01be9 "fix(products): column-case mapping for Supabase + seed 4 products with images". Vercel auto-deploy.
+
+Stage Summary:
+- Supabase configured & connected. App pakai real database (41 articles, 4 products, siteSettings, dll).
+- Section 4 (Paket Layanan) sekarang tampil 4 paket dengan gambar AI-generated (door panel, cabin, hood, wheel well), category badge, deskripsi, harga, dan CTA WhatsApp per produk.
+- Fix column-case mismatch (products table lowercase vs app camelCase) via mapping layer di db.ts — reusable untuk tabel lain kalau ada masalah serupa.
+- 4 product images di Supabase Storage (site-assets/landing/paket-*.png).
+- backup-sqlite.json juga punya 4 products (fallback kalau Supabase down).
+- .env dengan credentials TIDAK ter-commit (gitignored).
+- Push ke GitHub → Vercel auto-deploy.
