@@ -20,6 +20,8 @@
  */
 
 import 'server-only'
+import fs from 'node:fs'
+import path from 'node:path'
 import { getSupabaseAdmin } from '@/lib/supabase-server'
 import {
   localFindMany,
@@ -42,8 +44,6 @@ function isSupabaseConfigured(): boolean {
   const key = process.env.SUPABASE_SECRET_KEY
   // Re-parse .env file too (sandbox may shadow process.env)
   try {
-    const fs = require('node:fs')
-    const path = require('node:path')
     const envPath = path.join(process.cwd(), '.env')
     let fileVars: Record<string, string> = {}
     if (fs.existsSync(envPath)) {

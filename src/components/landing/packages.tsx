@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowRight, MessageCircle } from 'lucide-react'
 import { db } from '@/lib/db'
 
 /**
@@ -11,10 +10,10 @@ import { db } from '@/lib/db'
  * (/admin/products).
  *
  * Layout: horizontal card (gambar kiri 120×120 + konten kanan).
- * Tiap card punya CTA WhatsApp yang mengarah ke nomor WA produk tersebut
- * (product.waNumber).
+ * Card menampilkan: badge kategori, title, deskripsi.
+ * (Harga & tombol CTA WhatsApp per produk dihapus — user request.)
  *
- * Filter: hanya produk dengan isActive=true, urut by order ASC.
+ * Filter: hanya produk dengan isActive=true, urut by sortOrder ASC.
  */
 
 type Product = {
@@ -84,9 +83,6 @@ export async function Packages() {
         ) : (
           <ul className="mt-8 space-y-4">
             {products.map((p) => {
-              const waLink = `https://wa.me/${p.waNumber}?text=${encodeURIComponent(
-                `Halo, saya tertarik ${p.name}. Mohon info harga & detail.`,
-              )}`
               return (
                 <li
                   key={p.id}
@@ -132,32 +128,6 @@ export async function Packages() {
                           {p.description}
                         </p>
                       )}
-
-                      {/* Harga + CTA WhatsApp */}
-                      <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        {/* Harga */}
-                        {p.price && (
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Harga:
-                            </span>
-                            <span className="text-sm font-semibold text-brand dark:text-brand-light">
-                              {p.price}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* CTA WhatsApp per produk */}
-                        <a
-                          href={waLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-600 transition-colors"
-                        >
-                          <MessageCircle className="size-3.5" />
-                          Pesan via WA
-                        </a>
-                      </div>
                     </div>
                   </div>
                 </li>
@@ -165,11 +135,6 @@ export async function Packages() {
             })}
           </ul>
         )}
-
-        {/* Note */}
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          * Harga bisa berubah, hubungi admin untuk estimasi khusus mobil Anda.
-        </p>
       </div>
     </section>
   )
