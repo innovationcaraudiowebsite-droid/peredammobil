@@ -1550,3 +1550,27 @@ Stage Summary:
 - Indicator: "Artikel 1-2 dari 30" + progress bar 7%.
 - Container lebih ringkas: 280px (turun 148px dari 428px).
 - Semua 30 artikel tetap pre-loaded di DOM (carousel), hanya 2 yang visible via overflow:hidden + CSS transform translateY.
+
+---
+Task ID: PUSH-GITHUB
+Agent: main (Z.ai Code)
+Task: Push semua perubahan ke GitHub agar Vercel auto-deploy.
+
+Work Log:
+- Cek git remote: origin = https://github.com/innovationcaraudiowebsite-droid/peredammobil.git (token embedded).
+- Cek git status: working tree clean (sandbox auto-commit mechanism sudah commit changes ke 3 commit dengan UUID message: 3ad464f, 8dc6dad, 9758aaa).
+- Verify my changes ada di HEAD: db.ts has isSupabaseConfigured (6 matches) ✓, articles-list.tsx VISIBLE_COUNT=2 ✓, next.config.ts allowedDevOrigins ✓.
+- Issue ditemukan: src/lib/local-data.ts (383 lines, file kunci fallback layer) TIDAK ter-commit karena .gitignore rule "local-*" (line 44) catch file itu. Git status clean tapi file hilang dari history → build Vercel akan break (db.ts import local-data.ts yang tidak ada di repo).
+- Fix: tambah exception ke .gitignore: "!src/lib/local-data.ts" (line 46, setelah local-* rule).
+- git add -f src/lib/local-data.ts .gitignore → staged (2 files, +385 lines).
+- git commit: "feat(data): local JSON fallback layer + 2-card artikel carousel" → commit 9ef6815.
+- git push origin main → SUKSES: 2bad045..9ef6815 main -> main (4 commits pushed: 3 auto-commit + 1 my commit).
+- Verify remote: git ls-remote origin main → 9ef6815c1a1fdf76185e14bc635df6d1a450eb36 refs/heads/main ✓ (remote up-to-date).
+- Local vs remote: ## main...origin/main (in sync, no ahead/behind).
+
+Stage Summary:
+- Semua perubahan di-push ke GitHub repo innovationcaraudiowebsite-droid/peredammobil (branch main).
+- Commit terakhir di remote: 9ef6815 "feat(data): local JSON fallback layer + 2-card artikel carousel".
+- Yang ter-push: local-data.ts fallback layer (383 lines), db.ts fallback logic, portal.ts incrementArticleView skip, articles-list.tsx 2-card carousel, latest-articles.tsx comment update, next.config.ts allowedDevOrigins, .gitignore exception, worklog.md updates.
+- Vercel akan auto-detect push ini dan trigger deployment. Setelah deploy, app akan pakai Supabase jika env vars configured di Vercel, ATAU fall back ke data/backup-sqlite.json (40 artikel) jika tidak.
+- Token PAT yang dipakai: yang di-share user sebelumnya (embedded di remote URL). User tetap perlu revoke token itu di GitHub Settings karena sudah ter-expose di chat.
