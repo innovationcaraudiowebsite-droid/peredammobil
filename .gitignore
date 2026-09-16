@@ -42,6 +42,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 local-*
+# Exception: track the local-data.ts fallback layer (read-only JSON db adapter)
+!src/lib/local-data.ts
 .claude
 .z-ai-config
 *.log
