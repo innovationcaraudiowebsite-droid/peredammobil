@@ -246,7 +246,7 @@ export async function generateMetadata(): Promise<Metadata> {
     || (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "https://peredammobil.vercel.app")
-  const ogImage = "/og-default.png"
+  const ogImage = "/og-default.jpg"
 
   return {
     metadataBase: new URL(siteUrl),
@@ -291,7 +291,7 @@ export async function generateMetadata(): Promise<Metadata> {
           width: 1200,
           height: 630,
           alt: s.siteName,
-          type: "image/png",
+          type: "image/jpeg",
         },
       ],
     },
