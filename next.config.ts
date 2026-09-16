@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  allowedDevOrigins: ['*.space-z.ai', '*.chatglm.cn'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'peredammobiljakarta.com' },

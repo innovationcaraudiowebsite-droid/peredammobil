@@ -1473,3 +1473,27 @@ Stage Summary:
   pindah dengan warna brand).
 - Production verified via agent-browser.
 - Task COMPLETE.
+
+---
+Task ID: MOVE-WEB
+Agent: main (Z.ai Code)
+Task: User minta move SEMUA file & folder dari web/ ke /home/z/my-project/ dengan overwrite (sebelumnya clone hanya ada di web/, user ingin jadi root project).
+
+Work Log:
+- Stop dev server (pkill next).
+- Backup .env (DATABASE_URL) dan worklog.md lama ke /tmp.
+- Hapus item yang conflict di /home/z/my-project/ supaya clean overwrite: .git, .next, dev.log, dev-start.log, src, public, data, scripts, examples, mini-services, tests, download, .zscripts, .env.example, .gitignore, Caddyfile, components.json, eslint.config.mjs, next.config.ts, next-env.d.ts, package.json, postcss.config.mjs, tailwind.config.ts, tsconfig.json, bun.lock, VERCEL_SETUP.md, fix-preview-500.patch, worklog.md, vercel.json.
+- rsync -a /home/z/my-project/web/ /home/z/my-project/ — copy SEMUA file & folder (overwrite all), termasuk .git history, semua PNG screenshot, src/, public/, data/, scripts/, examples/, mini-services/, tests/, download/, .zscripts/, dll.
+- rm -rf /home/z/my-project/web (direktori web/ dikosongkan & dihapus — move complete).
+- Restore .env dari backup (DATABASE_URL untuk prisma db:push di dev.sh).
+- Re-add `allowedDevOrigins: ['*.space-z.ai','*.chatglm.cn']` ke next.config.ts (hilang karena ditimpa clone).
+- bun install — 1 package baru terpasang (server-only@0.0.1 dari package.json clone).
+- Start dev server (daemon setsid pattern) → polling → SUCCESS HTTP 200, 116417 bytes.
+- Verifikasi content: keyword "Peredam Mobil Jakarta" (2x), "Jenis Bahan", "Paket Layanan", "Artikel Terbaru", "Workshop" (2x) semua match. Title: "Peredam Mobil Jakarta — Spesialis Peredam Mobil & Audio Car Jakarta Jabodetabek".
+- agent-browser open http://localhost:3000/ → page load sukses, title benar.
+
+Stage Summary:
+- SEMUA file & folder dari web/ sudah di-move ke /home/z/my-project/ (overwrite complete). Direktori web/ sudah dihapus.
+- Project root /home/z/my-project/ sekarang berisi repo peredammobil LENGKAP (326 file termasuk .git history, PNG screenshots, src/, public/, data/, scripts/, .zscripts/, dll) + node_modules (preserved) + .env (preserved DATABASE_URL) + prisma/ + db/ + skills/ + upload/.
+- Dev server jalan di port 3000, landing page `/` render HTTP 200 dengan semua section (Hero, About, Jenis Bahan, Paket Layanan, Artikel Terbaru).
+- Catatan: app pakai Supabase; tanpa credentials di .env, section Paket/Artikel catch error & render empty state (fallback graceful).
