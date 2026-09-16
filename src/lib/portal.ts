@@ -471,6 +471,9 @@ export async function getRelatedArticles(
  */
 export async function incrementArticleView(slug: string): Promise<void> {
   try {
+    // Skip when Supabase isn't configured (local JSON backup is read-only).
+    const url = process.env.SUPABASE_URL
+    if (!url || url.startsWith('file:')) return
     const supabase = getSupabaseAdmin()
     const { data, error } = await supabase
       .from('articles')

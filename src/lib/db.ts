@@ -21,6 +21,47 @@
 
 import 'server-only'
 import { getSupabaseAdmin } from '@/lib/supabase-server'
+import {
+  localFindMany,
+  localFindFirst,
+  localFindUnique,
+  localCount,
+  localAggregate,
+} from '@/lib/local-data'
+
+/**
+ * Check whether Supabase env vars are configured (without throwing).
+ * When false, read operations fall back to the local JSON backup
+ * (`data/backup-sqlite.json`) so the public site still renders with
+ * real data even without a live database connection.
+ */
+let _supabaseConfigured: boolean | null = null
+function isSupabaseConfigured(): boolean {
+  if (_supabaseConfigured !== null) return _supabaseConfigured
+  const url = process.env.SUPABASE_URL
+  const key = process.env.SUPABASE_SECRET_KEY
+  // Re-parse .env file too (sandbox may shadow process.env)
+  try {
+    const fs = require('node:fs')
+    const path = require('node:path')
+    const envPath = path.join(process.cwd(), '.env')
+    let fileVars: Record<string, string> = {}
+    if (fs.existsSync(envPath)) {
+      for (const raw of fs.readFileSync(envPath, 'utf-8').split('\n')) {
+        const line = raw.trim()
+        if (!line || line.startsWith('#')) continue
+        const m = /^([A-Z_][A-Z0-9_]*)\s*=\s*"?(.+?)"?\s*$/.exec(line)
+        if (m) fileVars[m[1]] = m[2].split(/\s+#/)[0]
+      }
+    }
+    const u = url && !url.startsWith('file:') ? url : fileVars.SUPABASE_URL
+    const k = key || fileVars.SUPABASE_SECRET_KEY
+    _supabaseConfigured = !!(u && k)
+  } catch {
+    _supabaseConfigured = false
+  }
+  return _supabaseConfigured
+}
 
 type WhereValue = string | number | boolean | null | { [key: string]: unknown }
 type WhereClause = Record<string, WhereValue>
@@ -198,6 +239,10 @@ function makeModel<T = any>(table: string) {
   return {
     async findMany(opts: FindOptions = {}): Promise<T[]> {
       try {
+        // Fall back to local JSON backup when Supabase isn't configured
+        if (!isSupabaseConfigured()) {
+          return localFindMany(table, opts)
+        }
         let q = getSupabaseAdmin().from(table)
         const includeKeys = opts.include ? Object.keys(opts.include) : []
         const needsCategory = includeKeys.includes('category')
@@ -458,6 +503,10 @@ function makeModel<T = any>(table: string) {
       }
 
       try {
+        // Fall back to local JSON backup when Supabase isn't configured
+        if (!isSupabaseConfigured()) {
+          return localFindUnique(table, opts as Parameters<typeof localFindUnique>[1]) as T | null
+        }
         let q = getSupabaseAdmin().from(table)
         const selectStr = buildSelectString(opts.select, undefined)
         if (selectStr) q = q.select(selectStr)
@@ -561,6 +610,13 @@ function makeModel<T = any>(table: string) {
     },
 
     async upsert(opts: UpsertOptions): Promise<T> {
+      // Fall back to local JSON backup (read-only) when Supabase isn't
+      // configured. Treat upsert as findUnique — return existing row or null.
+      // This lets layout.tsx's getSettings() read real siteSettings from backup.
+      if (!isSupabaseConfigured()) {
+        const found = localFindUnique(table, { where: opts.where })
+        return (found as T) || null
+      }
       // Try find first (without .single() to avoid errors on 0 rows)
       let fq = getSupabaseAdmin().from(table).select('*')
       fq = applyWhere(fq, opts.where)
@@ -590,6 +646,9 @@ function makeModel<T = any>(table: string) {
     },
 
     async count(opts: { where?: WhereClause } = {}): Promise<number> {
+      if (!isSupabaseConfigured()) {
+        return localCount(table, opts)
+      }
       let q = getSupabaseAdmin().from(table).select('*', { count: 'exact', head: true })
       q = applyWhere(q, opts.where)
       const { count, error } = await q
@@ -609,6 +668,9 @@ function makeModel<T = any>(table: string) {
       _sum?: Record<string, true>
       _count?: boolean
     }): Promise<Record<string, any>> {
+      if (!isSupabaseConfigured()) {
+        return localAggregate(table, opts)
+      }
       const selectCols: string[] = []
       if (opts._sum) selectCols.push(...Object.keys(opts._sum))
       let q = getSupabaseAdmin().from(table).select(selectCols.join(',') || '*')

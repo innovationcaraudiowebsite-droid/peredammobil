@@ -1497,3 +1497,31 @@ Stage Summary:
 - Project root /home/z/my-project/ sekarang berisi repo peredammobil LENGKAP (326 file termasuk .git history, PNG screenshots, src/, public/, data/, scripts/, .zscripts/, dll) + node_modules (preserved) + .env (preserved DATABASE_URL) + prisma/ + db/ + skills/ + upload/.
 - Dev server jalan di port 3000, landing page `/` render HTTP 200 dengan semua section (Hero, About, Jenis Bahan, Paket Layanan, Artikel Terbaru).
 - Catatan: app pakai Supabase; tanpa credentials di .env, section Paket/Artikel catch error & render empty state (fallback graceful).
+
+---
+Task ID: LOCAL-DATA-FALLBACK
+Agent: main (Z.ai Code)
+Task: Section "Artikel Terbaru" kosong — user ingin artikel tampil dari database. App pakai Supabase (tidak ada credentials), tapi ada data/backup-sqlite.json (293KB, 40 artikel real).
+
+Work Log:
+- Inspeksi data/backup-sqlite.json: 10 tabel — articles (40 rows), categories (4), tags (27), articleTags (111), faqs (10), subscribers (1), comments (11), articleVersions (0), siteSettings (1), _meta.
+- Analisa src/lib/db.ts (712 lines): Prisma-compatible adapter yang di-backend Supabase. API: findMany/findFirst/findUnique/count/aggregate/upsert + create/update/delete. Handle where (eq, OR, contains, ilike, in, notIn, not, lte, gte, lt, gt), orderBy, take/skip, select/include dengan relations (category, tags, articles, article, versions).
+- Buat src/lib/local-data.ts (read-only JSON-backed layer): loadBackup() cache file, mapTable() (site_settings→siteSettings, article_versions→articleVersions, _ArticleTags→articleTags), matchWhere() (semua operator), sortRows(), pickFields(), joinCategory(), joinTags(), joinArticlesForCategory(), joinArticleForComment(). Export localFindMany/localFindFirst/localFindUnique/localCount/localAggregate.
+- Modify src/lib/db.ts: tambah isSupabaseConfigured() (check process.env + .env file tanpa throw, cached). Tambah fallback ke local-data di AWAL method read: findMany, findUnique, count, aggregate, upsert (treat as findUnique). findFirst delegate ke findMany (covered).
+- Fix src/lib/portal.ts incrementArticleView(): skip saat Supabase tidak configured (read-only backup tidak bisa write viewCount) — check process.env.SUPABASE_URL sebelum call getSupabaseAdmin().
+- Restart dev server, verifikasi:
+    - Landing page `/` HTTP 200, size 228KB (naik dari 116KB — artikel data loaded).
+    - "Artikel Terbaru" section: 10+ article card render dengan title, category badge (PEREDAM MOBIL), date (8 Sep 2026 / 29 Jul 2026), reading time (2-3 mnt).
+        Contoh artikel: "Peredam Kap Mesin dan Firewall: Mana yang Lebih Berpengaruh?", "Peredam Mobil BR-V: SUV Senyap untuk Harian dan Travel", "Peredam Mobil Calya", "Peredam Mobil Terios", "Peredam Mobil Xpander", "Peredam Mobil Jazz", "Peredam Mobil Innova", "Peredam Mobil Brio", "Peredam Mobil HRV", "Paket Peredam Mobil Avanza", "Uji Kebisingan Sebelum dan Sesudah".
+    - Title sekarang pakai real tagline dari siteSettings backup: "Peredam Mobil Jakarta — Review Workshop Peredam & Upgrade Audio Terbaik" (sebelumnya fallback).
+    - Article detail page /berita/peredam-mobil/peredam-pintu-mobil-... HTTP 200 — full content render (H1 title, H2 sections: "Urutan lapisan yang benar", "Berapa luas tutupan yang cukup?", "Kesalahan yang paling sering terjadi", "Bagaimana menilai hasilnya"), breadcrumb (Beranda > Peredam Mobil > title), tags (#butyl, #foam-absorber, #peredam-pintu), share buttons (WA/FB/Twitter/Copy), newsletter form.
+    - Comments API /api/comments?articleId=... HTTP 200 — return comments dari backup.
+    - Supabase error count di dev.log: 0 (sebelumnya 4+ per request).
+
+Stage Summary:
+- "Artikel Terbaru" section sekarang menampilkan artikel REAL dari database (40 artikel di backup, 30 di-load ke carousel).
+- Solution: read-only local-data fallback layer baca dari data/backup-sqlite.json saat Supabase tidak configured. Tidak perlu Supabase credentials, tidak perlu setup database baru.
+- Semua read operation (findMany/findUnique/count/aggregrate/upsert) otomatis fallback; write operation (create/update/delete/incrementArticleView) skip gracefully.
+- Article detail page, comments, siteSettings, categories, tags semua jalan dari backup data.
+- Dev log clean — 0 Supabase error.
+- Untuk admin write (CRUD artikel/product baru), user tetap perlu set Supabase credentials di .env.
