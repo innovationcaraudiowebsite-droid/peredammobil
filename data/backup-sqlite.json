@@ -12,7 +12,8 @@
       "subscribers": 1,
       "comments": 11,
       "articleVersions": 0,
-      "siteSettings": 1
+      "siteSettings": 1,
+      "products": 4
     }
   },
   "categories": [
@@ -1998,6 +1999,64 @@
       "verificationGoogle": null,
       "verificationBing": null,
       "updatedAt": "2026-09-05T10:03:49.000Z"
+    }
+  ],
+  "products": [
+    {
+      "id": "3886d38f-afe0-45f6-9eee-09b74fe1ead1",
+      "name": "Paket 4 Pintu",
+      "description": "Peredam 4 pintu dengan butyl 2mm + foam absorber. Audio speaker jernih, suara jalan berkurang.",
+      "price": "Hubungi Admin",
+      "category": "Paket Layanan",
+      "imageUrl": "https://dxtxpobdnskdfqmlskyv.supabase.co/storage/v1/object/public/site-assets/landing/paket-4-pintu.png",
+      "imageAlt": "Paket 4 Pintu",
+      "waNumber": "6282111222989",
+      "sortOrder": 1,
+      "isActive": true,
+      "createdAt": "2026-09-15T07:54:28.212806+00:00",
+      "updatedAt": "2026-09-15T07:54:28.212806+00:00"
+    },
+    {
+      "id": "2c214b3b-eced-424a-9108-7ea65e4c3d55",
+      "name": "Paket Full Kabin",
+      "description": "Peredam lantai + 4 pintu + plafon. Redam derau jalan, mesin, dan getaran body secara menyeluruh.",
+      "price": "Hubungi Admin",
+      "category": "Paket Layanan",
+      "imageUrl": "https://dxtxpobdnskdfqmlskyv.supabase.co/storage/v1/object/public/site-assets/landing/paket-full-kabin.png",
+      "imageAlt": "Paket Full Kabin",
+      "waNumber": "6282111222989",
+      "sortOrder": 2,
+      "isActive": true,
+      "createdAt": "2026-09-15T07:54:28.212806+00:00",
+      "updatedAt": "2026-09-15T07:54:28.212806+00:00"
+    },
+    {
+      "id": "32f26c3a-2053-48ee-b605-84a898fe645b",
+      "name": "Paket Kap Mesin",
+      "description": "Peredam kap mesin + firewall dengan heat barrier + butyl. Kurangi panas & derau mesin masuk kabin.",
+      "price": "Hubungi Admin",
+      "category": "Paket Layanan",
+      "imageUrl": "https://dxtxpobdnskdfqmlskyv.supabase.co/storage/v1/object/public/site-assets/landing/paket-kap-mesin.png",
+      "imageAlt": "Paket Kap Mesin",
+      "waNumber": "6282111222989",
+      "sortOrder": 3,
+      "isActive": true,
+      "createdAt": "2026-09-15T07:54:28.212806+00:00",
+      "updatedAt": "2026-09-15T07:54:28.212806+00:00"
+    },
+    {
+      "id": "a108cccf-5206-443d-8763-de18758c470e",
+      "name": "Paket Wheel Housing",
+      "description": "Peredam wheel housing (4 fender) dengan butyl tebal + foam. Redam suara ban & suspensi di jalan rusak.",
+      "price": "Hubungi Admin",
+      "category": "Paket Layanan",
+      "imageUrl": "https://dxtxpobdnskdfqmlskyv.supabase.co/storage/v1/object/public/site-assets/landing/paket-wheel-housing.png",
+      "imageAlt": "Paket Wheel Housing",
+      "waNumber": "6282111222989",
+      "sortOrder": 4,
+      "isActive": true,
+      "createdAt": "2026-09-15T07:54:28.212806+00:00",
+      "updatedAt": "2026-09-15T07:54:28.212806+00:00"
     }
   ]
 }

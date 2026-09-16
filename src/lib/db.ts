@@ -63,6 +63,80 @@ function isSupabaseConfigured(): boolean {
   return _supabaseConfigured
 }
 
+/**
+ * Column case-mapping for tables whose columns were created WITHOUT quoted
+ * identifiers (so Postgres lowercased them). The `products` table has
+ * lowercase columns (`imageurl`, `wanumber`, `isactive`, ...) while the app
+ * code uses camelCase (`imageUrl`, `waNumber`, `isActive`, ...).
+ *
+ * When Supabase is configured, this map converts:
+ *  - camelCase select keys → lowercase (for the PostgREST select string)
+ *  - camelCase where/orderBy keys → lowercase (for .eq/.order calls)
+ *  - lowercase response keys → camelCase (so app code like p.imageUrl works)
+ */
+const LOWERCASE_TABLES: Record<string, Record<string, string>> = {
+  products: {
+    imageUrl: 'imageurl',
+    imageAlt: 'imagealt',
+    waNumber: 'wanumber',
+    sortOrder: 'sortorder',
+    isActive: 'isactive',
+    createdAt: 'createdat',
+    updatedAt: 'updatedat',
+  },
+}
+// Reverse map: lowercase → camelCase (for response normalization)
+const LOWERCASE_REVERSE: Record<string, Record<string, string>> = {}
+for (const [tbl, m] of Object.entries(LOWERCASE_TABLES)) {
+  LOWERCASE_REVERSE[tbl] = Object.fromEntries(Object.entries(m).map(([k, v]) => [v, k]))
+}
+
+/** Convert a camelCase column name to the DB's lowercase form if needed. */
+function colToDb(table: string, col: string): string {
+  return LOWERCASE_TABLES[table]?.[col] || col
+}
+/** Convert a lowercase DB column name back to camelCase if needed. */
+function colFromDb(table: string, col: string): string {
+  return LOWERCASE_REVERSE[table]?.[col] || col
+}
+/** Normalize a response row's keys from DB-case to app-case. */
+function normalizeRow<T>(table: string, row: any): T {
+  if (!row || typeof row !== 'object') return row
+  if (!LOWERCASE_REVERSE[table]) return row
+  const out: any = {}
+  for (const [k, v] of Object.entries(row)) {
+    out[colFromDb(table, k)] = v
+  }
+  return out as T
+}
+/** Normalize a where clause's keys to DB-case for the query. */
+function normalizeWhere(table: string, where: WhereClause | undefined): WhereClause | undefined {
+  if (!where || !LOWERCASE_TABLES[table]) return where
+  const out: WhereClause = {}
+  for (const [k, v] of Object.entries(where)) {
+    if (k === 'OR' && Array.isArray(v)) {
+      out.OR = (v as WhereClause[]).map((cond) => {
+        const c: WhereClause = {}
+        for (const [ck, cv] of Object.entries(cond)) c[colToDb(table, ck)] = cv
+        return c
+      })
+    } else {
+      out[colToDb(table, k)] = v
+    }
+  }
+  return out
+}
+/** Normalize an orderBy's keys to DB-case for the query. */
+function normalizeOrderBy(table: string, orderBy: OrderBy | undefined): OrderBy | undefined {
+  if (!orderBy || !LOWERCASE_TABLES[table]) return orderBy
+  const arr = Array.isArray(orderBy) ? orderBy : [orderBy]
+  return arr.map((o) => {
+    const out: Record<string, 'asc' | 'desc'> = {}
+    for (const [k, dir] of Object.entries(o)) out[colToDb(table, k)] = dir
+    return out
+  })
+}
+
 type WhereValue = string | number | boolean | null | { [key: string]: unknown }
 type WhereClause = Record<string, WhereValue>
 type OrderBy = Record<string, 'asc' | 'desc'> | Array<Record<string, 'asc' | 'desc'>>
@@ -277,12 +351,14 @@ function makeModel<T = any>(table: string) {
         // Plain select without relations (we fetch separately)
         // If no explicit select (opts.select undefined), use '*' to get all columns
         const hasExplicitSelect = opts.select && Object.keys(opts.select).length > 0
+        // For tables with lowercase columns (e.g. products), convert camelCase
+        // select keys to the DB's lowercase form so PostgREST can find them.
         const flatSelect = hasExplicitSelect
-          ? (flatSelectKeys.length > 0 ? flatSelectKeys.join(',') : '*')
+          ? (flatSelectKeys.length > 0 ? flatSelectKeys.map((k) => colToDb(table, k)).join(',') : '*')
           : '*'
         q = q.select(flatSelect)
-        q = applyWhere(q, opts.where)
-        q = applyOrder(q, opts.orderBy)
+        q = applyWhere(q, normalizeWhere(table, opts.where))
+        q = applyOrder(q, normalizeOrderBy(table, opts.orderBy))
         if (opts.take) {
           if (opts.skip) q = q.range(opts.skip, opts.skip + opts.take - 1)
           else q = q.limit(opts.take)
@@ -294,7 +370,7 @@ function makeModel<T = any>(table: string) {
           console.error(`[db.${table}.findMany]`, error.message)
           return []
         }
-        let rows = (data || []).map((r: any) => convertDates(r)) as T[]
+        let rows = (data || []).map((r: any) => convertDates(normalizeRow(table, r))) as T[]
 
         // Manual include: category (from include OR nested select)
         if ((needsCategory || needsCategoryViaSelect) && rows.length > 0 && table === 'articles') {
@@ -508,10 +584,14 @@ function makeModel<T = any>(table: string) {
           return localFindUnique(table, opts as Parameters<typeof localFindUnique>[1]) as T | null
         }
         let q = getSupabaseAdmin().from(table)
-        const selectStr = buildSelectString(opts.select, undefined)
+        let selectStr = buildSelectString(opts.select, undefined)
+        // For lowercase-column tables (products), convert select col names
+        if (selectStr && LOWERCASE_TABLES[table]) {
+          selectStr = selectStr.split(',').map((c) => colToDb(table, c)).join(',')
+        }
         if (selectStr) q = q.select(selectStr)
         else q = q.select('*')
-        q = applyWhere(q, opts.where)
+        q = applyWhere(q, normalizeWhere(table, opts.where))
         // Use single() with eq (more reliable than maybeSingle in some cases)
         const { data, error } = await q.single()
         if (error) {
@@ -520,7 +600,7 @@ function makeModel<T = any>(table: string) {
           console.error(`[db.${table}.findUnique]`, error.message)
           return null
         }
-        return (convertDates(data) as T) || null
+        return (convertDates(normalizeRow(table, data)) as T) || null
       } catch (err) {
         console.error(`[db.${table}.findUnique] catch:`, err)
         return null
@@ -567,7 +647,7 @@ function makeModel<T = any>(table: string) {
       const { tags: tagsUpdate, ...updateData } = opts.data as any
       if (tagsUpdate) {
         let q = getSupabaseAdmin().from(table).update(updateData)
-        q = applyWhere(q, opts.where)
+        q = applyWhere(q, normalizeWhere(table, opts.where))
         const { data, error } = await q.select().maybeSingle()
         if (error) throw new Error(`[db.${table}.update] ${error.message}`)
         if (tagsUpdate.set && Array.isArray(tagsUpdate.set)) {
@@ -580,7 +660,7 @@ function makeModel<T = any>(table: string) {
         return data as T
       }
       let q = getSupabaseAdmin().from(table).update(opts.data)
-      q = applyWhere(q, opts.where)
+      q = applyWhere(q, normalizeWhere(table, opts.where))
       const { data, error } = await q.select().maybeSingle()
       if (error) throw new Error(`[db.${table}.update] ${error.message}`)
       return data as T
@@ -588,7 +668,7 @@ function makeModel<T = any>(table: string) {
 
     async updateMany(opts: { where: WhereClause; data: Record<string, unknown> }): Promise<{ count: number }> {
       let q = getSupabaseAdmin().from(table).update(opts.data)
-      q = applyWhere(q, opts.where)
+      q = applyWhere(q, normalizeWhere(table, opts.where))
       const { count, error } = await q
       if (error) throw new Error(`[db.${table}.updateMany] ${error.message}`)
       return { count: count || 0 }
@@ -596,14 +676,14 @@ function makeModel<T = any>(table: string) {
 
     async delete(opts: DeleteOptions): Promise<void> {
       let q = getSupabaseAdmin().from(table).delete()
-      q = applyWhere(q, opts.where)
+      q = applyWhere(q, normalizeWhere(table, opts.where))
       const { error } = await q
       if (error) throw new Error(`[db.${table}.delete] ${error.message}`)
     },
 
     async deleteMany(opts: { where: WhereClause }): Promise<{ count: number }> {
       let q = getSupabaseAdmin().from(table).delete()
-      q = applyWhere(q, opts.where)
+      q = applyWhere(q, normalizeWhere(table, opts.where))
       const { count, error } = await q
       if (error) throw new Error(`[db.${table}.deleteMany] ${error.message}`)
       return { count: count || 0 }
@@ -619,7 +699,7 @@ function makeModel<T = any>(table: string) {
       }
       // Try find first (without .single() to avoid errors on 0 rows)
       let fq = getSupabaseAdmin().from(table).select('*')
-      fq = applyWhere(fq, opts.where)
+      fq = applyWhere(fq, normalizeWhere(table, opts.where))
       fq = fq.limit(1)
       const { data: existing, error: findErr } = await fq
       if (findErr) console.warn(`[db.${table}.upsert] find:`, findErr.message)
@@ -627,7 +707,7 @@ function makeModel<T = any>(table: string) {
       if (existing && existing.length > 0) {
         // Update — use maybeSingle to avoid error if no rows match (RLS edge case)
         let uq = getSupabaseAdmin().from(table).update(opts.update || {})
-        uq = applyWhere(uq, opts.where)
+        uq = applyWhere(uq, normalizeWhere(table, opts.where))
         const { data, error } = await uq.select().maybeSingle()
         if (error) throw new Error(`[db.${table}.upsert.update] ${error.message}`)
         if (data) return data as T
@@ -650,7 +730,7 @@ function makeModel<T = any>(table: string) {
         return localCount(table, opts)
       }
       let q = getSupabaseAdmin().from(table).select('*', { count: 'exact', head: true })
-      q = applyWhere(q, opts.where)
+      q = applyWhere(q, normalizeWhere(table, opts.where))
       const { count, error } = await q
       if (error) {
         console.error(`[db.${table}.count]`, error.message)
@@ -674,7 +754,7 @@ function makeModel<T = any>(table: string) {
       const selectCols: string[] = []
       if (opts._sum) selectCols.push(...Object.keys(opts._sum))
       let q = getSupabaseAdmin().from(table).select(selectCols.join(',') || '*')
-      q = applyWhere(q, opts.where)
+      q = applyWhere(q, normalizeWhere(table, opts.where))
       const { data, error } = await q
       if (error) {
         console.error(`[db.${table}.aggregate]`, error.message)
