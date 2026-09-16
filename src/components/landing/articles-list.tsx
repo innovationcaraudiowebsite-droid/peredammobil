@@ -11,26 +11,26 @@ import { formatTanggalPendek } from '@/lib/format-tanggal'
  * ArticlesList — client component untuk render CAROUSEL artikel.
  *
  * PRINSIP (sesuai brief user):
- *  - Tampil artikel maksimal 3.
+ *  - Tampil artikel maksimal 2.
  *  - Saat scroll/swipe = MENGGESER artikel selanjutnya (slide animation),
  *    BUKAN reload/fetch API.
- *  - Aslinya banyak (all articles pre-loaded), tapi terlihat hanya 3.
+ *  - Aslinya banyak (all articles pre-loaded), tapi terlihat hanya 2.
  *  - Posisi sticky/fixed — container tetap, konten slide di dalamnya.
  *
  * Implementasi:
  *  - Semua artikel di-render di DOM (dari server, no API fetch).
- *  - Container `overflow: hidden`, fixed height untuk 3 card.
+ *  - Container `overflow: hidden`, fixed height untuk 2 card.
  *  - Inner track di-translate dengan CSS `transform: translateY(-N * cardHeight)`.
  *  - Scroll/swipe/wheel → increment/decrement `startIndex` → track slide.
  *  - CSS transition `duration-500 ease-out` untuk smooth animation.
  *  - NO network request — pure CSS, instant.
  *
  * Behavior:
- *  - Desktop: mouse wheel down → next 3, wheel up → prev 3.
- *  - Mobile (Android/iOS): touch swipe up → next 3, swipe down → prev 3.
+ *  - Desktop: mouse wheel down → next 2, wheel up → prev 2.
+ *  - Mobile (Android/iOS): touch swipe up → next 2, swipe down → prev 2.
  *  - Tombol Sebelumnya/Berikutnya untuk manual control.
  *  - Cooldown 500ms supaya 1 gesture = 1 slide (tidak rapid-fire).
- *  - Indicator: "Artikel 1-3 dari N" + progress bar.
+ *  - Indicator: "Artikel 1-2 dari N" + progress bar.
  *  - End state: tombol Berikutnya disabled, "✓ Sampai artikel terakhir".
  *
  * NOTE: Jangan import dari @/lib/portal (server-only). Pakai
@@ -65,7 +65,7 @@ interface ArticlesListProps {
   articles: ArticleItem[]
 }
 
-const VISIBLE_COUNT = 3
+const VISIBLE_COUNT = 2
 const CARD_HEIGHT = 132 // px — tinggi per card (sesuai measure production)
 const CARD_GAP = 16 // px — space-y-4 = 1rem = 16px
 const SLIDE_DISTANCE = CARD_HEIGHT + CARD_GAP // 148px per slide step
@@ -156,7 +156,7 @@ export function ArticlesList({ articles }: ArticlesListProps) {
   }, [])
 
   // Auto-advance via wheel (desktop) + touch (Android/iOS) dengan throttle 500ms.
-  // PRINSIP: scroll/swipe = SLIDE ke 3 card berikutnya (CSS transform),
+  // PRINSIP: scroll/swipe = SLIDE ke 2 card berikutnya (CSS transform),
   // BUKAN reload/fetch API. Pure animation, instant.
   useEffect(() => {
     const section = document.getElementById('artikel')
@@ -223,7 +223,7 @@ export function ArticlesList({ articles }: ArticlesListProps) {
 
   return (
     <>
-      {/* Carousel container — overflow:hidden, fixed height untuk 3 card.
+      {/* Carousel container — overflow:hidden, fixed height untuk 2 card.
           Inner track di-translate dengan CSS transform (NO reload). */}
       <div
         className="mt-6 overflow-hidden"
@@ -252,7 +252,7 @@ export function ArticlesList({ articles }: ArticlesListProps) {
           Sebelumnya
         </button>
 
-        {/* Indicator: "Artikel 1-3 dari N" + progress bar */}
+        {/* Indicator: "Artikel 1-2 dari N" + progress bar */}
         <div className="flex flex-col items-center gap-1">
           <span className="text-xs font-medium text-muted-foreground">
             Artikel {startIndex + 1}-{visibleEnd} dari {total}

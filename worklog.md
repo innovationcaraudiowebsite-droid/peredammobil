@@ -1525,3 +1525,28 @@ Stage Summary:
 - Article detail page, comments, siteSettings, categories, tags semua jalan dari backup data.
 - Dev log clean — 0 Supabase error.
 - Untuk admin write (CRUD artikel/product baru), user tetap perlu set Supabase credentials di .env.
+
+---
+Task ID: CAROUSEL-2-CARDS
+Agent: main (Z.ai Code)
+Task: Ubah section "Artikel Terbaru" — yang tampil awal (sebelum scroll) dari 3 card jadi 2 card. Indicator "Artikel 1-3 dari 30" jadi "Artikel 1-2 dari 30".
+
+Work Log:
+- Buat wireframe before/after (ASCII) menunjukkan: 3 card (428px) → 2 card (280px), indicator 1-3 → 1-2, progress 10% → 7%.
+- Edit src/components/landing/articles-list.tsx:
+    - VISIBLE_COUNT: 3 → 2 (konstanta utama yang kontrol card visible + slide step + container height + indicator range).
+    - Update JSDoc: "maksimal 3" → "maksimal 2", "terlihat hanya 3" → "terlihat hanya 2", "fixed height untuk 3 card" → "2 card", "next 3" → "next 2", "swipe up → next 3" → "next 2", "Artikel 1-3" → "Artikel 1-2".
+    - Update inline comment: "SLIDE ke 3 card" → "SLIDE ke 2 card", carousel container comment "3 card" → "2 card", indicator comment "1-3" → "1-2".
+- Edit src/components/landing/latest-articles.tsx: update JSDoc — "hanya 3 card visible" → "hanya 2", "slide ke 3 card" → "slide ke 2 card", "maksimal 3" → "maksimal 2", "terlihat hanya 3" → "terlihat hanya 2".
+- Restart dev server, verifikasi via agent-browser:
+    - Container height: 280px (sebelumnya 428px) — 2×132 + 1×16 = 280px. ✓
+    - Indicator text: "Artikel 1-2 dari 30" (sebelumnya "Artikel 1-3 dari 30"). ✓
+    - Progress bar: width 6.67% (2/30, sebelumnya 10% = 3/30). ✓
+    - Screenshot: /tmp/artikel-2cards.png.
+
+Stage Summary:
+- Section "Artikel Terbaru" sekarang tampil 2 card awal (sebelum scroll), bukan 3.
+- Slide step juga 2 card (1 scroll/swipe = geser 2 card berikutnya).
+- Indicator: "Artikel 1-2 dari 30" + progress bar 7%.
+- Container lebih ringkas: 280px (turun 148px dari 428px).
+- Semua 30 artikel tetap pre-loaded di DOM (carousel), hanya 2 yang visible via overflow:hidden + CSS transform translateY.

@@ -7,14 +7,14 @@ import { ArticlesList, type ArticleItem } from '@/components/landing/articles-li
  * CAROUSEL MODE (bukan pagination):
  *  - Server fetch ALL artikel PUBLISHED (limit 30) sekali saja di SSR.
  *  - Pass ke ArticlesList client component yang render semua artikel di DOM.
- *  - Container overflow:hidden, hanya 3 card visible.
- *  - Scroll/swipe → CSS transform translateY → slide ke 3 card berikutnya.
+ *  - Container overflow:hidden, hanya 2 card visible.
+ *  - Scroll/swipe → CSS transform translateY → slide ke 2 card berikutnya.
  *  - NO API reload — pure CSS animation, instant.
  *
  * Sesuai brief user revisi:
- *  - Tampil artikel maksimal 3.
+ *  - Tampil artikel maksimal 2.
  *  - Saat scroll = menggeser artikel selanjutnya (slide), BUKAN reload.
- *  - Aslinya banyak, tapi terlihat hanya 3 dan posisi sticky/fixed.
+ *  - Aslinya banyak, tapi terlihat hanya 2 dan posisi sticky/fixed.
  */
 export const dynamic = 'force-dynamic'
 
