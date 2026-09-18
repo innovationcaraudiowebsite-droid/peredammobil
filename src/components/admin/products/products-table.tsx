@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Pencil, Trash2, MessageCircle, Plus, Search } from 'lucide-react'
+import { Pencil, Trash2, MessageCircle, Plus, Search, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -213,6 +213,11 @@ export function ProductsTable({ products }: ProductsTableProps) {
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <div className="inline-flex gap-1">
+                      <Button asChild size="sm" variant="ghost" className="size-8 p-0">
+                        <Link href={`/admin/products/${p.id}`} title="Lihat detail">
+                          <Eye className="size-3.5" />
+                        </Link>
+                      </Button>
                       <Button asChild size="sm" variant="ghost" className="size-8 p-0">
                         <Link href={`/admin/products/${p.id}/edit`} title="Edit produk">
                           <Pencil className="size-3.5" />
