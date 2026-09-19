@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { X } from 'lucide-react'
 
 /**
  * WhatsAppIcon — logo resmi WhatsApp Business (phone-in-speech-bubble).
@@ -23,42 +22,27 @@ function WhatsAppIcon({ className }: { className?: string }) {
 }
 
 /**
- * FloatingAdminButton — floating button WhatsApp Sales yang fixed di
- * pojok kanan bawah. Selalu visible saat scroll. Klik → expand panel
- * berisi 2 WA Sales (Sales 1 & Sales 2), user pilih mau chat yang mana.
+ * FloatingAdminButton — floating button WhatsApp yang fixed di pojok
+ * kanan bawah. Selalu visible saat scroll > 100px. Klik → langsung
+ * buka wa.me/<nomor> di tab baru (1 nomor, 1 click, no panel).
  *
- * Sesuai brief user revisi:
- *  - Ganti icon Phone (warna coklat brand) → logo WhatsApp (warna hijau
- *    emerald, khas WhatsApp).
- *  - 2 nomor WA Sales:
- *      Sales 1: +62 822-1122-2989 (6282111222989)
- *      Sales 2: +62 812-9595-2279 (6281295952279)
- *  - Panel expand: 2 opsi WA (Sales 1 / Sales 2), langsung buka wa.me.
- *  - Warna: emerald gradient (hijau khas WhatsApp).
- *  - Icon: MessageCircle (logo WA dari lucide-react).
+ * Konfigurasi:
+ *  - 1 nomor WA: +62 822-1122-2399 (6282211222399)
+ *  - Logo: WhatsApp Business resmi (inline SVG)
+ *  - Warna: emerald gradient (hijau khas WhatsApp)
+ *  - Bentuk: lingkaran sempurna (size-16 = 64×64, rounded-full)
  *
  * Behavior:
  *  - Muncul setelah scroll > 100px (supaya tidak overlap dengan hero).
- *  - Klik button → toggle panel expand.
- *  - Klik salah satu Sales → buka wa.me/<nomor> di tab baru.
- *  - Auto-close saat klik luar panel atau saat scroll.
+ *  - Klik button → langsung buka wa.me/<nomor>?text=<pesan> di tab baru.
+ *  - Sembunyi di halaman /admin (tidak perlu CTA WA di dashboard).
  */
-const WA_SALES = [
-  {
-    label: 'Sales 1',
-    number: '6282111222989', // +62 822-1122-2989
-    display: '0822-1122-2989',
-  },
-  {
-    label: 'Sales 2',
-    number: '6281295952279', // +62 812-9595-2279
-    display: '0812-9595-2279',
-  },
-] as const
+const WA_NUMBER = '6282211222399' // +62 822-1122-2399
+const WA_DISPLAY = '0822-1122-2399'
+const WA_MESSAGE = 'Halo, saya tertarik paket layanan peredam mobil. Mohon info lengkap.'
 
 export function FloatingAdminButton() {
   const pathname = usePathname()
-  const [open, setOpen] = useState(false)
   const [visible, setVisible] = useState(false)
 
   // Sembunyi di halaman admin (tidak perlu CTA WA di dashboard admin)
@@ -74,32 +58,10 @@ export function FloatingAdminButton() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [isAdmin])
 
-  // Close saat klik luar panel
-  useEffect(() => {
-    if (!open) return
-    const onClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      // Jangan close jika klik di dalam panel atau button itu sendiri
-      if (target.closest('[data-floating-wa]')) return
-      setOpen(false)
-    }
-    // Delay supaya click yang baru saja trigger open tidak langsung close
-    const timer = setTimeout(() => {
-      document.addEventListener('click', onClick)
-    }, 100)
-    return () => {
-      clearTimeout(timer)
-      document.removeEventListener('click', onClick)
-    }
-  }, [open])
-
-  const waLinkFor = (number: string) =>
-    `https://wa.me/${number}?text=${encodeURIComponent(
-      'Halo, saya tertarik paket layanan peredam mobil. Mohon info lengkap.',
-    )}`
-
   // Early return di admin — render nothing (setelah semua hooks dipanggil)
   if (isAdmin) return null
+
+  const waLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(WA_MESSAGE)}`
 
   return (
     <div
@@ -108,49 +70,22 @@ export function FloatingAdminButton() {
         visible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
       }`}
     >
-      {/* Expand panel — 2 opsi WA Sales */}
-      {open && (
-        <div className="w-60 rounded-xl border border-border bg-card p-3 shadow-2xl">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm font-bold text-foreground">Chat WhatsApp</span>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="grid size-6 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              aria-label="Tutup panel"
-            >
-              <X className="size-3.5" />
-            </button>
-          </div>
-          <ul className="space-y-1.5">
-            {WA_SALES.map((s) => (
-              <li key={s.label}>
-                <a
-                  href={waLinkFor(s.number)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 rounded-lg border border-border bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
-                >
-                  <WhatsAppIcon className="size-4 shrink-0" />
-                  <span className="flex-1">{s.label}</span>
-                  <span className="text-xs text-emerald-600 dark:text-emerald-400">{s.display}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Tooltip label (hover di desktop) */}
+      <span className="hidden sm:flex items-center gap-1.5 rounded-full bg-card border border-border px-3 py-1.5 text-xs font-medium text-foreground shadow-md">
+        <WhatsAppIcon className="size-3.5 text-emerald-600" />
+        Chat WA: {WA_DISPLAY}
+      </span>
 
-      {/* Main button — logo WA resmi, lingkaran sempurna (size-16 = 64×64, rounded-full = circle) */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
+      {/* Main button — direct link ke wa.me, lingkaran sempurna (size-16 = 64×64) */}
+      <a
+        href={waLink}
+        target="_blank"
+        rel="noopener noreferrer"
         className="group grid size-16 place-items-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/40 transition-all hover:scale-110 hover:shadow-xl hover:shadow-emerald-500/50 active:scale-95"
-        aria-label="Chat WhatsApp Sales"
-        aria-expanded={open}
+        aria-label={`Chat WhatsApp ${WA_DISPLAY}`}
       >
         <WhatsAppIcon className="size-8 shrink-0" />
-      </button>
+      </a>
     </div>
   )
 }

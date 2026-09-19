@@ -49,7 +49,7 @@ export function ProductForm({ initial }: ProductFormProps) {
       category: 'Paket Layanan',
       imageUrl: null,
       imageAlt: '',
-      waNumber: '6282111222989',
+      waNumber: '6282211222399',
       sortOrder: 0,
       isActive: true,
     },
@@ -294,11 +294,11 @@ export function ProductForm({ initial }: ProductFormProps) {
             id="waNumber"
             value={form.waNumber}
             onChange={(e) => patch({ waNumber: e.target.value })}
-            placeholder="Contoh: 6282111222989 (format internasional, tanpa +)"
+            placeholder="Contoh: 6282211222399 (format internasional, tanpa +)"
             className="h-11"
           />
           <p className="text-xs text-muted-foreground">
-            Format: 62&lt;nomor&gt; tanpa tanda + atau spasi. Contoh: 6282111222989
+            Format: 62&lt;nomor&gt; tanpa tanda + atau spasi. Contoh: 6282211222399
           </p>
         </div>
 

@@ -38,7 +38,7 @@ export default async function EditProductPage({
     category: product.category ?? 'Paket Layanan',
     imageUrl: product.imageUrl,
     imageAlt: product.imageAlt ?? '',
-    waNumber: product.waNumber ?? '6282111222989',
+    waNumber: product.waNumber ?? '6282211222399',
     sortOrder: product.sortOrder ?? 0,
     isActive: product.isActive ?? true,
   }

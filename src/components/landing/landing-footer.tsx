@@ -20,8 +20,8 @@ export function LandingFooter() {
           </span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs sm:text-sm">
-          <a href="tel:082211122989" className="hover:text-brand-light transition-colors">
-            0822-1122-2989
+          <a href="tel:082211222399" className="hover:text-brand-light transition-colors">
+            0822-1122-2399
           </a>
           <a
             href="mailto:innovationcaraudio@gmail.com"
